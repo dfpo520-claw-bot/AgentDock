@@ -11,12 +11,12 @@ use std::process::Command;
 
 use crate::models::types::VersionInfo;
 
-struct GuardianPause {
+pub(crate) struct GuardianPause {
     reason: &'static str,
 }
 
 impl GuardianPause {
-    fn new(reason: &'static str) -> Self {
+    pub(crate) fn new(reason: &'static str) -> Self {
         crate::commands::service::guardian_pause(reason);
         Self { reason }
     }
@@ -800,7 +800,7 @@ pub fn save_openclaw_json(config: &Value) -> Result<(), String> {
 
 /// 供其他模块复用：触发 Gateway 重载
 pub async fn do_reload_gateway(app: &tauri::AppHandle) -> Result<String, String> {
-    reload_gateway_internal(Some(app)).await
+    super::gateway_runtime::do_reload_gateway(app).await
 }
 
 #[tauri::command]
@@ -4921,7 +4921,7 @@ pub fn delete_backup(name: String) -> Result<(), String> {
 
 /// 获取当前用户 UID（macOS/Linux 用 id -u，Windows 返回 0）
 #[allow(dead_code)]
-fn get_uid() -> Result<u32, String> {
+pub(crate) fn get_uid() -> Result<u32, String> {
     #[cfg(target_os = "windows")]
     {
         Ok(0)
@@ -4941,209 +4941,6 @@ fn get_uid() -> Result<u32, String> {
 
 /// 重载 Gateway 配置（热重载，不重启进程）
 /// 通过 HTTP POST 向 Gateway 发送 reload 信号，避免触发完整的服务重启循环
-#[allow(dead_code)]
-async fn reload_gateway_via_http() -> Result<String, String> {
-    // 读取 gateway 端口和 token
-    let config_path = crate::commands::openclaw_dir().join("openclaw.json");
-    let content =
-        std::fs::read_to_string(&config_path).map_err(|e| format!("读取配置失败: {e}"))?;
-    let config: serde_json::Value =
-        serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))?;
-
-    let gw_port = config
-        .get("gateway")
-        .and_then(|g| g.get("port"))
-        .and_then(|p| p.as_u64())
-        .unwrap_or(18789) as u16;
-
-    let token = config
-        .get("gateway")
-        .and_then(|g| g.get("auth"))
-        .and_then(|a| a.get("token"))
-        .and_then(|t| t.as_str())
-        .unwrap_or("");
-
-    // 尝试两个可能的 control UI 端口
-    let control_ports = [gw_port + 2, 18792];
-
-    for ctrl_port in control_ports {
-        let url = format!("http://127.0.0.1:{}/__api/reload", ctrl_port);
-        let client = crate::commands::build_http_client(
-            std::time::Duration::from_secs(5),
-            Some("ClawPanel"),
-        )?;
-
-        let mut req = client.post(&url);
-        if !token.is_empty() {
-            req = req.header("Authorization", format!("Bearer {}", token));
-        }
-
-        match req.send().await {
-            Ok(resp) if resp.status().is_success() => {
-                return Ok("Gateway 配置已热重载".to_string());
-            }
-            Ok(resp) => {
-                eprintln!(
-                    "[reload_gateway] 端口 {ctrl_port} 返回状态: {}",
-                    resp.status()
-                );
-            }
-            Err(e) => {
-                eprintln!("[reload_gateway] 端口 {ctrl_port} 请求失败: {e}");
-            }
-        }
-    }
-
-    // 所有 HTTP 重载方式都失败，回退到进程重启
-    eprintln!("[reload_gateway] HTTP 热重载不可用，将触发进程重启");
-    Err("Gateway HTTP 重载不可用".to_string())
-}
-
-/// 重载 Gateway 服务
-/// Windows/Linux: 优先尝试 HTTP 热重载（不重启进程）
-/// 如果 HTTP 重载失败，回退到 restart_service（会触发 Guardian 重启循环）
-#[allow(unused_variables)]
-async fn reload_gateway_internal(app: Option<&tauri::AppHandle>) -> Result<String, String> {
-    #[cfg(target_os = "macos")]
-    {
-        let uid = get_uid()?;
-        let target = format!("gui/{uid}/ai.openclaw.gateway");
-        let output = tokio::process::Command::new("launchctl")
-            .args(["kickstart", "-k", &target])
-            .output()
-            .await
-            .map_err(|e| format!("重载失败: {e}"))?;
-        if output.status.success() {
-            Ok("Gateway 已重载".to_string())
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            Err(format!("重载失败: {stderr}"))
-        }
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        match reload_gateway_via_http().await {
-            Ok(msg) => Ok(msg),
-            Err(_) => crate::commands::service::restart_service(
-                app.cloned()
-                    .ok_or_else(|| "缺少 AppHandle，无法回退到 Gateway 进程重启".to_string())?,
-                "ai.openclaw.gateway".into(),
-            )
-            .await
-            .map(|_| "Gateway 已重启".to_string()),
-        }
-    }
-}
-
-/// 全局 Gateway 重启 mutex（单飞行锁）
-/// 保证同时只有一个重启操作在运行，彻底避免僵尸进程堆积（issue #243）
-static RESTART_MUTEX: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
-/// 上一次重启完成的时间戳（用于 2 秒冷却，防止穿透式重复调用）
-static LAST_RESTART_FINISHED_AT: std::sync::Mutex<Option<std::time::Instant>> =
-    std::sync::Mutex::new(None);
-
-const RESTART_COOLDOWN: std::time::Duration = std::time::Duration::from_secs(2);
-
-/// 带单飞行锁和 2s 冷却的 restart 入口
-/// 即使前端穿透节流发来多个请求，后端也只串行执行，且 2s 内不重复
-async fn restart_gateway_guarded(app: Option<&tauri::AppHandle>) -> Result<String, String> {
-    // 获取 mutex：并发调用时串行化
-    let _guard = RESTART_MUTEX.lock().await;
-
-    // 2 秒冷却：如果刚刚才完成一次重启，跳过本次（配置已被前一次生效）
-    let last_finished = {
-        let guard = LAST_RESTART_FINISHED_AT.lock().unwrap();
-        *guard
-    };
-    if let Some(last) = last_finished {
-        if last.elapsed() < RESTART_COOLDOWN {
-            return Ok("Gateway 刚重启过，本次请求已合并（冷却中）".to_string());
-        }
-    }
-
-    let result = reload_gateway_internal(app).await;
-
-    // 无论成功失败都记录时间，避免失败后被重试风暴压爆
-    {
-        let mut guard = LAST_RESTART_FINISHED_AT.lock().unwrap();
-        *guard = Some(std::time::Instant::now());
-    }
-
-    result
-}
-
-#[tauri::command]
-pub async fn reload_gateway(app: tauri::AppHandle) -> Result<String, String> {
-    restart_gateway_guarded(Some(&app)).await
-}
-
-/// 重启 Gateway 服务（与 reload_gateway 相同实现）
-#[tauri::command]
-pub async fn restart_gateway(app: tauri::AppHandle) -> Result<String, String> {
-    restart_gateway_guarded(Some(&app)).await
-}
-
-/// 运行 openclaw doctor --fix 自动修复配置问题
-#[tauri::command]
-pub async fn doctor_fix() -> Result<Value, String> {
-    use crate::utils::openclaw_command_async;
-
-    let result = tokio::time::timeout(
-        std::time::Duration::from_secs(30),
-        openclaw_command_async().args(["doctor", "--fix"]).output(),
-    )
-    .await;
-
-    match result {
-        Ok(Ok(o)) => {
-            let stdout = String::from_utf8_lossy(&o.stdout).to_string();
-            let stderr = String::from_utf8_lossy(&o.stderr).to_string();
-            let success = o.status.success();
-            Ok(json!({
-                "success": success,
-                "output": stdout.trim(),
-                "errors": stderr.trim(),
-                "exitCode": o.status.code(),
-            }))
-        }
-        Ok(Err(e)) => {
-            if e.kind() == std::io::ErrorKind::NotFound {
-                Err("OpenClaw CLI 未找到，请先安装".to_string())
-            } else {
-                Err(format!("执行 doctor 失败: {e}"))
-            }
-        }
-        Err(_) => Err("doctor --fix 执行超时 (30s)".to_string()),
-    }
-}
-
-/// 运行 openclaw doctor（仅诊断，不修复）
-#[tauri::command]
-pub async fn doctor_check() -> Result<Value, String> {
-    use crate::utils::openclaw_command_async;
-
-    let result = tokio::time::timeout(
-        std::time::Duration::from_secs(20),
-        openclaw_command_async().args(["doctor"]).output(),
-    )
-    .await;
-
-    match result {
-        Ok(Ok(o)) => {
-            let stdout = String::from_utf8_lossy(&o.stdout).to_string();
-            let stderr = String::from_utf8_lossy(&o.stderr).to_string();
-            Ok(json!({
-                "success": o.status.success(),
-                "output": stdout.trim(),
-                "errors": stderr.trim(),
-            }))
-        }
-        Ok(Err(e)) => Err(format!("执行 doctor 失败: {e}")),
-        Err(_) => Err("doctor 执行超时 (20s)".to_string()),
-    }
-}
-
-/// 清理 base URL：去掉尾部斜杠和已知端点路径，防止用户粘贴完整端点 URL 导致路径重复
 fn normalize_base_url(raw: &str) -> String {
     let mut base = raw.trim_end_matches('/').to_string();
     for suffix in &[
@@ -5906,78 +5703,6 @@ pub async fn list_remote_models(
 }
 
 /// 安装 Gateway 服务（执行 openclaw gateway install）
-#[tauri::command]
-pub async fn install_gateway() -> Result<String, String> {
-    use crate::utils::openclaw_command_async;
-    let _guardian_pause = GuardianPause::new("install gateway");
-    // 先检测 openclaw CLI 是否可用
-    let cli_check = openclaw_command_async().arg("--version").output().await;
-    match cli_check {
-        Ok(o) if o.status.success() => {}
-        _ => {
-            return Err("openclaw CLI 未安装。请先执行以下命令安装：\n\n\
-                 npm install -g @qingchencloud/openclaw-zh\n\n\
-                 安装完成后再点击此按钮安装 Gateway 服务。"
-                .into());
-        }
-    }
-
-    let output = openclaw_command_async()
-        .args(["gateway", "install"])
-        .output()
-        .await
-        .map_err(|e| format!("安装失败: {e}"))?;
-
-    if output.status.success() {
-        Ok("Gateway 服务已安装".to_string())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(format!("安装失败: {stderr}"))
-    }
-}
-
-/// 卸载 Gateway 服务
-/// macOS: launchctl bootout + 删除 plist
-/// Windows: 直接 taskkill
-/// Linux: pkill
-#[tauri::command]
-pub fn uninstall_gateway() -> Result<String, String> {
-    let _guardian_pause = GuardianPause::new("uninstall gateway");
-    crate::commands::service::guardian_mark_manual_stop();
-    #[cfg(target_os = "macos")]
-    {
-        let uid = get_uid()?;
-        let target = format!("gui/{uid}/ai.openclaw.gateway");
-
-        // 先停止服务
-        let _ = Command::new("launchctl")
-            .args(["bootout", &target])
-            .output();
-
-        // 删除 plist 文件
-        let home = dirs::home_dir().unwrap_or_default();
-        let plist = home.join("Library/LaunchAgents/ai.openclaw.gateway.plist");
-        if plist.exists() {
-            fs::remove_file(&plist).map_err(|e| format!("删除 plist 失败: {e}"))?;
-        }
-    }
-    #[cfg(target_os = "windows")]
-    {
-        // 直接杀死 gateway 相关的 node.exe 进程，不走慢 CLI
-        let _ = Command::new("taskkill")
-            .args(["/f", "/im", "node.exe", "/fi", "WINDOWTITLE eq openclaw*"])
-            .creation_flags(0x08000000)
-            .output();
-    }
-    #[cfg(target_os = "linux")]
-    {
-        let _ = Command::new("pkill")
-            .args(["-f", "openclaw.*gateway"])
-            .output();
-    }
-    Ok("Gateway 服务已卸载".to_string())
-}
-
 /// 为 openclaw.json 中所有模型添加 input: ["text", "image"]，使 Gateway 识别模型支持图片输入
 #[tauri::command]
 pub fn patch_model_vision() -> Result<bool, String> {
@@ -6102,39 +5827,17 @@ pub async fn check_panel_update() -> Result<Value, String> {
 /// 获取当前生效的 OpenClaw 配置目录路径
 #[tauri::command]
 pub fn get_openclaw_dir() -> Result<Value, String> {
-    let resolved = super::openclaw_dir();
-    let is_custom = super::read_panel_config_value()
-        .and_then(|v| v.get("openclawDir")?.as_str().map(String::from))
-        .map(|s| !s.trim().is_empty())
-        .unwrap_or(false);
-    let config_exists = resolved.join("openclaw.json").exists();
-    Ok(json!({
-        "path": resolved.to_string_lossy(),
-        "isCustom": is_custom,
-        "configExists": config_exists,
-    }))
+    super::app_config::get_openclaw_dir()
 }
 
 #[tauri::command]
 pub fn read_panel_config() -> Result<Value, String> {
-    let path = super::panel_config_path();
-    if !path.exists() {
-        return Ok(serde_json::json!({}));
-    }
-    let content = fs::read_to_string(&path).map_err(|e| format!("读取失败: {e}"))?;
-    serde_json::from_str(&content).map_err(|e| format!("解析失败: {e}"))
+    super::app_config::read_panel_config()
 }
 
 #[tauri::command]
 pub fn write_panel_config(config: Value) -> Result<(), String> {
-    let path = super::panel_config_path();
-    if let Some(dir) = path.parent() {
-        if !dir.exists() {
-            fs::create_dir_all(dir).map_err(|e| format!("创建目录失败: {e}"))?;
-        }
-    }
-    let json = serde_json::to_string_pretty(&config).map_err(|e| format!("序列化失败: {e}"))?;
-    fs::write(&path, json).map_err(|e| format!("写入失败: {e}"))
+    super::app_config::write_panel_config(config)
 }
 
 /// 重启应用（用于设置变更后自动重启）
@@ -6153,17 +5856,12 @@ pub async fn relaunch_app(app: tauri::AppHandle) -> Result<(), String> {
 /// 测试代理连通性：通过配置的代理访问指定 URL，返回状态码和耗时
 #[tauri::command]
 pub fn detect_legacy_config_migration() -> Result<Value, String> {
-    serde_json::to_value(crate::product_config::detect_legacy_config())
-        .map_err(|e| format!("serialize legacy migration detection failed: {e}"))
+    super::app_config::detect_legacy_config_migration()
 }
 
 #[tauri::command]
 pub fn apply_legacy_config_migration(action: String) -> Result<Value, String> {
-    let result = crate::product_config::apply_legacy_config_decision(
-        crate::product_config::LegacyConfigDecision { action },
-    )?;
-    serde_json::to_value(result)
-        .map_err(|e| format!("serialize legacy migration result failed: {e}"))
+    super::app_config::apply_legacy_config_migration(action)
 }
 
 #[tauri::command]
@@ -6197,13 +5895,12 @@ pub async fn test_proxy(url: Option<String>) -> Result<Value, String> {
 
 #[tauri::command]
 pub fn get_npm_registry() -> Result<String, String> {
-    Ok(get_configured_registry())
+    super::app_config::get_npm_registry()
 }
 
 #[tauri::command]
 pub fn set_npm_registry(registry: String) -> Result<(), String> {
-    let path = super::openclaw_dir().join("npm-registry.txt");
-    fs::write(&path, registry.trim()).map_err(|e| format!("保存失败: {e}"))
+    super::app_config::set_npm_registry(registry)
 }
 
 /// 检测 Git 是否已安装
@@ -6597,7 +6294,5 @@ pub fn configure_git_https() -> Result<String, String> {
 /// 刷新 enhanced_path 缓存，使新设置的 Node.js 路径立即生效
 #[tauri::command]
 pub fn invalidate_path_cache() -> Result<(), String> {
-    super::refresh_enhanced_path();
-    crate::commands::service::invalidate_cli_detection_cache();
-    Ok(())
+    super::app_config::invalidate_path_cache()
 }

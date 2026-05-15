@@ -5,8 +5,8 @@ mod tray;
 mod utils;
 
 use commands::{
-    agent, assistant, cli_conflict, config, device, diagnose, extensions, hermes, hermes_providers,
-    logs, memory, messaging, pairing, service, skills, update,
+    agent, assistant, cli_conflict, config, device, diagnose, extensions, gateway_runtime,
+    hermes, hermes_providers, logs, memory, messaging, pairing, service, skills, update,
 };
 
 pub fn run() {
@@ -93,16 +93,16 @@ pub fn run() {
             config::create_backup,
             config::restore_backup,
             config::delete_backup,
-            config::reload_gateway,
-            config::restart_gateway,
+            gateway_runtime::reload_gateway,
+            gateway_runtime::restart_gateway,
             config::test_model,
             config::test_model_verbose,
             config::list_remote_models,
             config::list_openclaw_versions,
             config::upgrade_openclaw,
             config::uninstall_openclaw,
-            config::install_gateway,
-            config::uninstall_gateway,
+            gateway_runtime::install_gateway,
+            gateway_runtime::uninstall_gateway,
             config::patch_model_vision,
             config::check_panel_update,
             config::get_openclaw_dir,
@@ -119,8 +119,8 @@ pub fn run() {
             config::configure_git_https,
             config::invalidate_path_cache,
             config::get_status_summary,
-            config::doctor_fix,
-            config::doctor_check,
+            gateway_runtime::doctor_fix,
+            gateway_runtime::doctor_check,
             config::relaunch_app,
             // 设备密钥 + Gateway 握手
             device::create_connect_frame,
