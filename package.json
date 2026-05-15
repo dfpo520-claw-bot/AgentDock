@@ -1,0 +1,44 @@
+{
+  "name": "agentdock",
+  "version": "0.15.3",
+  "private": true,
+  "description": "AgentDock - production desktop console for multi-engine AI agent operations",
+  "type": "module",
+  "author": "AgentDock Team",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/agentdock/agentdock",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentdock/agentdock"
+  },
+  "bugs": {
+    "url": "https://github.com/agentdock/agentdock/issues"
+  },
+  "keywords": [
+    "ai-agent",
+    "tauri",
+    "desktop-app",
+    "management-panel",
+    "agentdock"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "brand:assets": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-brand-assets.ps1",
+    "icon:regen": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-brand-assets.ps1 && tauri icon docs/agentdock-icon.png -o src-tauri/icons && node -e \"require('fs').copyFileSync('src-tauri/icons/icon.ico','public/favicon.ico')\"",
+    "serve": "node scripts/serve.js",
+    "version:sync": "node scripts/sync-version.js",
+    "version:set": "node scripts/sync-version.js"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/plugin-autostart": "^2.5.1",
+    "@tauri-apps/plugin-shell": "^2.2.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.5.0",
+    "vite": "^6.4.2"
+  }
+}

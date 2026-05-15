@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="agentdock-bg" x1="88" y1="72" x2="424" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#12223a"/>
+      <stop offset="1" stop-color="#3369ff"/>
+    </linearGradient>
+  </defs>
+  <rect x="61" y="61" width="390" height="390" rx="90" fill="url(#agentdock-bg)"/>
+  <path d="M173 337 L251 192 L330 337" fill="none" stroke="#f4f9ff" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M204 282 H312" stroke="#67b1ff" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="348" cy="144" r="42" fill="#27d788"/>
+</svg>
