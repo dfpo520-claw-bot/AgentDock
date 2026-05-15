@@ -100,6 +100,8 @@ test('gateway runtime commands move out of config.rs ownership', () => {
 
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
   const gatewayRuntimeRs = fs.readFileSync('src-tauri/src/commands/gateway_runtime.rs', 'utf8')
+  const agentRs = fs.readFileSync('src-tauri/src/commands/agent.rs', 'utf8')
+  const messagingRs = fs.readFileSync('src-tauri/src/commands/messaging.rs', 'utf8')
   const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
   const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
 
@@ -118,5 +120,234 @@ test('gateway runtime commands move out of config.rs ownership', () => {
     assert.doesNotMatch(configRs, new RegExp(`pub (async )?fn ${name}\\b`))
   }
 
-  assert.match(configRs, /gateway_runtime::do_reload_gateway/)
+  assert.doesNotMatch(configRs, /pub async fn do_reload_gateway\b/)
+  assert.doesNotMatch(agentRs, /super::config::do_reload_gateway/)
+  assert.doesNotMatch(messagingRs, /super::config::do_reload_gateway/)
+  assert.match(agentRs, /super::gateway_runtime::do_reload_gateway/)
+  assert.match(messagingRs, /super::gateway_runtime::do_reload_gateway/)
+})
+
+test('status summary command moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/status_summary.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const statusSummaryRs = fs.readFileSync('src-tauri/src/commands/status_summary.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod status_summary;/)
+  assert.match(statusSummaryRs, /pub async fn get_status_summary\b/)
+  assert.match(libRs, /status_summary::get_status_summary/)
+  assert.doesNotMatch(configRs, /pub async fn get_status_summary\b/)
+})
+
+test('standalone path helpers move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/standalone_paths.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const standalonePathsRs = fs.readFileSync('src-tauri/src/standalone_paths.rs', 'utf8')
+  const serviceRs = fs.readFileSync('src-tauri/src/commands/service.rs', 'utf8')
+  const cliConflictRs = fs.readFileSync('src-tauri/src/commands/cli_conflict.rs', 'utf8')
+  const utilsRs = fs.readFileSync('src-tauri/src/utils.rs', 'utf8')
+  const commandsModRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(libRs, /mod standalone_paths;/)
+  assert.match(standalonePathsRs, /pub\(crate\) fn all_standalone_dirs\b/)
+  assert.doesNotMatch(configRs, /pub\(crate\) fn all_standalone_dirs\b/)
+  assert.doesNotMatch(serviceRs, /commands::config::all_standalone_dirs/)
+  assert.doesNotMatch(cliConflictRs, /commands::config::all_standalone_dirs/)
+  assert.doesNotMatch(utilsRs, /commands::config::all_standalone_dirs/)
+  assert.doesNotMatch(commandsModRs, /config::all_standalone_dirs/)
+})
+
+test('runtime support helpers move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/runtime_support.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const gatewayRuntimeRs = fs.readFileSync('src-tauri/src/commands/gateway_runtime.rs', 'utf8')
+  const runtimeSupportRs = fs.readFileSync('src-tauri/src/runtime_support.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(libRs, /mod runtime_support;/)
+  assert.match(runtimeSupportRs, /pub\(crate\) struct GuardianPause/)
+  assert.match(runtimeSupportRs, /pub\(crate\) fn get_uid\b/)
+  assert.doesNotMatch(configRs, /pub\(crate\) struct GuardianPause/)
+  assert.doesNotMatch(configRs, /pub\(crate\) fn get_uid\b/)
+  assert.doesNotMatch(gatewayRuntimeRs, /super::config::GuardianPause/)
+  assert.doesNotMatch(gatewayRuntimeRs, /super::config::get_uid/)
+})
+
+test('openclaw cli path helpers move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/openclaw_cli_paths.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const utilsRs = fs.readFileSync('src-tauri/src/utils.rs', 'utf8')
+  const cliPathsRs = fs.readFileSync('src-tauri/src/openclaw_cli_paths.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(libRs, /mod openclaw_cli_paths;/)
+  assert.match(cliPathsRs, /pub\(crate\) fn is_rejected_cli_path\b/)
+  assert.match(cliPathsRs, /pub\(crate\) fn resolve_openclaw_cli_input_path\b/)
+  assert.match(cliPathsRs, /pub\(crate\) fn resolve_openclaw_cli_input\b/)
+  assert.doesNotMatch(configRs, /pub\(crate\) fn resolve_openclaw_cli_input_path\b/)
+  assert.doesNotMatch(configRs, /pub\(crate\) fn resolve_openclaw_cli_input\b/)
+  assert.doesNotMatch(utilsRs, /pub fn is_rejected_cli_path\b/)
+  assert.doesNotMatch(utilsRs, /commands::config::resolve_openclaw_cli_input_path/)
+})
+
+test('installation status command moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/installation_status.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const installationStatusRs = fs.readFileSync('src-tauri/src/commands/installation_status.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod installation_status;/)
+  assert.match(installationStatusRs, /pub fn check_installation\b/)
+  assert.match(libRs, /installation_status::check_installation/)
+  assert.doesNotMatch(configRs, /pub fn check_installation\b/)
+})
+
+test('node runtime commands move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/node_runtime.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const nodeRuntimeRs = fs.readFileSync('src-tauri/src/commands/node_runtime.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod node_runtime;/)
+  for (const name of [
+    'check_node',
+    'check_node_at_path',
+    'scan_node_paths',
+    'save_custom_node_path',
+  ]) {
+    assert.match(nodeRuntimeRs, new RegExp(`pub fn ${name}\\b`))
+    assert.match(libRs, new RegExp(`node_runtime::${name}`))
+    assert.doesNotMatch(configRs, new RegExp(`pub fn ${name}\\b`))
+  }
+})
+
+test('proxy diagnostics command moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/proxy_diagnostics.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const proxyDiagnosticsRs = fs.readFileSync('src-tauri/src/commands/proxy_diagnostics.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod proxy_diagnostics;/)
+  assert.match(proxyDiagnosticsRs, /pub async fn test_proxy\b/)
+  assert.match(libRs, /proxy_diagnostics::test_proxy/)
+  assert.doesNotMatch(configRs, /pub async fn test_proxy\b/)
+})
+
+test('openclaw installation scanning moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_installations.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const openclawInstallationsRs = fs.readFileSync('src-tauri/src/commands/openclaw_installations.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_installations;/)
+  for (const name of [
+    'scan_openclaw_paths',
+    'check_openclaw_at_path',
+  ]) {
+    assert.match(openclawInstallationsRs, new RegExp(`pub fn ${name}\\b`))
+    assert.match(libRs, new RegExp(`openclaw_installations::${name}`))
+    assert.doesNotMatch(libRs, new RegExp(`config::${name}`))
+    assert.doesNotMatch(configRs, new RegExp(`pub fn ${name}\\b`))
+  }
+
+  for (const name of [
+    'scan_cli_identity',
+    'scan_all_installations',
+    'read_version_from_installation',
+  ]) {
+    assert.match(openclawInstallationsRs, new RegExp(`\\bfn ${name}\\b`))
+    assert.doesNotMatch(configRs, new RegExp(`\\bfn ${name}\\b`))
+  }
+})
+
+test('openclaw version summary moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_version.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_version;/)
+  assert.match(openclawVersionRs, /pub async fn get_version_info\b/)
+  assert.match(openclawVersionRs, /pub\(crate\) fn detect_installed_source\b/)
+  assert.match(openclawVersionRs, /pub\(crate\) async fn get_local_version\b/)
+  assert.match(libRs, /openclaw_version::get_version_info/)
+  assert.doesNotMatch(libRs, /config::get_version_info/)
+
+  for (const name of [
+    'get_version_info',
+    'get_local_version',
+    'get_latest_version_for',
+    'detect_source_from_cmd_shim',
+    'detect_standalone_source_from_dir',
+    'detect_standalone_source_from_cli_path',
+    'detect_installed_source',
+  ]) {
+    assert.doesNotMatch(configRs, new RegExp(`\\b(?:pub(?:\\(crate\\))?\\s+)?(?:async\\s+)?fn ${name}\\b`))
+  }
+})
+
+test('git runtime commands move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/git_runtime.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const gitRuntimeRs = fs.readFileSync('src-tauri/src/commands/git_runtime.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(modRs, /pub mod git_runtime;/)
+  for (const name of [
+    'check_git',
+    'scan_git_paths',
+    'auto_install_git',
+    'configure_git_https',
+  ]) {
+    assert.match(gitRuntimeRs, new RegExp(`pub (?:async )?fn ${name}\\b`))
+    assert.match(libRs, new RegExp(`git_runtime::${name}`))
+    assert.doesNotMatch(configRs, new RegExp(`pub (?:async )?fn ${name}\\b`))
+  }
+
+  for (const name of [
+    'configured_git_path',
+    'find_git_path',
+  ]) {
+    assert.match(gitRuntimeRs, new RegExp(`\\b${name}\\b`))
+    assert.doesNotMatch(configRs, new RegExp(`\\b${name}\\b`))
+  }
+
+  for (const name of [
+    'git_executable',
+    'configure_git_https_rules',
+    'apply_git_install_env',
+    'check_git_impl',
+    'scan_git_paths_impl',
+    'auto_install_git_impl',
+    'configure_git_https_impl',
+  ]) {
+    assert.doesNotMatch(configRs, new RegExp(`\\b${name}\\b`))
+  }
+
+  for (const name of [
+    'ensure_https_rewrites',
+    'apply_install_env',
+    'https_rewrite_rule_count',
+  ]) {
+    assert.match(gitRuntimeRs, new RegExp(`\\b${name}\\b`))
+    assert.match(configRs, new RegExp(`git_runtime::${name}\\(`))
+  }
 })

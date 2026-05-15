@@ -617,7 +617,7 @@ pub async fn update_agent_config(
     super::config::save_openclaw_json(&root)?;
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
     Ok(json!({ "ok": true }))
 }
@@ -725,7 +725,7 @@ pub async fn add_agent(
     }
 
     // 触发 Gateway 重载使新 agent 生效
-    let _ = super::config::do_reload_gateway(&app).await;
+    let _ = super::gateway_runtime::do_reload_gateway(&app).await;
 
     list_agents().await
 }
@@ -811,7 +811,7 @@ pub async fn delete_agent(app: tauri::AppHandle, id: String) -> Result<String, S
     }
 
     // 3. 触发 Gateway 重载
-    let _ = super::config::do_reload_gateway(&app).await;
+    let _ = super::gateway_runtime::do_reload_gateway(&app).await;
 
     Ok("已删除".into())
 }
@@ -885,7 +885,7 @@ pub async fn update_agent_identity(
     }
 
     // 触发 Gateway 重载使配置生效
-    let _ = super::config::do_reload_gateway(&app).await;
+    let _ = super::gateway_runtime::do_reload_gateway(&app).await;
 
     Ok("已更新".into())
 }
@@ -970,7 +970,7 @@ pub async fn update_agent_model(
     super::config::save_openclaw_json(&config)?;
 
     // 触发 Gateway 重载使配置生效
-    let _ = super::config::do_reload_gateway(&app).await;
+    let _ = super::gateway_runtime::do_reload_gateway(&app).await;
 
     Ok("已更新".into())
 }

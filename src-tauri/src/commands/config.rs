@@ -9,48 +9,8 @@ use std::os::windows::process::CommandExt;
 use std::path::PathBuf;
 use std::process::Command;
 
-use crate::models::types::VersionInfo;
-
-pub(crate) struct GuardianPause {
-    reason: &'static str,
-}
-
-impl GuardianPause {
-    pub(crate) fn new(reason: &'static str) -> Self {
-        crate::commands::service::guardian_pause(reason);
-        Self { reason }
-    }
-}
-
-impl Drop for GuardianPause {
-    fn drop(&mut self) {
-        crate::commands::service::guardian_resume(self.reason);
-    }
-}
-
 /// 预设 npm 源列表
 const DEFAULT_REGISTRY: &str = "https://registry.npmmirror.com";
-/// (target_https_prefix, from_pattern) pairs for Git HTTPS rewriting.
-/// Each entry maps a non-HTTPS Git URL pattern to the corresponding HTTPS URL.
-const GIT_HTTPS_REWRITES: &[(&str, &str)] = &[
-    // github.com
-    ("https://github.com/", "ssh://git@github.com/"),
-    ("https://github.com/", "ssh://git@github.com"),
-    ("https://github.com/", "ssh://git@://github.com/"),
-    ("https://github.com/", "git@github.com:"),
-    ("https://github.com/", "git://github.com/"),
-    ("https://github.com/", "git+ssh://git@github.com/"),
-    // gitlab.com
-    ("https://gitlab.com/", "ssh://git@gitlab.com/"),
-    ("https://gitlab.com/", "git@gitlab.com:"),
-    ("https://gitlab.com/", "git://gitlab.com/"),
-    ("https://gitlab.com/", "git+ssh://git@gitlab.com/"),
-    // bitbucket.org
-    ("https://bitbucket.org/", "ssh://git@bitbucket.org/"),
-    ("https://bitbucket.org/", "git@bitbucket.org:"),
-    ("https://bitbucket.org/", "git://bitbucket.org/"),
-    ("https://bitbucket.org/", "git+ssh://git@bitbucket.org/"),
-];
 
 #[derive(Debug, Deserialize, Default)]
 struct VersionPolicySource {
@@ -96,7 +56,7 @@ struct VersionPolicy {
     panels: HashMap<String, VersionPolicyEntry>,
 }
 
-fn panel_version() -> &'static str {
+pub(crate) fn panel_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
@@ -149,7 +109,7 @@ fn base_version(v: &str) -> String {
 }
 
 /// 判断 CLI 报告的版本是否与推荐版匹配（考虑汉化版 -zh.x 后缀差异）
-fn versions_match(cli_version: &str, recommended: &str) -> bool {
+pub(crate) fn versions_match(cli_version: &str, recommended: &str) -> bool {
     if cli_version == recommended {
         return true;
     }
@@ -158,7 +118,7 @@ fn versions_match(cli_version: &str, recommended: &str) -> bool {
 }
 
 /// 判断推荐版是否真的比当前版本更新（忽略 -zh.x 后缀）
-fn recommended_is_newer(recommended: &str, current: &str) -> bool {
+pub(crate) fn recommended_is_newer(recommended: &str, current: &str) -> bool {
     let r = parse_version(&base_version(recommended));
     let c = parse_version(&base_version(current));
     r > c
@@ -238,30 +198,7 @@ pub(crate) fn standalone_install_dir() -> Option<PathBuf> {
     }
 }
 
-/// 所有可能的 standalone 安装位置（用于检测和卸载）
-pub(crate) fn all_standalone_dirs() -> Vec<PathBuf> {
-    let mut dirs = Vec::new();
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(la) = std::env::var("LOCALAPPDATA") {
-            dirs.push(PathBuf::from(&la).join("Programs").join("OpenClaw"));
-            dirs.push(PathBuf::from(&la).join("OpenClaw"));
-        }
-        if let Ok(pf) = std::env::var("ProgramFiles") {
-            dirs.push(PathBuf::from(pf).join("OpenClaw"));
-        }
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        if let Some(h) = dirs::home_dir() {
-            dirs.push(h.join(".openclaw-bin"));
-        }
-        dirs.push(PathBuf::from("/opt/openclaw"));
-    }
-    dirs
-}
-
-fn recommended_version_for(source: &str) -> Option<String> {
+pub(crate) fn recommended_version_for(source: &str) -> Option<String> {
     let policy = load_version_policy();
     let panel_entry = find_panel_policy_entry(&policy, panel_version());
     match source {
@@ -271,80 +208,6 @@ fn recommended_version_for(source: &str) -> Option<String> {
         _ => panel_entry
             .and_then(|entry| entry.chinese.recommended.clone())
             .or(policy.default.chinese.recommended),
-    }
-}
-
-/// 获取用户配置的 git 可执行文件路径，回退到 "git"
-fn configured_git_path() -> Option<String> {
-    super::read_panel_config_value()
-        .and_then(|v| v.get("gitPath")?.as_str().map(String::from))
-        .map(|custom| custom.trim().to_string())
-        .filter(|custom| !custom.is_empty())
-}
-
-/// 获取用户配置的 git 可执行文件路径，回退到 "git"
-pub fn git_executable() -> String {
-    configured_git_path().unwrap_or_else(|| "git".into())
-}
-
-fn configure_git_https_rules() -> usize {
-    let git = git_executable();
-    // Collect unique target prefixes to unset old rules
-    let targets: std::collections::HashSet<&str> =
-        GIT_HTTPS_REWRITES.iter().map(|(t, _)| *t).collect();
-    for target in &targets {
-        let key = format!("url.{target}.insteadOf");
-        let mut unset = Command::new(&git);
-        unset.args(["config", "--global", "--unset-all", &key]);
-        #[cfg(target_os = "windows")]
-        unset.creation_flags(0x08000000);
-        let _ = unset.output();
-    }
-
-    let mut success = 0;
-    for (target, from) in GIT_HTTPS_REWRITES {
-        let key = format!("url.{target}.insteadOf");
-        let mut cmd = Command::new(&git);
-        cmd.args(["config", "--global", "--add", &key, from]);
-        #[cfg(target_os = "windows")]
-        cmd.creation_flags(0x08000000);
-        if cmd.output().map(|o| o.status.success()).unwrap_or(false) {
-            success += 1;
-        }
-    }
-    success
-}
-
-fn apply_git_install_env(cmd: &mut Command) {
-    if let Some(custom_git) = configured_git_path() {
-        let git_path = PathBuf::from(&custom_git);
-        if let Some(parent) = git_path.parent() {
-            let mut paths: Vec<PathBuf> = std::env::var_os("PATH")
-                .map(|value| std::env::split_paths(&value).collect())
-                .unwrap_or_default();
-            if !paths.iter().any(|p| p == parent) {
-                paths.insert(0, parent.to_path_buf());
-            }
-            if let Ok(joined) = std::env::join_paths(paths) {
-                cmd.env("PATH", joined);
-            }
-        }
-        cmd.env("GIT", &custom_git);
-    }
-    crate::commands::apply_proxy_env(cmd);
-    cmd.env("GIT_TERMINAL_PROMPT", "0")
-        .env(
-            "GIT_SSH_COMMAND",
-            "ssh -o BatchMode=yes -o StrictHostKeyChecking=no -o IdentitiesOnly=yes",
-        )
-        .env("GIT_ALLOW_PROTOCOL", "https:http:file");
-    cmd.env("GIT_CONFIG_COUNT", GIT_HTTPS_REWRITES.len().to_string());
-    for (idx, (target, from)) in GIT_HTTPS_REWRITES.iter().enumerate() {
-        cmd.env(
-            format!("GIT_CONFIG_KEY_{idx}"),
-            format!("url.{target}.insteadOf"),
-        )
-        .env(format!("GIT_CONFIG_VALUE_{idx}"), *from);
     }
 }
 
@@ -358,7 +221,7 @@ fn nix_is_root() -> bool {
 }
 
 /// 读取用户配置的 npm registry，fallback 到淘宝镜像
-fn get_configured_registry() -> String {
+pub(crate) fn get_configured_registry() -> String {
     let path = super::openclaw_dir().join("npm-registry.txt");
     fs::read_to_string(&path)
         .ok()
@@ -369,7 +232,7 @@ fn get_configured_registry() -> String {
 
 /// 创建使用配置源的 npm Command（不带提权，用于 npm list 等只读操作）
 /// Windows 上 npm 是 npm.cmd，需要通过 cmd /c 调用，并隐藏窗口
-fn npm_command() -> Command {
+pub(crate) fn npm_command() -> Command {
     let registry = get_configured_registry();
     #[cfg(target_os = "windows")]
     {
@@ -554,7 +417,7 @@ fn pre_install_cleanup() {
         }
 
         // 同时杀死 standalone 目录下的 node.exe 进程（每个目录 10s 超时）
-        for sa_dir in all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             if sa_dir.exists() {
                 let dir_lower = sa_dir
                     .to_string_lossy()
@@ -589,7 +452,7 @@ fn pre_install_cleanup() {
     }
     #[cfg(target_os = "macos")]
     {
-        let uid = get_uid().unwrap_or(501);
+        let uid = crate::runtime_support::get_uid().unwrap_or(501);
         if let Ok(child) = Command::new("launchctl")
             .args(["bootout", &format!("gui/{uid}/ai.openclaw.gateway")])
             .stdout(std::process::Stdio::null())
@@ -796,11 +659,6 @@ pub fn load_openclaw_json() -> Result<Value, String> {
 /// 供其他模块复用：将 JSON Value 写回 openclaw.json（含备份和清理）
 pub fn save_openclaw_json(config: &Value) -> Result<(), String> {
     write_openclaw_config(config.clone())
-}
-
-/// 供其他模块复用：触发 Gateway 重载
-pub async fn do_reload_gateway(app: &tauri::AppHandle) -> Result<String, String> {
-    super::gateway_runtime::do_reload_gateway(app).await
 }
 
 #[tauri::command]
@@ -1890,927 +1748,10 @@ pub fn write_mcp_config(config: Value) -> Result<(), String> {
 /// 获取本地安装的 openclaw 版本号（异步版本）
 /// macOS: 优先从 npm 包的 package.json 读取（含完整后缀），fallback 到 CLI
 /// Windows/Linux: 优先读文件系统，fallback 到 CLI
-async fn get_local_version() -> Option<String> {
-    #[cfg(target_os = "macos")]
-    {
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let resolved = std::fs::canonicalize(&cli_path)
-                .ok()
-                .unwrap_or_else(|| PathBuf::from(&cli_path));
-            if let Some(ver) = read_version_from_installation(&resolved)
-                .or_else(|| read_version_from_installation(std::path::Path::new(&cli_path)))
-            {
-                return Some(ver);
-            }
-        }
-
-        for brew_prefix in &["/opt/homebrew/bin", "/usr/local/bin"] {
-            let openclaw_path = format!("{}/openclaw", brew_prefix);
-            if let Ok(target) = fs::read_link(&openclaw_path) {
-                let pkg_json = PathBuf::from(brew_prefix)
-                    .join(&target)
-                    .parent()
-                    .map(|p| p.join("package.json"));
-                if let Some(pkg_path) = pkg_json {
-                    if let Ok(content) = fs::read_to_string(&pkg_path) {
-                        if let Some(ver) = serde_json::from_str::<Value>(&content)
-                            .ok()
-                            .and_then(|v| v.get("version")?.as_str().map(String::from))
-                        {
-                            return Some(ver);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        // 优先从活跃 CLI 路径读取版本（与 macOS 逻辑一致）
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let cli_pb = PathBuf::from(&cli_path);
-            let resolved = std::fs::canonicalize(&cli_pb).unwrap_or_else(|_| cli_pb.clone());
-            if let Some(ver) = read_version_from_installation(&resolved)
-                .or_else(|| read_version_from_installation(&cli_pb))
-            {
-                return Some(ver);
-            }
-        }
-
-        for sa_dir in all_standalone_dirs() {
-            // 仅当 CLI 二进制实际存在时才读取版本，避免残留文件误判为已安装
-            if !sa_dir.join("openclaw.cmd").exists() {
-                continue;
-            }
-            let version_file = sa_dir.join("VERSION");
-            if let Ok(content) = fs::read_to_string(&version_file) {
-                for line in content.lines() {
-                    if let Some(ver) = line.strip_prefix("openclaw_version=") {
-                        let ver = ver.trim();
-                        if !ver.is_empty() {
-                            return Some(ver.to_string());
-                        }
-                    }
-                }
-            }
-            let sa_pkg = sa_dir
-                .join("node_modules")
-                .join("@qingchencloud")
-                .join("openclaw-zh")
-                .join("package.json");
-            if let Ok(content) = fs::read_to_string(&sa_pkg) {
-                if let Some(ver) = serde_json::from_str::<Value>(&content)
-                    .ok()
-                    .and_then(|v| v.get("version")?.as_str().map(String::from))
-                {
-                    return Some(ver);
-                }
-            }
-        }
-
-        if let Some(npm_bin) = npm_global_bin_dir() {
-            let shim_path = npm_bin.join("openclaw.cmd");
-            // 仅当 npm 全局 CLI shim 存在时才读取版本
-            if !shim_path.exists() {
-                // npm 全局无 CLI shim，跳过
-            } else {
-                // 读 .cmd 内容判断活跃包，而非依赖 classify_cli_source（路径无法区分）
-                let is_zh = detect_source_from_cmd_shim(&shim_path)
-                    .map(|s| s == "chinese")
-                    .unwrap_or(false);
-                let pkgs: &[&str] = if is_zh {
-                    &["@qingchencloud/openclaw-zh", "openclaw"]
-                } else {
-                    &["openclaw", "@qingchencloud/openclaw-zh"]
-                };
-                for pkg in pkgs {
-                    let pkg_json = npm_bin.join("node_modules").join(pkg).join("package.json");
-                    if let Ok(content) = fs::read_to_string(&pkg_json) {
-                        if let Some(ver) = serde_json::from_str::<Value>(&content)
-                            .ok()
-                            .and_then(|v| v.get("version")?.as_str().map(String::from))
-                        {
-                            return Some(ver);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Linux: 参照 macOS/Windows 实现，完整检测链
-    #[cfg(target_os = "linux")]
-    {
-        // 1. 活跃 CLI 优先
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let cli_pb = PathBuf::from(&cli_path);
-            let resolved = std::fs::canonicalize(&cli_pb).unwrap_or_else(|_| cli_pb.clone());
-            if let Some(ver) = read_version_from_installation(&resolved)
-                .or_else(|| read_version_from_installation(&cli_pb))
-            {
-                return Some(ver);
-            }
-        }
-        // 2. standalone 目录
-        for sa_dir in all_standalone_dirs() {
-            if sa_dir.join("openclaw").exists() || sa_dir.join("VERSION").exists() {
-                if let Some(ver) = read_version_from_installation(&sa_dir.join("openclaw")) {
-                    return Some(ver);
-                }
-            }
-        }
-        // 3. symlink -> package.json
-        if let Ok(target) = fs::read_link("/usr/local/bin/openclaw") {
-            let pkg_json = PathBuf::from("/usr/local/bin")
-                .join(&target)
-                .parent()
-                .map(|p| p.join("package.json"));
-            if let Some(ref pkg_path) = pkg_json {
-                if let Ok(content) = fs::read_to_string(pkg_path) {
-                    if let Some(ver) = serde_json::from_str::<Value>(&content)
-                        .ok()
-                        .and_then(|v| v.get("version")?.as_str().map(String::from))
-                    {
-                        return Some(ver);
-                    }
-                }
-            }
-        }
-    }
-
-    let mut status_cmd = crate::utils::openclaw_command_async();
-    status_cmd.args(["status", "--json"]);
-    if let Ok(Ok(output)) =
-        tokio::time::timeout(std::time::Duration::from_secs(2), status_cmd.output()).await
-    {
-        if output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            if let Some(ver) = crate::commands::skills::extract_json_pub(&stdout)
-                .and_then(|v| v.get("runtimeVersion")?.as_str().map(String::from))
-            {
-                return Some(ver);
-            }
-        }
-    }
-
-    // 所有平台通用 fallback: CLI 输出
-    // Windows: 先确认 openclaw 不是第三方程序（如 CherryStudio）
-    #[cfg(target_os = "windows")]
-    {
-        use std::os::windows::process::CommandExt;
-        if let Ok(o) = std::process::Command::new("where")
-            .arg("openclaw")
-            .creation_flags(0x08000000)
-            .output()
-        {
-            let stdout = String::from_utf8_lossy(&o.stdout).to_lowercase();
-            let all_third_party = stdout
-                .lines()
-                .filter(|l| !l.trim().is_empty())
-                .all(|l| l.contains(".cherrystudio") || l.contains("cherry-studio"));
-            if all_third_party {
-                return None;
-            }
-        }
-    }
-
-    use crate::utils::openclaw_command_async;
-    let output = openclaw_command_async()
-        .arg("--version")
-        .output()
-        .await
-        .ok()?;
-    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    // 输出格式: "OpenClaw 2026.3.24 (hash)" → 取第一个数字开头的词（版本号）
-    raw.split_whitespace()
-        .find(|w| w.chars().next().is_some_and(|c| c.is_ascii_digit()))
-        .map(String::from)
-}
-
-/// 从 npm registry 获取最新版本号，超时 5 秒
-async fn get_latest_version_for(source: &str) -> Option<String> {
-    let client =
-        crate::commands::build_http_client(std::time::Duration::from_secs(2), None).ok()?;
-    let pkg = npm_package_name(source)
-        .replace('/', "%2F")
-        .replace('@', "%40");
-    let registry = get_configured_registry();
-    let url = format!("{registry}/{pkg}/latest");
-    let resp = client.get(&url).send().await.ok()?;
-    let json: Value = resp.json().await.ok()?;
-    json.get("version")
-        .and_then(|v| v.as_str())
-        .map(String::from)
-}
-
-/// 从 Windows .cmd shim 文件内容判断实际关联的 npm 包来源
-/// npm 生成的 shim 末尾引用实际 JS 入口，据此区分官方版与汉化版
-#[cfg(target_os = "windows")]
-fn detect_source_from_cmd_shim(cmd_path: &std::path::Path) -> Option<String> {
-    let content = std::fs::read_to_string(cmd_path).ok()?;
-    let lower = content.to_lowercase();
-    // 汉化版标记：@qingchencloud 或 openclaw-zh
-    if lower.contains("openclaw-zh") || lower.contains("@qingchencloud") {
-        return Some("chinese".into());
-    }
-    // 确认是 npm shim（含 node_modules 引用）→ 官方版
-    if lower.contains("node_modules") {
-        return Some("official".into());
-    }
-    // standalone 的 .cmd 可能不含 node_modules（自定义脚本），由 classify 处理
-    None
-}
-
-fn detect_standalone_source_from_dir(dir: &std::path::Path) -> Option<String> {
-    let version_file = dir.join("VERSION");
-    if let Ok(content) = std::fs::read_to_string(&version_file) {
-        let mut edition = String::new();
-        let mut package = String::new();
-        for line in content.lines() {
-            if let Some(value) = line.strip_prefix("edition=") {
-                edition = value.trim().to_ascii_lowercase();
-            } else if let Some(value) = line.strip_prefix("package=") {
-                package = value.trim().to_ascii_lowercase();
-            }
-        }
-        if package.contains("openclaw-zh") || package.contains("@qingchencloud") {
-            return Some("chinese".into());
-        }
-        if package == "openclaw" {
-            return Some("official".into());
-        }
-        if matches!(edition.as_str(), "zh" | "zh-cn" | "chinese" | "cn") {
-            return Some("chinese".into());
-        }
-        if matches!(edition.as_str(), "en" | "official") {
-            return Some("official".into());
-        }
-    }
-    if dir
-        .join("node_modules")
-        .join("@qingchencloud")
-        .join("openclaw-zh")
-        .join("package.json")
-        .exists()
-    {
-        return Some("chinese".into());
-    }
-    if dir
-        .join("node_modules")
-        .join("openclaw")
-        .join("package.json")
-        .exists()
-    {
-        return Some("official".into());
-    }
-    None
-}
-
-fn detect_standalone_source_from_cli_path(cli_path: &std::path::Path) -> Option<String> {
-    cli_path
-        .parent()
-        .and_then(detect_standalone_source_from_dir)
-}
-
-/// 检测当前安装的是官方版还是汉化版
-/// macOS: 优先检查 symlink 指向的实际路径
-/// Windows: 读取 .cmd shim 内容判断实际关联的包
-/// Linux: 直接用 npm list
-fn detect_installed_source() -> String {
-    // macOS: 检查 openclaw bin 的 symlink 指向
-    #[cfg(target_os = "macos")]
-    {
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let resolved = std::fs::canonicalize(&cli_path)
-                .ok()
-                .unwrap_or_else(|| PathBuf::from(&cli_path));
-            let source = crate::utils::classify_cli_source(&resolved.to_string_lossy());
-            if source == "standalone" {
-                return detect_standalone_source_from_cli_path(&resolved)
-                    .unwrap_or_else(|| "chinese".into());
-            }
-            if source == "npm-zh" {
-                return "chinese".into();
-            }
-            if source == "npm-official" || source == "npm-global" {
-                return "official".into();
-            }
-        }
-        // 兼容 ARM (/opt/homebrew) 和 Intel (/usr/local) 两种 Homebrew 路径
-        for brew_prefix in &["/opt/homebrew/bin/openclaw", "/usr/local/bin/openclaw"] {
-            if let Ok(target) = std::fs::read_link(brew_prefix) {
-                if target.to_string_lossy().contains("openclaw-zh") {
-                    return "chinese".into();
-                }
-                return "official".into();
-            }
-        }
-        for sa_dir in all_standalone_dirs() {
-            if sa_dir.join("openclaw").exists() || sa_dir.join("VERSION").exists() {
-                return detect_standalone_source_from_dir(&sa_dir)
-                    .unwrap_or_else(|| "chinese".into());
-            }
-        }
-        "unknown".into()
-    }
-    // Windows: 通过活跃 CLI 的 .cmd shim 内容判断来源
-    // npm 生成的 .cmd shim 最后一行包含实际 JS 入口路径，例如:
-    //   "%dp0%\node_modules\openclaw\bin\openclaw.js"           → 官方版
-    //   "%dp0%\node_modules\@qingchencloud\openclaw-zh\..."     → 汉化版
-    // 读取内容即可一锤定音，不依赖文件系统扫描（避免残留目录误判）
-    #[cfg(target_os = "windows")]
-    {
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let source = crate::utils::classify_cli_source(&cli_path);
-            // 路径本身能确定的情况（standalone 目录、npm-zh 路径含 openclaw-zh）
-            if source == "standalone" {
-                return detect_standalone_source_from_cli_path(std::path::Path::new(&cli_path))
-                    .unwrap_or_else(|| "chinese".into());
-            }
-            if source == "npm-zh" {
-                return "chinese".into();
-            }
-            // npm-official / npm-global / unknown: 路径不含包名，读 .cmd 内容判断
-            if let Some(shim_source) = detect_source_from_cmd_shim(std::path::Path::new(&cli_path))
-            {
-                return shim_source;
-            }
-        }
-        // 无活跃 CLI 时的兜底：仅检查 npm 全局目录中实际存在的 shim
-        if let Some(npm_bin) = npm_global_bin_dir() {
-            let shim = npm_bin.join("openclaw.cmd");
-            if let Some(s) = detect_source_from_cmd_shim(&shim) {
-                return s;
-            }
-        }
-        for sa_dir in all_standalone_dirs() {
-            if sa_dir.join("openclaw.cmd").exists() || sa_dir.join("VERSION").exists() {
-                return detect_standalone_source_from_dir(&sa_dir)
-                    .unwrap_or_else(|| "chinese".into());
-            }
-        }
-        // 确实无法判断
-        "unknown".into()
-    }
-    // Linux: 参照 macOS 实现，完整检测链
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        // 1. 活跃 CLI 路径分类（与 macOS 一致）
-        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
-            let resolved = std::fs::canonicalize(&cli_path)
-                .ok()
-                .unwrap_or_else(|| PathBuf::from(&cli_path));
-            let source = crate::utils::classify_cli_source(&resolved.to_string_lossy());
-            if source == "standalone" {
-                return detect_standalone_source_from_cli_path(&resolved)
-                    .unwrap_or_else(|| "chinese".into());
-            }
-            if source == "npm-zh" {
-                return "chinese".into();
-            }
-            if source == "npm-official" || source == "npm-global" {
-                return "official".into();
-            }
-        }
-        // 2. 检查 symlink 指向（/usr/local/bin/openclaw, ~/bin/openclaw）
-        let home = dirs::home_dir().unwrap_or_default();
-        for link in &[
-            PathBuf::from("/usr/local/bin/openclaw"),
-            home.join("bin").join("openclaw"),
-        ] {
-            if let Ok(target) = std::fs::read_link(link) {
-                if target.to_string_lossy().contains("openclaw-zh") {
-                    return "chinese".into();
-                }
-                return "official".into();
-            }
-        }
-        // 3. standalone 目录检测
-        for sa_dir in all_standalone_dirs() {
-            if sa_dir.join("openclaw").exists() || sa_dir.join("VERSION").exists() {
-                return detect_standalone_source_from_dir(&sa_dir)
-                    .unwrap_or_else(|| "chinese".into());
-            }
-        }
-        // 4. npm list 兜底
-        if let Ok(o) = npm_command()
-            .args(["list", "-g", "@qingchencloud/openclaw-zh", "--depth=0"])
-            .output()
-        {
-            if String::from_utf8_lossy(&o.stdout).contains("openclaw-zh@") {
-                return "chinese".into();
-            }
-        }
-        "unknown".into()
-    }
-}
-
-#[tauri::command]
-pub async fn get_version_info() -> Result<VersionInfo, String> {
-    let current = get_local_version().await;
-    let mut source = detect_installed_source();
-    // 兜底：版本号含 -zh 则一定是汉化版
-    if let Some(ref ver) = current {
-        if ver.contains("-zh") && source != "chinese" {
-            source = "chinese".to_string();
-        }
-    }
-    // unknown 来源不查询 latest/recommended（无法确定对应哪个 npm 包）
-    let latest = if source == "unknown" {
-        None
-    } else {
-        get_latest_version_for(&source).await
-    };
-    let recommended = if source == "unknown" {
-        None
-    } else {
-        recommended_version_for(&source)
-    };
-    let update_available = match (&current, &recommended) {
-        (Some(c), Some(r)) => recommended_is_newer(r, c),
-        (None, Some(_)) => true,
-        _ => false,
-    };
-    let latest_update_available = match (&current, &latest) {
-        (Some(c), Some(l)) => recommended_is_newer(l, c),
-        (None, Some(_)) => true,
-        _ => false,
-    };
-    let is_recommended = match (&current, &recommended) {
-        (Some(c), Some(r)) => versions_match(c, r),
-        _ => false,
-    };
-    let ahead_of_recommended = match (&current, &recommended) {
-        (Some(c), Some(r)) => recommended_is_newer(c, r),
-        _ => false,
-    };
-
-    // 解析当前实际使用的 CLI 路径
-    let cli_path = crate::utils::resolve_openclaw_cli_path();
-    let cli_source = cli_path
-        .as_ref()
-        .map(|p| crate::utils::classify_cli_source(p));
-
-    // 扫描所有可检测到的 OpenClaw 安装
-    let all_installations = scan_all_installations(&cli_path);
-
-    Ok(VersionInfo {
-        current,
-        latest,
-        recommended,
-        update_available,
-        latest_update_available,
-        is_recommended,
-        ahead_of_recommended,
-        panel_version: panel_version().to_string(),
-        source,
-        cli_path,
-        cli_source,
-        all_installations: Some(all_installations),
-    })
-}
-
-fn scan_cli_identity(cli_path: &std::path::Path) -> String {
-    #[cfg(target_os = "windows")]
-    let identity_path = {
-        let mut identity_path = cli_path.to_path_buf();
-        let file_name = cli_path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .unwrap_or_default()
-            .to_ascii_lowercase();
-        if matches!(
-            file_name.as_str(),
-            "openclaw" | "openclaw.exe" | "openclaw.ps1"
-        ) {
-            let cmd_path = cli_path.with_file_name("openclaw.cmd");
-            if cmd_path.exists() {
-                identity_path = cmd_path;
-            }
-        }
-        identity_path
-    };
-
-    #[cfg(not(target_os = "windows"))]
-    let identity_path = cli_path.to_path_buf();
-
-    identity_path
-        .canonicalize()
-        .unwrap_or(identity_path)
-        .to_string_lossy()
-        .to_lowercase()
-}
-
-/// 扫描系统中所有可检测到的 OpenClaw 安装
-fn scan_all_installations(
-    active_path: &Option<String>,
-) -> Vec<crate::models::types::OpenClawInstallation> {
-    use crate::models::types::OpenClawInstallation;
-    let mut results: Vec<OpenClawInstallation> = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-    let active_identity = active_path
-        .as_ref()
-        .map(|path| scan_cli_identity(std::path::Path::new(path)));
-
-    let mut try_add = |path: std::path::PathBuf| {
-        if !path.exists() {
-            return;
-        }
-        if crate::utils::is_rejected_cli_path(&path.to_string_lossy()) {
-            return;
-        }
-        let identity = scan_cli_identity(&path);
-        if seen.contains(&identity) {
-            return;
-        }
-        seen.insert(identity.clone());
-        let path_str = path.to_string_lossy().to_string();
-        let source = crate::utils::classify_cli_source(&path_str);
-        let version = read_version_from_installation(&path);
-        let is_active = active_identity
-            .as_ref()
-            .map(|active| active == &identity)
-            .unwrap_or(false);
-        results.push(OpenClawInstallation {
-            path: path_str,
-            source,
-            version,
-            active: is_active,
-        });
-    };
-
-    // standalone 安装目录
-    for sa_dir in all_standalone_dirs() {
-        #[cfg(target_os = "windows")]
-        {
-            try_add(sa_dir.join("openclaw.cmd"));
-            try_add(sa_dir.join("openclaw.exe"));
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            try_add(sa_dir.join("openclaw"));
-        }
-    }
-
-    for configured in super::openclaw_search_paths() {
-        if let Some(resolved) = resolve_openclaw_cli_input_path(&configured) {
-            try_add(resolved);
-        }
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(appdata) = std::env::var("APPDATA") {
-            try_add(
-                std::path::PathBuf::from(&appdata)
-                    .join("npm")
-                    .join("openclaw.cmd"),
-            );
-            try_add(
-                std::path::PathBuf::from(&appdata)
-                    .join("npm")
-                    .join("openclaw"),
-            );
-        }
-        if let Some(prefix) = super::windows_npm_global_prefix() {
-            let prefix_path = std::path::PathBuf::from(prefix);
-            try_add(prefix_path.join("openclaw.cmd"));
-            try_add(prefix_path.join("openclaw.exe"));
-            try_add(prefix_path.join("openclaw"));
-        }
-        if let Ok(localappdata) = std::env::var("LOCALAPPDATA") {
-            try_add(
-                std::path::PathBuf::from(&localappdata)
-                    .join("Programs")
-                    .join("nodejs")
-                    .join("openclaw.cmd"),
-            );
-        }
-        if let Ok(program_files) = std::env::var("ProgramFiles") {
-            try_add(
-                std::path::PathBuf::from(&program_files)
-                    .join("nodejs")
-                    .join("openclaw.cmd"),
-            );
-            try_add(
-                std::path::PathBuf::from(&program_files)
-                    .join("OpenClaw")
-                    .join("openclaw.cmd"),
-            );
-        }
-        if let Ok(program_files_x86) = std::env::var("ProgramFiles(x86)") {
-            try_add(
-                std::path::PathBuf::from(&program_files_x86)
-                    .join("nodejs")
-                    .join("openclaw.cmd"),
-            );
-        }
-        if let Ok(profile) = std::env::var("USERPROFILE") {
-            try_add(
-                std::path::PathBuf::from(&profile)
-                    .join(".openclaw-bin")
-                    .join("openclaw.cmd"),
-            );
-        }
-        for drive in ["C", "D", "E", "F", "G"] {
-            try_add(std::path::PathBuf::from(format!(
-                r"{}:\OpenClaw\openclaw.cmd",
-                drive
-            )));
-            try_add(std::path::PathBuf::from(format!(
-                r"{}:\AI\OpenClaw\openclaw.cmd",
-                drive
-            )));
-        }
-        let mut where_cmd = Command::new("where");
-        where_cmd.arg("openclaw");
-        where_cmd.creation_flags(0x08000000);
-        if let Ok(output) = where_cmd.output() {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let trimmed = line.trim();
-                    if trimmed.is_empty() {
-                        continue;
-                    }
-                    try_add(std::path::PathBuf::from(trimmed));
-                }
-            }
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        if let Some(home) = dirs::home_dir() {
-            try_add(home.join(".npm-global").join("bin").join("openclaw"));
-            try_add(home.join(".local").join("bin").join("openclaw"));
-            try_add(
-                home.join(".nvm")
-                    .join("current")
-                    .join("bin")
-                    .join("openclaw"),
-            );
-            try_add(home.join(".volta").join("bin").join("openclaw"));
-            try_add(
-                home.join(".fnm")
-                    .join("current")
-                    .join("bin")
-                    .join("openclaw"),
-            );
-            try_add(home.join("bin").join("openclaw"));
-        }
-        try_add(std::path::PathBuf::from("/opt/openclaw/openclaw"));
-        try_add(std::path::PathBuf::from("/opt/homebrew/bin/openclaw"));
-        try_add(std::path::PathBuf::from("/usr/local/bin/openclaw"));
-        try_add(std::path::PathBuf::from("/usr/bin/openclaw"));
-        try_add(std::path::PathBuf::from("/snap/bin/openclaw"));
-        if let Ok(output) = Command::new("which").args(["-a", "openclaw"]).output() {
-            if output.status.success() {
-                for line in String::from_utf8_lossy(&output.stdout).lines() {
-                    let trimmed = line.trim();
-                    if trimmed.is_empty() {
-                        continue;
-                    }
-                    try_add(std::path::PathBuf::from(trimmed));
-                }
-            }
-        }
-    }
-
-    let enhanced = super::enhanced_path();
-    #[cfg(target_os = "windows")]
-    let sep = ';';
-    #[cfg(not(target_os = "windows"))]
-    let sep = ':';
-    for dir in enhanced.split(sep) {
-        let dir = dir.trim();
-        if dir.is_empty() {
-            continue;
-        }
-        let base = std::path::Path::new(dir);
-        #[cfg(target_os = "windows")]
-        {
-            try_add(base.join("openclaw.cmd"));
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            try_add(base.join("openclaw"));
-        }
-    }
-
-    results.sort_by(|a, b| {
-        b.active
-            .cmp(&a.active)
-            .then_with(|| a.source.cmp(&b.source))
-            .then_with(|| a.path.cmp(&b.path))
-    });
-
-    results
-}
-
-pub(crate) fn resolve_openclaw_cli_input_path(
-    cli_path: &std::path::Path,
-) -> Option<std::path::PathBuf> {
-    if cli_path.as_os_str().is_empty() {
-        return None;
-    }
-    let input = cli_path.to_path_buf();
-    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
-
-    if input.is_dir() {
-        #[cfg(target_os = "windows")]
-        {
-            candidates.push(input.join("openclaw.cmd"));
-            candidates.push(input.join("openclaw.exe"));
-            candidates.push(input.join("openclaw"));
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            candidates.push(input.join("openclaw"));
-        }
-    } else {
-        candidates.push(input);
-    }
-
-    candidates.into_iter().find(|candidate| {
-        candidate.exists() && !crate::utils::is_rejected_cli_path(&candidate.to_string_lossy())
-    })
-}
-
-pub(crate) fn resolve_openclaw_cli_input(cli_path: &str) -> Option<std::path::PathBuf> {
-    let raw = cli_path.trim();
-    if raw.is_empty() {
-        return None;
-    }
-    resolve_openclaw_cli_input_path(std::path::Path::new(raw))
-}
-
-#[tauri::command]
-pub fn scan_openclaw_paths() -> Result<Vec<crate::models::types::OpenClawInstallation>, String> {
-    super::refresh_enhanced_path();
-    crate::commands::service::invalidate_cli_detection_cache();
-    let active_path = crate::utils::resolve_openclaw_cli_path();
-    Ok(scan_all_installations(&active_path))
-}
-
-#[tauri::command]
-pub fn check_openclaw_at_path(cli_path: String) -> Result<Value, String> {
-    let mut result = serde_json::Map::new();
-    if let Some(resolved) = resolve_openclaw_cli_input(&cli_path) {
-        let path_str = resolved.to_string_lossy().to_string();
-        result.insert("installed".into(), Value::Bool(true));
-        result.insert("path".into(), Value::String(path_str.clone()));
-        result.insert(
-            "source".into(),
-            Value::String(crate::utils::classify_cli_source(&path_str)),
-        );
-        if let Some(version) = read_version_from_installation(&resolved) {
-            result.insert("version".into(), Value::String(version));
-        } else {
-            result.insert("version".into(), Value::Null);
-        }
-    } else {
-        result.insert("installed".into(), Value::Bool(false));
-        result.insert("path".into(), Value::Null);
-        result.insert("source".into(), Value::Null);
-        result.insert("version".into(), Value::Null);
-    }
-    Ok(Value::Object(result))
-}
-
-fn find_git_path() -> Option<String> {
-    // #Compat-4: 必须把子进程 PATH 替换成 enhanced_path，否则继承的是 Tauri 启动时快照，
-    // 用户新装的 git 不在快照里，`where git` / `which git` 就找不到。对齐 find_node_path 的做法。
-    let enhanced = super::enhanced_path();
-    #[cfg(target_os = "windows")]
-    {
-        let mut cmd = Command::new("where");
-        cmd.arg("git");
-        cmd.creation_flags(0x08000000);
-        cmd.env("PATH", &enhanced);
-        if let Ok(output) = cmd.output() {
-            if output.status.success() {
-                if let Some(first_line) = String::from_utf8_lossy(&output.stdout).lines().next() {
-                    let path = first_line.trim().to_string();
-                    if !path.is_empty() && std::path::Path::new(&path).exists() {
-                        return Some(path);
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut cmd = Command::new("which");
-        cmd.arg("git");
-        cmd.env("PATH", &enhanced);
-        if let Ok(output) = cmd.output() {
-            if output.status.success() {
-                let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                if !path.is_empty() && std::path::Path::new(&path).exists() {
-                    return Some(path);
-                }
-            }
-        }
-    }
-
-    None
-}
-
-/// 从安装路径附近读取版本信息
-fn read_version_from_installation(cli_path: &std::path::Path) -> Option<String> {
-    // 尝试从同目录的 VERSION 文件读取
-    if let Some(dir) = cli_path.parent() {
-        let version_file = dir.join("VERSION");
-        if let Ok(content) = std::fs::read_to_string(&version_file) {
-            for line in content.lines() {
-                if let Some(ver) = line.strip_prefix("openclaw_version=") {
-                    let ver = ver.trim();
-                    if !ver.is_empty() {
-                        return Some(ver.to_string());
-                    }
-                }
-            }
-        }
-        // CLI 本体位于包目录中时（如 npm 全局安装：nvm、Homebrew 等），
-        // 直接读取同目录的 package.json（即该包自身的版本文件）
-        let own_pkg = dir.join("package.json");
-        if let Ok(content) = std::fs::read_to_string(&own_pkg) {
-            if let Some(ver) = serde_json::from_str::<serde_json::Value>(&content)
-                .ok()
-                .and_then(|v| v.get("version")?.as_str().map(String::from))
-            {
-                return Some(ver);
-            }
-        }
-        // 根据 CLI 路径判断来源，决定 package.json 检查顺序
-        // 避免残留的另一来源包被优先读取
-        let cli_source = crate::utils::classify_cli_source(&cli_path.to_string_lossy());
-        let pkg_names: &[&str] = if cli_source == "npm-zh" || cli_source == "standalone" {
-            &["@qingchencloud/openclaw-zh", "openclaw"]
-        } else {
-            &["openclaw", "@qingchencloud/openclaw-zh"]
-        };
-        // 尝试从 package.json 读取
-        for pkg_name in pkg_names {
-            let pkg_json = dir.join("node_modules").join(pkg_name).join("package.json");
-            if let Ok(content) = std::fs::read_to_string(&pkg_json) {
-                if let Some(ver) = serde_json::from_str::<serde_json::Value>(&content)
-                    .ok()
-                    .and_then(|v| v.get("version")?.as_str().map(String::from))
-                {
-                    return Some(ver);
-                }
-            }
-        }
-        // npm shim 情况：向上查找 node_modules
-        if let Some(parent) = dir.parent() {
-            for pkg_name in pkg_names {
-                let pkg_json = parent
-                    .join("node_modules")
-                    .join(pkg_name)
-                    .join("package.json");
-                if let Ok(content) = std::fs::read_to_string(&pkg_json) {
-                    if let Some(ver) = serde_json::from_str::<serde_json::Value>(&content)
-                        .ok()
-                        .and_then(|v| v.get("version")?.as_str().map(String::from))
-                    {
-                        return Some(ver);
-                    }
-                }
-            }
-        }
-    }
-    None
-}
-
 /// 获取 OpenClaw 运行时状态摘要（openclaw status --json）
 /// 包含 runtimeVersion、会话列表（含 token 用量、fastMode 等标签）
-#[tauri::command]
-pub async fn get_status_summary() -> Result<Value, String> {
-    let output = crate::utils::openclaw_command_async()
-        .args(["status", "--json"])
-        .output()
-        .await;
-
-    match output {
-        Ok(o) if o.status.success() => {
-            let stdout = String::from_utf8_lossy(&o.stdout);
-            // CLI 输出可能含非 JSON 行，复用 skills 模块的 extract_json
-            crate::commands::skills::extract_json_pub(&stdout)
-                .ok_or_else(|| "解析失败: 输出中未找到有效 JSON".to_string())
-        }
-        Ok(o) => {
-            let stderr = String::from_utf8_lossy(&o.stderr);
-            Err(format!("openclaw status 失败: {}", stderr.trim()))
-        }
-        Err(e) => Err(format!("执行 openclaw 失败: {e}")),
-    }
-}
-
 /// npm 包名映射
-fn npm_package_name(source: &str) -> &'static str {
+pub(crate) fn npm_package_name(source: &str) -> &'static str {
     match source {
         "official" => "openclaw",
         _ => "@qingchencloud/openclaw-zh",
@@ -2969,7 +1910,7 @@ fn npm_global_modules_dir() -> Option<PathBuf> {
 
 /// npm 全局 bin 目录
 #[allow(dead_code)]
-fn npm_global_bin_dir() -> Option<PathBuf> {
+pub(crate) fn npm_global_bin_dir() -> Option<PathBuf> {
     #[cfg(target_os = "windows")]
     {
         super::windows_npm_global_prefix()
@@ -3475,7 +2416,7 @@ async fn try_r2_install(
         let _ = app.emit("upgrade-log", "通用 tarball 模式，执行 npm install...");
         let mut install_cmd = npm_command_elevated();
         install_cmd.args(["install", "-g", &archive_path.to_string_lossy(), "--force"]);
-        apply_git_install_env(&mut install_cmd);
+        super::git_runtime::apply_install_env(&mut install_cmd);
         let install_output = install_cmd
             .output()
             .map_err(|e| format!("npm install 执行失败: {e}"))?;
@@ -3608,9 +2549,9 @@ async fn upgrade_openclaw_inner(
     use std::io::{BufRead, BufReader};
     use std::process::Stdio;
     use tauri::Emitter;
-    let _guardian_pause = GuardianPause::new("upgrade");
+    let _guardian_pause = crate::runtime_support::GuardianPause::new("upgrade");
 
-    let current_source = detect_installed_source();
+    let current_source = super::openclaw_version::detect_installed_source();
     let pkg_name = npm_package_name(&source);
     let requested_version = version.clone();
     let recommended_version = recommended_version_for(&source);
@@ -3714,13 +2655,13 @@ async fn upgrade_openclaw_inner(
             let _ = app.emit("upgrade-log", "未找到绑定稳定版，将回退到 latest");
         }
     }
-    let configured_rules = configure_git_https_rules();
+    let configured_rules = super::git_runtime::ensure_https_rewrites();
     let _ = app.emit(
         "upgrade-log",
         format!(
             "Git HTTPS 规则已就绪 ({}/{})",
             configured_rules,
-            GIT_HTTPS_REWRITES.len()
+            super::git_runtime::https_rewrite_rule_count()
         ),
     );
 
@@ -3782,7 +2723,7 @@ async fn upgrade_openclaw_inner(
         registry,
         "--verbose",
     ]);
-    apply_git_install_env(&mut install_cmd);
+    super::git_runtime::apply_install_env(&mut install_cmd);
     let mut child = install_cmd
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -3846,7 +2787,7 @@ async fn upgrade_openclaw_inner(
                 fallback,
                 "--verbose",
             ]);
-            apply_git_install_env(&mut install_cmd2);
+            super::git_runtime::apply_install_env(&mut install_cmd2);
             let mut child2 = install_cmd2
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
@@ -3952,7 +2893,7 @@ async fn upgrade_openclaw_inner(
 
         // 清理 standalone 安装目录（不论从 standalone 切走还是切到 standalone，
         // npm 路径已经安装了新 CLI，standalone 残留会干扰源检测）
-        for sa_dir in all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             if sa_dir.exists() {
                 let _ = app.emit(
                     "upgrade-log",
@@ -4024,7 +2965,7 @@ async fn upgrade_openclaw_inner(
         // 先停掉旧的
         #[cfg(target_os = "macos")]
         {
-            let uid = get_uid().unwrap_or(501);
+            let uid = crate::runtime_support::get_uid().unwrap_or(501);
             let _ = Command::new("launchctl")
                 .args(["bootout", &format!("gui/{uid}/ai.openclaw.gateway")])
                 .output();
@@ -4062,7 +3003,9 @@ async fn upgrade_openclaw_inner(
     super::refresh_enhanced_path();
     crate::commands::service::invalidate_cli_detection_cache();
 
-    let new_ver = get_local_version().await.unwrap_or_else(|| "未知".into());
+    let new_ver = super::openclaw_version::get_local_version()
+        .await
+        .unwrap_or_else(|| "未知".into());
     let msg = format!("✅ 安装完成，当前版本: {new_ver}");
     let _ = app.emit("upgrade-log", &msg);
     Ok(msg)
@@ -4098,17 +3041,17 @@ async fn uninstall_openclaw_inner(
     use std::io::{BufRead, BufReader};
     use std::process::Stdio;
     use tauri::Emitter;
-    let _guardian_pause = GuardianPause::new("uninstall openclaw");
+    let _guardian_pause = crate::runtime_support::GuardianPause::new("uninstall openclaw");
     crate::commands::service::guardian_mark_manual_stop();
 
-    let source = detect_installed_source();
+    let source = super::openclaw_version::detect_installed_source();
     let pkg = npm_package_name(&source);
 
     // 1. 先停止 Gateway
     let _ = app.emit("upgrade-log", "正在停止 Gateway...");
     #[cfg(target_os = "macos")]
     {
-        let uid = get_uid().unwrap_or(501);
+        let uid = crate::runtime_support::get_uid().unwrap_or(501);
         let _ = Command::new("launchctl")
             .args(["bootout", &format!("gui/{uid}/ai.openclaw.gateway")])
             .output();
@@ -4130,7 +3073,7 @@ async fn uninstall_openclaw_inner(
     tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
     // 3. 清理 standalone 安装（所有可能的位置）
-    for sa_dir in &all_standalone_dirs() {
+    for sa_dir in &crate::standalone_paths::all_standalone_dirs() {
         if sa_dir.exists() {
             let _ = app.emit(
                 "upgrade-log",
@@ -4324,474 +3267,7 @@ pub fn init_openclaw_config() -> Result<Value, String> {
     Ok(Value::Object(result))
 }
 
-#[tauri::command]
-pub fn check_installation() -> Result<Value, String> {
-    let dir = super::openclaw_dir();
-    let installed = dir.join("openclaw.json").exists();
-    let mut result = serde_json::Map::new();
-    result.insert("installed".into(), Value::Bool(installed));
-    result.insert(
-        "path".into(),
-        Value::String(dir.to_string_lossy().to_string()),
-    );
-    Ok(Value::Object(result))
-}
-
 /// 检测 Node.js 是否已安装，返回版本号和检测到的路径
-#[tauri::command]
-pub fn check_node() -> Result<Value, String> {
-    let mut result = serde_json::Map::new();
-    let enhanced = super::enhanced_path();
-
-    // 尝试通过 which/where 命令找到 node 的实际路径
-    let node_path = find_node_path(&enhanced);
-
-    if let Some(path) = node_path {
-        let mut cmd = Command::new(&path);
-        cmd.arg("--version");
-        #[cfg(target_os = "windows")]
-        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
-        match cmd.output() {
-            Ok(o) if o.status.success() => {
-                let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                let detected_from = detect_node_source(&path);
-                result.insert("installed".into(), Value::Bool(true));
-                result.insert("version".into(), Value::String(ver));
-                result.insert("path".into(), Value::String(path));
-                result.insert("detectedFrom".into(), Value::String(detected_from));
-            }
-            _ => {
-                result.insert("installed".into(), Value::Bool(false));
-                result.insert("version".into(), Value::Null);
-                result.insert("path".into(), Value::Null);
-                result.insert("detectedFrom".into(), Value::Null);
-            }
-        }
-    } else {
-        result.insert("installed".into(), Value::Bool(false));
-        result.insert("version".into(), Value::Null);
-        result.insert("path".into(), Value::Null);
-        result.insert("detectedFrom".into(), Value::Null);
-    }
-    Ok(Value::Object(result))
-}
-
-/// 在 PATH 中查找 node 可执行文件的实际路径
-fn find_node_path(enhanced_path: &str) -> Option<String> {
-    #[cfg(target_os = "windows")]
-    {
-        // Windows: 使用 where 命令
-        let mut cmd = Command::new("where");
-        cmd.arg("node");
-        cmd.creation_flags(0x08000000);
-        // 设置 PATH 为 enhanced_path，优先查找 node
-        if std::env::var("PATH").is_ok() {
-            cmd.env("PATH", enhanced_path);
-            if let Ok(output) = cmd.output() {
-                if output.status.success() {
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    // where 输出可能有多行，取第一行
-                    if let Some(first_line) = stdout.lines().next() {
-                        let path = first_line.trim().to_string();
-                        if !path.is_empty() && std::path::Path::new(&path).exists() {
-                            return Some(path);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        // Unix: 使用 which 命令
-        let mut cmd = Command::new("which");
-        cmd.arg("node");
-        if let Ok(_current_path) = std::env::var("PATH") {
-            cmd.env("PATH", enhanced_path);
-            if let Ok(output) = cmd.output() {
-                if output.status.success() {
-                    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                    if !path.is_empty() && std::path::Path::new(&path).exists() {
-                        return Some(path);
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-/// 根据 node 路径推断其来源
-fn detect_node_source(node_path: &str) -> String {
-    let path_lower = node_path.to_lowercase();
-    let path_obj = std::path::Path::new(node_path);
-
-    // 检查父目录
-    if let Some(parent) = path_obj.parent() {
-        let parent_str = parent.to_string_lossy().to_lowercase();
-
-        // nvm-windows 符号链接路径
-        if parent_str.contains("nvm") || parent_str.contains(".nvm") {
-            // 检查是否是 nvm-windows 的当前版本符号链接
-            if let Ok(nvm_symlink) = std::env::var("NVM_SYMLINK") {
-                if path_lower.contains(&nvm_symlink.to_lowercase()) {
-                    return "NVM_SYMLINK".to_string();
-                }
-            }
-            return "NVM".to_string();
-        }
-
-        // Volta
-        if parent_str.contains(".volta") || parent_str.contains("volta") {
-            return "VOLTA".to_string();
-        }
-
-        // fnm
-        if parent_str.contains("fnm") || parent_str.contains("fnm_multishells") {
-            return "FNM".to_string();
-        }
-
-        // nodenv
-        if parent_str.contains("nodenv") {
-            return "NODENV".to_string();
-        }
-
-        // n (node version manager)
-        if parent_str.contains("/n/bin") || parent_str.contains("\\n\\bin") {
-            return "N".to_string();
-        }
-
-        // npm 全局
-        if parent_str.contains("npm") && parent_str.contains("appdata") {
-            return "NPM_GLOBAL".to_string();
-        }
-
-        // 系统默认安装位置
-        if parent_str.contains("program files") || parent_str.contains("programs\\nodejs") {
-            return "SYSTEM".to_string();
-        }
-    }
-
-    // 检查环境变量
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(nvm_symlink) = std::env::var("NVM_SYMLINK") {
-            if path_lower.contains(&nvm_symlink.to_lowercase()) {
-                return "NVM_SYMLINK".to_string();
-            }
-        }
-    }
-
-    "PATH".to_string()
-}
-
-/// 在指定路径下检测 node 是否存在
-#[tauri::command]
-pub fn check_node_at_path(node_dir: String) -> Result<Value, String> {
-    let dir = std::path::PathBuf::from(&node_dir);
-    #[cfg(target_os = "windows")]
-    let node_bin = dir.join("node.exe");
-    #[cfg(not(target_os = "windows"))]
-    let node_bin = dir.join("node");
-
-    let mut result = serde_json::Map::new();
-    if !node_bin.exists() {
-        result.insert("installed".into(), Value::Bool(false));
-        result.insert("version".into(), Value::Null);
-        return Ok(Value::Object(result));
-    }
-
-    let mut cmd = Command::new(&node_bin);
-    cmd.arg("--version");
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(0x08000000);
-    match cmd.output() {
-        Ok(o) if o.status.success() => {
-            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            result.insert("installed".into(), Value::Bool(true));
-            result.insert("version".into(), Value::String(ver));
-            result.insert("path".into(), Value::String(node_dir));
-        }
-        _ => {
-            result.insert("installed".into(), Value::Bool(false));
-            result.insert("version".into(), Value::Null);
-        }
-    }
-    Ok(Value::Object(result))
-}
-
-/// 扫描常见路径，返回所有找到的 Node.js 安装，包含来源说明
-#[tauri::command]
-pub fn scan_node_paths() -> Result<Value, String> {
-    let mut found: Vec<Value> = vec![];
-    let home = dirs::home_dir().unwrap_or_default();
-
-    let mut candidates: Vec<(String, String)> = vec![]; // (path, source)
-
-    #[cfg(target_os = "windows")]
-    {
-        let pf = std::env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".into());
-        let pf86 =
-            std::env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".into());
-        let localappdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
-        let appdata = std::env::var("APPDATA").unwrap_or_default();
-
-        // NVM_SYMLINK - nvm-windows 活跃版本
-        if let Ok(nvm_symlink) = std::env::var("NVM_SYMLINK") {
-            if std::path::Path::new(&nvm_symlink).is_dir() {
-                candidates.push((nvm_symlink, "NVM_SYMLINK".to_string()));
-            }
-        }
-
-        // NVM_HOME - 用户自定义 nvm 目录
-        if let Ok(nvm_home) = std::env::var("NVM_HOME") {
-            if std::path::Path::new(&nvm_home).is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&nvm_home) {
-                    for entry in entries.flatten() {
-                        let p = entry.path();
-                        if p.is_dir() && p.join("node.exe").exists() {
-                            // 检查是否是当前激活版本（通过 settings.json）
-                            let is_active = is_nvm_active_version(&nvm_home, &p);
-                            let source = if is_active { "NVM_ACTIVE" } else { "NVM" };
-                            candidates.push((p.to_string_lossy().to_string(), source.to_string()));
-                        }
-                    }
-                }
-            }
-        }
-
-        // %APPDATA%\nvm - nvm-windows 默认目录
-        if !appdata.is_empty() {
-            let nvm_dir = std::path::Path::new(&appdata).join("nvm");
-            if nvm_dir.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
-                    for entry in entries.flatten() {
-                        let p = entry.path();
-                        if p.is_dir() && p.join("node.exe").exists() {
-                            let is_active =
-                                is_nvm_active_version(nvm_dir.to_string_lossy().as_ref(), &p);
-                            let source = if is_active { "NVM_ACTIVE" } else { "NVM" };
-                            candidates.push((p.to_string_lossy().to_string(), source.to_string()));
-                        }
-                    }
-                }
-            }
-        }
-
-        // Volta
-        let volta_bin = format!(r"{}\.volta\bin", home.display());
-        candidates.push((volta_bin.clone(), "VOLTA".to_string()));
-        // 检查 volta 当前激活版本
-        if let Ok(volta_home) = std::env::var("VOLTA_HOME") {
-            let volta_current = std::path::Path::new(&volta_home).join("current/bin");
-            if volta_current.exists() {
-                candidates.push((
-                    volta_current.to_string_lossy().to_string(),
-                    "VOLTA_ACTIVE".to_string(),
-                ));
-            }
-        }
-
-        // fnm
-        if !localappdata.is_empty() {
-            candidates.push((
-                format!(r"{}\fnm_multishells", localappdata),
-                "FNM_TEMP".to_string(),
-            ));
-        }
-        let fnm_base = std::env::var("FNM_DIR")
-            .ok()
-            .map(std::path::PathBuf::from)
-            .unwrap_or_else(|| std::path::Path::new(&appdata).join("fnm"));
-        // fnm current
-        let fnm_current = fnm_base.join("current/installation");
-        if fnm_current.is_dir() && fnm_current.join("node.exe").exists() {
-            candidates.push((
-                fnm_current.to_string_lossy().to_string(),
-                "FNM_ACTIVE".to_string(),
-            ));
-        }
-        // fnm versions
-        let fnm_versions = fnm_base.join("node-versions");
-        if fnm_versions.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&fnm_versions) {
-                for entry in entries.flatten() {
-                    let inst = entry.path().join("installation");
-                    if inst.is_dir() && inst.join("node.exe").exists() {
-                        let source = if inst == fnm_current {
-                            "FNM_ACTIVE"
-                        } else {
-                            "FNM"
-                        };
-                        candidates.push((inst.to_string_lossy().to_string(), source.to_string()));
-                    }
-                }
-            }
-        }
-
-        // npm 全局
-        if !appdata.is_empty() {
-            candidates.push((format!(r"{}\npm", appdata), "NPM_GLOBAL".to_string()));
-        }
-        if let Some(prefix) = super::windows_npm_global_prefix() {
-            candidates.push((prefix, "NPM_GLOBAL".to_string()));
-        }
-
-        // 系统默认
-        candidates.push((format!(r"{}\nodejs", pf), "SYSTEM".to_string()));
-        candidates.push((format!(r"{}\nodejs", pf86), "SYSTEM".to_string()));
-        if !localappdata.is_empty() {
-            candidates.push((
-                format!(r"{}\Programs\nodejs", localappdata),
-                "SYSTEM".to_string(),
-            ));
-        }
-
-        // 常见盘符
-        for drive in &["C", "D", "E", "F", "G"] {
-            candidates.push((format!(r"{}:\nodejs", drive), "MANUAL".to_string()));
-            candidates.push((format!(r"{}:\Node", drive), "MANUAL".to_string()));
-            candidates.push((format!(r"{}:\Node.js", drive), "MANUAL".to_string()));
-            candidates.push((
-                format!(r"{}:\Program Files\nodejs", drive),
-                "SYSTEM".to_string(),
-            ));
-            // AI/Dev 工具目录
-            candidates.push((format!(r"{}:\AI\Node", drive), "MANUAL".to_string()));
-            candidates.push((format!(r"{}:\AI\nodejs", drive), "MANUAL".to_string()));
-            candidates.push((format!(r"{}:\Dev\nodejs", drive), "MANUAL".to_string()));
-            candidates.push((format!(r"{}:\Tools\nodejs", drive), "MANUAL".to_string()));
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        candidates.push(("/usr/local/bin".into(), "SYSTEM".to_string()));
-        candidates.push(("/opt/homebrew/bin".into(), "BREW".to_string()));
-        candidates.push((
-            format!("{}/.nvm/current/bin", home.display()),
-            "NVM_ACTIVE".to_string(),
-        ));
-        candidates.push((
-            format!("{}/.volta/bin", home.display()),
-            "VOLTA".to_string(),
-        ));
-        candidates.push((
-            format!("{}/.nodenv/shims", home.display()),
-            "NODENV".to_string(),
-        ));
-        candidates.push((
-            format!("{}/.fnm/current/bin", home.display()),
-            "FNM_ACTIVE".to_string(),
-        ));
-        candidates.push((format!("{}/n/bin", home.display()), "N".to_string()));
-        candidates.push((
-            format!("{}/.npm-global/bin", home.display()),
-            "NPM_GLOBAL".to_string(),
-        ));
-    }
-
-    // 去重并检测 node
-    let mut seen_paths: std::collections::HashSet<String> = std::collections::HashSet::new();
-
-    for (dir, source) in &candidates {
-        let path = std::path::Path::new(dir);
-        #[cfg(target_os = "windows")]
-        let node_bin = path.join("node.exe");
-        #[cfg(not(target_os = "windows"))]
-        let node_bin = path.join("node");
-
-        if node_bin.exists() {
-            let node_path_str = node_bin.to_string_lossy().to_string();
-            // 去重
-            if seen_paths.contains(&node_path_str) {
-                continue;
-            }
-            seen_paths.insert(node_path_str.clone());
-
-            let mut cmd = Command::new(&node_bin);
-            cmd.arg("--version");
-            #[cfg(target_os = "windows")]
-            cmd.creation_flags(0x08000000);
-            if let Ok(o) = cmd.output() {
-                if o.status.success() {
-                    let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                    let mut entry = serde_json::Map::new();
-                    entry.insert("path".into(), Value::String(node_path_str));
-                    entry.insert("version".into(), Value::String(ver));
-                    entry.insert("source".into(), Value::String(source.clone()));
-                    // 标记是否激活
-                    let is_active = source.contains("ACTIVE");
-                    entry.insert("active".into(), Value::Bool(is_active));
-                    found.push(Value::Object(entry));
-                }
-            }
-        }
-    }
-
-    // 按激活状态排序（激活的版本排在前面）
-    found.sort_by(|a, b| {
-        let a_active = a.get("active").and_then(|v| v.as_bool()).unwrap_or(false);
-        let b_active = b.get("active").and_then(|v| v.as_bool()).unwrap_or(false);
-        b_active.cmp(&a_active)
-    });
-
-    Ok(Value::Array(found))
-}
-
-/// 检查给定版本目录是否是 nvm-windows 的当前激活版本
-#[allow(dead_code)]
-fn is_nvm_active_version(nvm_dir: &str, version_dir: &std::path::Path) -> bool {
-    let settings_path = std::path::Path::new(nvm_dir).join("settings.json");
-    if !settings_path.exists() {
-        return false;
-    }
-
-    if let Ok(content) = std::fs::read_to_string(&settings_path) {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&content) {
-            if let Some(current_path) = json.get("path").and_then(|v| v.as_str()) {
-                // settings.json 中的 path 可能是绝对路径或相对路径
-                let expected_path: std::path::PathBuf =
-                    if current_path.starts_with('/') || current_path.contains(':') {
-                        // 绝对路径
-                        std::path::Path::new(current_path).to_path_buf()
-                    } else {
-                        // 相对路径
-                        std::path::Path::new(nvm_dir).join(current_path)
-                    };
-                return version_dir == expected_path.as_path();
-            }
-        }
-    }
-    false
-}
-
-/// 保存用户自定义的 Node.js 路径到 ~/.openclaw/clawpanel.json
-#[tauri::command]
-pub fn save_custom_node_path(node_dir: String) -> Result<(), String> {
-    let config_path = super::panel_config_path();
-    if let Some(parent) = config_path.parent() {
-        let _ = std::fs::create_dir_all(parent);
-    }
-    let mut config: serde_json::Map<String, Value> = if config_path.exists() {
-        let content =
-            std::fs::read_to_string(&config_path).map_err(|e| format!("读取配置失败: {e}"))?;
-        serde_json::from_str(&content).unwrap_or_default()
-    } else {
-        serde_json::Map::new()
-    };
-    config.insert("nodePath".into(), Value::String(node_dir));
-    let json = serde_json::to_string_pretty(&Value::Object(config))
-        .map_err(|e| format!("序列化失败: {e}"))?;
-    std::fs::write(&config_path, json).map_err(|e| format!("写入配置失败: {e}"))?;
-    // 立即刷新 PATH 缓存，使新路径生效（无需重启应用）
-    super::refresh_enhanced_path();
-    crate::commands::service::invalidate_cli_detection_cache();
-    Ok(())
-}
-
 #[tauri::command]
 pub fn write_env_file(path: String, config: String) -> Result<(), String> {
     let expanded = if let Some(stripped) = path.strip_prefix("~/") {
@@ -4921,26 +3397,6 @@ pub fn delete_backup(name: String) -> Result<(), String> {
 
 /// 获取当前用户 UID（macOS/Linux 用 id -u，Windows 返回 0）
 #[allow(dead_code)]
-pub(crate) fn get_uid() -> Result<u32, String> {
-    #[cfg(target_os = "windows")]
-    {
-        Ok(0)
-    }
-    #[cfg(not(target_os = "windows"))]
-    {
-        let output = Command::new("id")
-            .arg("-u")
-            .output()
-            .map_err(|e| format!("获取 UID 失败: {e}"))?;
-        String::from_utf8_lossy(&output.stdout)
-            .trim()
-            .parse::<u32>()
-            .map_err(|e| format!("解析 UID 失败: {e}"))
-    }
-}
-
-/// 重载 Gateway 配置（热重载，不重启进程）
-/// 通过 HTTP POST 向 Gateway 发送 reload 信号，避免触发完整的服务重启循环
 fn normalize_base_url(raw: &str) -> String {
     let mut base = raw.trim_end_matches('/').to_string();
     for suffix in &[
@@ -5865,35 +4321,6 @@ pub fn apply_legacy_config_migration(action: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
-pub async fn test_proxy(url: Option<String>) -> Result<Value, String> {
-    let proxy_url = crate::commands::configured_proxy_url()
-        .ok_or("未配置代理地址，请先在面板设置中保存代理地址")?;
-
-    let target = url.unwrap_or_else(|| "https://registry.npmjs.org/-/ping".to_string());
-
-    let client =
-        crate::commands::build_http_client(std::time::Duration::from_secs(10), Some("ClawPanel"))
-            .map_err(|e| format!("创建代理客户端失败: {e}"))?;
-
-    let start = std::time::Instant::now();
-    let resp = client.get(&target).send().await.map_err(|e| {
-        let elapsed = start.elapsed().as_millis();
-        format!("代理连接失败 ({elapsed}ms): {e}")
-    })?;
-
-    let elapsed = start.elapsed().as_millis();
-    let status = resp.status().as_u16();
-
-    Ok(json!({
-        "ok": status < 500,
-        "status": status,
-        "elapsed_ms": elapsed,
-        "proxy": proxy_url,
-        "target": target,
-    }))
-}
-
-#[tauri::command]
 pub fn get_npm_registry() -> Result<String, String> {
     super::app_config::get_npm_registry()
 }
@@ -5901,394 +4328,6 @@ pub fn get_npm_registry() -> Result<String, String> {
 #[tauri::command]
 pub fn set_npm_registry(registry: String) -> Result<(), String> {
     super::app_config::set_npm_registry(registry)
-}
-
-/// 检测 Git 是否已安装
-#[tauri::command]
-pub fn check_git() -> Result<Value, String> {
-    let mut result = serde_json::Map::new();
-    let configured = configured_git_path();
-    let git = configured.clone().unwrap_or_else(|| "git".into());
-    let is_custom = configured.is_some();
-    let git_path = if is_custom {
-        Some(git.clone())
-    } else {
-        find_git_path()
-    };
-    // #Compat-4: 优先用 find_git_path 拿到的绝对路径执行 --version（避免依赖子进程 PATH），
-    // 回退到 "git" 时也把 enhanced_path 注入子进程 PATH，让刚装完 git 的场景立即可识别。
-    let exec = git_path.as_deref().unwrap_or(&git);
-    let mut cmd = Command::new(exec);
-    cmd.arg("--version");
-    cmd.env("PATH", super::enhanced_path());
-    #[cfg(target_os = "windows")]
-    cmd.creation_flags(0x08000000);
-    match cmd.output() {
-        Ok(o) if o.status.success() => {
-            let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-            result.insert("installed".into(), Value::Bool(true));
-            result.insert("version".into(), Value::String(ver));
-            result.insert(
-                "path".into(),
-                git_path.map(Value::String).unwrap_or(Value::Null),
-            );
-            result.insert("isCustom".into(), Value::Bool(is_custom));
-        }
-        _ => {
-            result.insert("installed".into(), Value::Bool(false));
-            result.insert("version".into(), Value::Null);
-            result.insert("path".into(), Value::Null);
-            result.insert("isCustom".into(), Value::Bool(is_custom));
-        }
-    }
-    Ok(Value::Object(result))
-}
-
-/// 扫描常见路径，返回所有找到的 Git 安装
-#[tauri::command]
-pub fn scan_git_paths() -> Result<Value, String> {
-    let mut found: Vec<Value> = vec![];
-    let mut candidates: Vec<(String, String)> = vec![]; // (path, source)
-
-    #[cfg(target_os = "windows")]
-    {
-        let pf = std::env::var("ProgramFiles").unwrap_or_else(|_| r"C:\Program Files".into());
-        let pf86 =
-            std::env::var("ProgramFiles(x86)").unwrap_or_else(|_| r"C:\Program Files (x86)".into());
-        let localappdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
-
-        // 标准安装路径
-        candidates.push((format!(r"{}\Git\cmd\git.exe", pf), "SYSTEM".into()));
-        candidates.push((format!(r"{}\Git\cmd\git.exe", pf86), "SYSTEM".into()));
-
-        // 常见盘符
-        for drive in &["C", "D", "E", "F", "G"] {
-            candidates.push((format!(r"{}:\Git\cmd\git.exe", drive), "MANUAL".into()));
-            candidates.push((
-                format!(r"{}:\Program Files\Git\cmd\git.exe", drive),
-                "SYSTEM".into(),
-            ));
-            // 工具目录
-            for sub in &["Tools", "Dev", "AI", "Apps", "Software"] {
-                candidates.push((
-                    format!(r"{}:\{}\Git\cmd\git.exe", drive, sub),
-                    "MANUAL".into(),
-                ));
-            }
-        }
-
-        // 自定义应用目录（如 D:\Data\exeApp\Git）
-        for drive in &["C", "D", "E", "F"] {
-            candidates.push((
-                format!(r"{}:\Data\exeApp\Git\cmd\git.exe", drive),
-                "MANUAL".into(),
-            ));
-        }
-
-        // GitHub Desktop 内置 Git
-        if !localappdata.is_empty() {
-            let gh_dir = std::path::Path::new(&localappdata).join("GitHubDesktop");
-            if gh_dir.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&gh_dir) {
-                    for entry in entries.flatten() {
-                        let p = entry.path();
-                        if p.is_dir() {
-                            let git_exe = p
-                                .join("resources")
-                                .join("app")
-                                .join("git")
-                                .join("cmd")
-                                .join("git.exe");
-                            if git_exe.exists() {
-                                candidates.push((
-                                    git_exe.to_string_lossy().to_string(),
-                                    "GITHUB_DESKTOP".into(),
-                                ));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // VS Code 内置 Git
-        if !localappdata.is_empty() {
-            let vscode_git = std::path::Path::new(&localappdata).join(r"Programs\Microsoft VS Code\resources\app\node_modules.asar.unpacked\vscode-git\git\cmd\git.exe");
-            if vscode_git.exists() {
-                candidates.push((vscode_git.to_string_lossy().to_string(), "VSCODE".into()));
-            }
-        }
-
-        // MinGW / MSYS2 / Git Bash
-        candidates.push((format!(r"{}\Git\mingw64\bin\git.exe", pf), "MINGW".into()));
-        for drive in &["C", "D"] {
-            candidates.push((
-                format!(r"{}:\msys64\usr\bin\git.exe", drive),
-                "MSYS2".into(),
-            ));
-            candidates.push((format!(r"{}:\msys2\usr\bin\git.exe", drive), "MSYS2".into()));
-        }
-
-        // Scoop
-        let home = dirs::home_dir().unwrap_or_default();
-        candidates.push((
-            format!(r"{}\scoop\apps\git\current\cmd\git.exe", home.display()),
-            "SCOOP".into(),
-        ));
-        candidates.push((
-            format!(r"{}\scoop\shims\git.exe", home.display()),
-            "SCOOP".into(),
-        ));
-
-        // Chocolatey
-        let choco_dir = std::env::var("ChocolateyInstall")
-            .unwrap_or_else(|_| r"C:\ProgramData\chocolatey".into());
-        candidates.push((format!(r"{}\bin\git.exe", choco_dir), "CHOCOLATEY".into()));
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        candidates.push(("/usr/bin/git".into(), "SYSTEM".into()));
-        candidates.push(("/usr/local/bin/git".into(), "SYSTEM".into()));
-        candidates.push(("/opt/homebrew/bin/git".into(), "BREW".into()));
-        // Xcode
-        candidates.push((
-            "/Library/Developer/CommandLineTools/usr/bin/git".into(),
-            "XCODE_CLT".into(),
-        ));
-        candidates.push((
-            "/Applications/Xcode.app/Contents/Developer/usr/bin/git".into(),
-            "XCODE".into(),
-        ));
-        // Snap / Flatpak
-        candidates.push(("/snap/bin/git".into(), "SNAP".into()));
-        // Nix
-        let home = dirs::home_dir().unwrap_or_default();
-        candidates.push((
-            format!("{}/.nix-profile/bin/git", home.display()),
-            "NIX".into(),
-        ));
-        // Linuxbrew
-        candidates.push((
-            format!("{}/.linuxbrew/bin/git", home.display()),
-            "BREW".into(),
-        ));
-        candidates.push(("/home/linuxbrew/.linuxbrew/bin/git".into(), "BREW".into()));
-    }
-
-    // 去重并检测
-    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-    for (path, source) in &candidates {
-        let p = std::path::Path::new(path);
-        if !p.exists() {
-            continue;
-        }
-        let canonical = p.to_string_lossy().to_string();
-        if seen.contains(&canonical) {
-            continue;
-        }
-        seen.insert(canonical.clone());
-
-        let mut cmd = Command::new(path);
-        cmd.arg("--version");
-        #[cfg(target_os = "windows")]
-        cmd.creation_flags(0x08000000);
-        if let Ok(o) = cmd.output() {
-            if o.status.success() {
-                let ver = String::from_utf8_lossy(&o.stdout).trim().to_string();
-                let mut entry = serde_json::Map::new();
-                entry.insert("path".into(), Value::String(canonical));
-                entry.insert("version".into(), Value::String(ver));
-                entry.insert("source".into(), Value::String(source.clone()));
-                found.push(Value::Object(entry));
-            }
-        }
-    }
-
-    Ok(Value::Array(found))
-}
-
-/// 尝试自动安装 Git（Windows: winget; macOS: xcode-select; Linux: apt/yum）
-#[tauri::command]
-pub async fn auto_install_git(app: tauri::AppHandle) -> Result<String, String> {
-    use std::process::Stdio;
-    use tauri::Emitter;
-
-    let _ = app.emit("upgrade-log", "正在尝试自动安装 Git...");
-
-    #[cfg(target_os = "windows")]
-    {
-        use std::io::{BufRead, BufReader};
-        // 尝试 winget
-        let _ = app.emit("upgrade-log", "尝试使用 winget 安装 Git...");
-        let mut child = Command::new("winget")
-            .args([
-                "install",
-                "--id",
-                "Git.Git",
-                "-e",
-                "--source",
-                "winget",
-                "--accept-package-agreements",
-                "--accept-source-agreements",
-            ])
-            .creation_flags(0x08000000)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("winget 不可用，请手动安装 Git: {e}"))?;
-
-        let stderr = child.stderr.take();
-        let stdout = child.stdout.take();
-        let app2 = app.clone();
-        let handle = std::thread::spawn(move || {
-            if let Some(pipe) = stderr {
-                for line in BufReader::new(pipe).lines().map_while(Result::ok) {
-                    let _ = app2.emit("upgrade-log", &line);
-                }
-            }
-        });
-        if let Some(pipe) = stdout {
-            for line in BufReader::new(pipe).lines().map_while(Result::ok) {
-                let _ = app.emit("upgrade-log", &line);
-            }
-        }
-        let _ = handle.join();
-        let status = child
-            .wait()
-            .map_err(|e| format!("等待 winget 完成失败: {e}"))?;
-        if status.success() {
-            let _ = app.emit("upgrade-log", "Git 安装成功！");
-            // #Compat-4: 刷新 PATH 缓存，使 check_git 能立即检测到新装的 git，
-            // 避免用户反馈「装完不识别，重启客户端才能用」
-            super::refresh_enhanced_path();
-            crate::commands::service::invalidate_cli_detection_cache();
-            return Ok("Git 已通过 winget 安装".to_string());
-        }
-        Err("winget 安装 Git 失败，请手动下载安装: https://git-scm.com/downloads".to_string())
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let _ = app.emit("upgrade-log", "尝试通过 xcode-select 安装 Git...");
-        let mut child = Command::new("xcode-select")
-            .arg("--install")
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("xcode-select 不可用: {e}"))?;
-        let status = child.wait().map_err(|e| format!("等待安装完成失败: {e}"))?;
-        if status.success() {
-            let _ = app.emit("upgrade-log", "Git 安装已触发，请在弹出的窗口中确认安装。");
-            // #Compat-4: 刷新缓存（即便是"触发"而非同步完成，下次检测时缓存也已清）
-            super::refresh_enhanced_path();
-            crate::commands::service::invalidate_cli_detection_cache();
-            return Ok("已触发 xcode-select 安装，请在弹窗中确认".to_string());
-        }
-        Err(
-            "xcode-select 安装失败，请手动安装 Xcode Command Line Tools 或 brew install git"
-                .to_string(),
-        )
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        use std::io::{BufRead, BufReader};
-        // 检测包管理器
-        let pkg_mgr = if Command::new("apt-get")
-            .arg("--version")
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
-            "apt"
-        } else if Command::new("yum")
-            .arg("--version")
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
-            "yum"
-        } else if Command::new("dnf")
-            .arg("--version")
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
-            "dnf"
-        } else if Command::new("pacman")
-            .arg("--version")
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
-            "pacman"
-        } else {
-            return Err(
-                "未找到包管理器，请手动安装 Git: sudo apt install git 或 sudo yum install git"
-                    .to_string(),
-            );
-        };
-
-        let (cmd_name, args): (&str, Vec<&str>) = match pkg_mgr {
-            "apt" => ("sudo", vec!["apt-get", "install", "-y", "git"]),
-            "yum" => ("sudo", vec!["yum", "install", "-y", "git"]),
-            "dnf" => ("sudo", vec!["dnf", "install", "-y", "git"]),
-            "pacman" => ("sudo", vec!["pacman", "-S", "--noconfirm", "git"]),
-            _ => return Err("不支持的包管理器".to_string()),
-        };
-
-        let _ = app.emit(
-            "upgrade-log",
-            format!("执行: {} {}", cmd_name, args.join(" ")),
-        );
-        let mut child = Command::new(cmd_name)
-            .args(&args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|e| format!("安装命令执行失败: {e}"))?;
-
-        let stderr = child.stderr.take();
-        let stdout = child.stdout.take();
-        let app2 = app.clone();
-        let handle = std::thread::spawn(move || {
-            if let Some(pipe) = stderr {
-                for line in BufReader::new(pipe).lines().map_while(Result::ok) {
-                    let _ = app2.emit("upgrade-log", &line);
-                }
-            }
-        });
-        if let Some(pipe) = stdout {
-            for line in BufReader::new(pipe).lines().map_while(Result::ok) {
-                let _ = app.emit("upgrade-log", &line);
-            }
-        }
-        let _ = handle.join();
-        let status = child.wait().map_err(|e| format!("等待安装完成失败: {e}"))?;
-        if status.success() {
-            let _ = app.emit("upgrade-log", "Git 安装成功！");
-            // #Compat-4: 刷新 PATH 缓存，使 check_git 立即识别新装的 git
-            super::refresh_enhanced_path();
-            crate::commands::service::invalidate_cli_detection_cache();
-            return Ok("Git 已安装".to_string());
-        }
-        Err("Git 安装失败，请手动执行: sudo apt install git".to_string())
-    }
-}
-
-/// 配置 Git 使用 HTTPS 替代 SSH，解决国内用户 SSH 不通的问题
-#[tauri::command]
-pub fn configure_git_https() -> Result<String, String> {
-    let success = configure_git_https_rules();
-    if success > 0 {
-        Ok(format!(
-            "已配置 Git 使用 HTTPS（{success}/{} 条规则）",
-            GIT_HTTPS_REWRITES.len()
-        ))
-    } else {
-        Err("Git 未安装或配置失败".to_string())
-    }
 }
 
 /// 刷新 enhanced_path 缓存，使新设置的 Node.js 路径立即生效

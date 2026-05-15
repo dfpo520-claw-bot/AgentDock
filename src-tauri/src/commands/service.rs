@@ -834,7 +834,7 @@ mod platform {
     fn common_cli_candidates() -> Vec<PathBuf> {
         let mut candidates = Vec::new();
         // standalone 安装目录（集中管理，避免多处硬编码）
-        for sa_dir in crate::commands::config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             candidates.push(sa_dir.join("openclaw"));
         }
         // Homebrew 路径（非 standalone，保留）
@@ -1440,7 +1440,7 @@ mod platform {
         let mut candidates = Vec::new();
 
         // standalone 安装目录（集中管理，避免多处硬编码）
-        for sa_dir in crate::commands::config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             candidates.push(sa_dir.join("openclaw.cmd"));
         }
 
@@ -1811,7 +1811,7 @@ mod platform {
             );
         }
         // standalone 安装目录（集中管理，避免多处硬编码）
-        for sa_dir in crate::commands::config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             candidates.push(sa_dir.join("openclaw"));
         }
         candidates.push(PathBuf::from("/usr/local/bin/openclaw"));

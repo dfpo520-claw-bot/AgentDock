@@ -1,11 +1,6 @@
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
-pub fn is_rejected_cli_path(cli_path: &str) -> bool {
-    let lower = cli_path.replace('\\', "/").to_lowercase();
-    lower.contains("/.cherrystudio/") || lower.contains("cherry-studio")
-}
-
 /// 读取 clawpanel.json 中用户绑定的 CLI 路径
 fn bound_cli_path() -> Option<std::path::PathBuf> {
     let config = crate::commands::read_panel_config_value()?;
@@ -14,7 +9,9 @@ fn bound_cli_path() -> Option<std::path::PathBuf> {
         return None;
     }
     let p = std::path::PathBuf::from(raw);
-    if p.exists() && !is_rejected_cli_path(&p.to_string_lossy()) {
+    if p.exists()
+        && !crate::openclaw_cli_paths::is_rejected_cli_path(&p.to_string_lossy())
+    {
         Some(p)
     } else {
         None
@@ -40,8 +37,8 @@ fn apply_openclaw_dir_env_tokio(cmd: &mut tokio::process::Command) {
 fn configured_cli_candidates() -> Vec<std::path::PathBuf> {
     crate::commands::openclaw_search_paths()
         .into_iter()
-        .filter_map(|p| crate::commands::config::resolve_openclaw_cli_input_path(&p))
-        .filter(|p| !is_rejected_cli_path(&p.to_string_lossy()))
+        .filter_map(|p| crate::openclaw_cli_paths::resolve_openclaw_cli_input_path(&p))
+        .filter(|p| !crate::openclaw_cli_paths::is_rejected_cli_path(&p.to_string_lossy()))
         .collect()
 }
 
@@ -62,7 +59,9 @@ fn find_openclaw_cmd() -> Option<std::path::PathBuf> {
     let path = crate::commands::enhanced_path();
     for dir in path.split(';') {
         let candidate = std::path::Path::new(dir).join("openclaw.cmd");
-        if candidate.exists() && !is_rejected_cli_path(&candidate.to_string_lossy()) {
+        if candidate.exists()
+            && !crate::openclaw_cli_paths::is_rejected_cli_path(&candidate.to_string_lossy())
+        {
             return Some(candidate);
         }
     }
@@ -73,7 +72,7 @@ fn find_openclaw_cmd() -> Option<std::path::PathBuf> {
 fn common_non_windows_cli_candidates() -> Vec<std::path::PathBuf> {
     let mut candidates = Vec::new();
     // standalone 安装目录（集中管理，避免多处硬编码）
-    for sa_dir in crate::commands::config::all_standalone_dirs() {
+    for sa_dir in crate::standalone_paths::all_standalone_dirs() {
         candidates.push(sa_dir.join("openclaw"));
     }
     // 其他标准路径
@@ -102,7 +101,9 @@ pub fn resolve_openclaw_cli_path() -> Option<String> {
         let path = crate::commands::enhanced_path();
         for dir in path.split(';') {
             let candidate = std::path::Path::new(dir).join("openclaw.cmd");
-            if candidate.exists() && !is_rejected_cli_path(&candidate.to_string_lossy()) {
+            if candidate.exists()
+                && !crate::openclaw_cli_paths::is_rejected_cli_path(&candidate.to_string_lossy())
+            {
                 return Some(candidate.to_string_lossy().to_string());
             }
         }

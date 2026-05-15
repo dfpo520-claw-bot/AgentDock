@@ -60,7 +60,7 @@ async fn reload_gateway_via_http() -> Result<String, String> {
 async fn reload_gateway_internal(app: Option<&tauri::AppHandle>) -> Result<String, String> {
     #[cfg(target_os = "macos")]
     {
-        let uid = super::config::get_uid()?;
+        let uid = crate::runtime_support::get_uid()?;
         let target = format!("gui/{uid}/ai.openclaw.gateway");
         let output = tokio::process::Command::new("launchctl")
             .args(["kickstart", "-k", &target])
@@ -193,7 +193,7 @@ pub async fn doctor_check() -> Result<Value, String> {
 pub async fn install_gateway() -> Result<String, String> {
     use crate::utils::openclaw_command_async;
 
-    let _guardian_pause = super::config::GuardianPause::new("install gateway");
+    let _guardian_pause = crate::runtime_support::GuardianPause::new("install gateway");
     let cli_check = openclaw_command_async().arg("--version").output().await;
     match cli_check {
         Ok(o) if o.status.success() => {}
@@ -223,11 +223,11 @@ pub async fn install_gateway() -> Result<String, String> {
 
 #[tauri::command]
 pub fn uninstall_gateway() -> Result<String, String> {
-    let _guardian_pause = super::config::GuardianPause::new("uninstall gateway");
+    let _guardian_pause = crate::runtime_support::GuardianPause::new("uninstall gateway");
     crate::commands::service::guardian_mark_manual_stop();
     #[cfg(target_os = "macos")]
     {
-        let uid = super::config::get_uid()?;
+        let uid = crate::runtime_support::get_uid()?;
         let target = format!("gui/{uid}/ai.openclaw.gateway");
 
         let _ = Command::new("launchctl").args(["bootout", &target]).output();

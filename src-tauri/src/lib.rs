@@ -1,12 +1,17 @@
 mod commands;
 mod models;
+mod openclaw_cli_paths;
 mod product_config;
+mod runtime_support;
+mod standalone_paths;
 mod tray;
 mod utils;
 
 use commands::{
     agent, assistant, cli_conflict, config, device, diagnose, extensions, gateway_runtime,
-    hermes, hermes_providers, logs, memory, messaging, pairing, service, skills, update,
+    git_runtime, hermes, hermes_providers, installation_status, logs, memory, messaging,
+    node_runtime, openclaw_installations, openclaw_version, pairing, proxy_diagnostics, service,
+    skills, status_summary, update,
 };
 
 pub fn run() {
@@ -78,16 +83,16 @@ pub fn run() {
             config::validate_openclaw_config,
             config::read_mcp_config,
             config::write_mcp_config,
-            config::get_version_info,
-            config::check_installation,
+            openclaw_version::get_version_info,
+            installation_status::check_installation,
             config::init_openclaw_config,
             config::calibrate_openclaw_config,
-            config::check_node,
-            config::check_node_at_path,
-            config::check_openclaw_at_path,
-            config::scan_node_paths,
-            config::scan_openclaw_paths,
-            config::save_custom_node_path,
+            node_runtime::check_node,
+            node_runtime::check_node_at_path,
+            openclaw_installations::check_openclaw_at_path,
+            node_runtime::scan_node_paths,
+            openclaw_installations::scan_openclaw_paths,
+            node_runtime::save_custom_node_path,
             config::write_env_file,
             config::list_backups,
             config::create_backup,
@@ -110,15 +115,15 @@ pub fn run() {
             config::write_panel_config,
             config::detect_legacy_config_migration,
             config::apply_legacy_config_migration,
-            config::test_proxy,
+            proxy_diagnostics::test_proxy,
             config::get_npm_registry,
             config::set_npm_registry,
-            config::check_git,
-            config::scan_git_paths,
-            config::auto_install_git,
-            config::configure_git_https,
+            git_runtime::check_git,
+            git_runtime::scan_git_paths,
+            git_runtime::auto_install_git,
+            git_runtime::configure_git_https,
             config::invalidate_path_cache,
-            config::get_status_summary,
+            status_summary::get_status_summary,
             gateway_runtime::doctor_fix,
             gateway_runtime::doctor_check,
             config::relaunch_app,

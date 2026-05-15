@@ -22,15 +22,22 @@ pub mod device;
 pub mod diagnose;
 pub mod extensions;
 pub mod gateway_runtime;
+pub mod git_runtime;
 pub mod hermes;
 pub mod hermes_providers;
+pub mod installation_status;
 pub mod logs;
 pub mod memory;
 pub mod messaging;
+pub mod node_runtime;
+pub mod openclaw_installations;
+pub mod openclaw_version;
 pub mod pairing;
+pub mod proxy_diagnostics;
 pub mod service;
 pub mod skillhub;
 pub mod skills;
+pub mod status_summary;
 pub mod update;
 
 /// 默认 OpenClaw 配置目录
@@ -400,7 +407,7 @@ fn build_enhanced_path() -> String {
             extra.push(format!("{}/bin", prefix));
         }
         // standalone 安装目录（集中管理，避免多处硬编码）
-        for sa_dir in config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             extra.push(sa_dir.to_string_lossy().into_owned());
         }
         // 扫描 nvm 实际安装的版本目录（兼容无 current 符号链接的情况）
@@ -484,7 +491,7 @@ fn build_enhanced_path() -> String {
             extra.push(format!("{}/bin", prefix));
         }
         // standalone 安装目录（集中管理，避免多处硬编码）
-        for sa_dir in config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             extra.push(sa_dir.to_string_lossy().into_owned());
         }
         // NVM_DIR 环境变量（用户可能自定义了 nvm 安装目录）
@@ -726,7 +733,7 @@ fn build_enhanced_path() -> String {
         // standalone 安装后通过注册表写入用户 PATH，但当前进程的 PATH 环境变量不会
         // 实时更新，需要显式添加到 enhanced_path 以确保 resolve_openclaw_cli_path()
         // 能找到 standalone 安装的 openclaw.cmd
-        for sa_dir in config::all_standalone_dirs() {
+        for sa_dir in crate::standalone_paths::all_standalone_dirs() {
             extra.push(sa_dir.to_string_lossy().into_owned());
         }
 

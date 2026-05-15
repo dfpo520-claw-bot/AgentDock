@@ -165,7 +165,7 @@ pub async fn scan_openclaw_path_conflicts() -> Result<Vec<CliConflict>, String> 
     let mut conflicts = Vec::new();
     let mut seen = std::collections::HashSet::new();
 
-    let standalone_canon: Vec<String> = crate::commands::config::all_standalone_dirs()
+    let standalone_canon: Vec<String> = crate::standalone_paths::all_standalone_dirs()
         .iter()
         .map(|p| canonical_lower(p))
         .filter(|s| !s.is_empty())
@@ -231,7 +231,7 @@ pub async fn quarantine_openclaw_path(path: String) -> Result<QuarantineRecord, 
 
     // 安全检查 1：拒绝隔离 standalone 目录下的文件
     let canon = canonical_lower(&original);
-    let standalone_dirs = crate::commands::config::all_standalone_dirs();
+    let standalone_dirs = crate::standalone_paths::all_standalone_dirs();
     for sa in &standalone_dirs {
         let sa_canon = canonical_lower(sa);
         if !sa_canon.is_empty() && canon.starts_with(&sa_canon) {

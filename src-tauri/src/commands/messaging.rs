@@ -1057,7 +1057,7 @@ pub async fn save_messaging_platform(
     // Gateway 重载在后台进行，不阻塞 UI 响应
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(json!({ "ok": true }))
@@ -1116,7 +1116,7 @@ pub async fn remove_messaging_platform(
     super::config::save_openclaw_json(&cfg)?;
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(json!({ "ok": true }))
@@ -1146,7 +1146,7 @@ pub async fn toggle_messaging_platform(
     // Gateway 重载在后台进行，不阻塞 UI 响应
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(json!({ "ok": true }))
@@ -1817,7 +1817,7 @@ pub async fn repair_qqbot_channel_setup(app: tauri::AppHandle) -> Result<Value, 
     super::config::save_openclaw_json(&cfg)?;
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
     Ok(json!({
         "ok": true,
@@ -3567,7 +3567,7 @@ pub async fn save_agent_binding(
 
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(serde_json::json!({
@@ -3612,7 +3612,7 @@ pub async fn delete_agent_binding(
 
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(serde_json::json!({
@@ -3648,7 +3648,7 @@ pub async fn delete_agent_all_bindings(
 
     let app2 = app.clone();
     tauri::async_runtime::spawn(async move {
-        let _ = super::config::do_reload_gateway(&app2).await;
+        let _ = super::gateway_runtime::do_reload_gateway(&app2).await;
     });
 
     Ok(serde_json::json!({
