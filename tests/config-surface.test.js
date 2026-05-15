@@ -384,6 +384,23 @@ test('openclaw install runtime helpers move out of config.rs ownership', () => {
   assert.match(openclawVersionRs, /openclaw_install_runtime::npm_command\(\)/)
 })
 
+test('openclaw r2 installer moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_r2_installer.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const r2InstallerRs = fs.readFileSync('src-tauri/src/commands/openclaw_r2_installer.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_r2_installer;/)
+  assert.match(r2InstallerRs, /pub\(crate\) async fn try_r2_install\b/)
+  assert.doesNotMatch(configRs, /\basync fn try_r2_install\b/)
+  assert.match(r2InstallerRs, /openclaw_install_policy::r2_config\(\)/)
+  assert.match(r2InstallerRs, /openclaw_install_policy::versions_match\(/)
+  assert.match(r2InstallerRs, /openclaw_install_runtime::r2_platform_key\(\)/)
+  assert.match(r2InstallerRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
+  assert.match(r2InstallerRs, /openclaw_install_runtime::npm_global_bin_dir\(\)/)
+})
+
 test('installation lifecycle public contract stays stable during phase 5', () => {
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
   const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
