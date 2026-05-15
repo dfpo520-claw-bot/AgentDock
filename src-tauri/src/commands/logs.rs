@@ -64,7 +64,9 @@ pub fn read_log_tail(log_name: String, lines: Option<u32>) -> Result<String, Str
         0
     };
 
-    Ok(all_lines[start..].join("\n"))
+    Ok(super::secret_redaction::redact_secrets(
+        all_lines[start..].join("\n"),
+    ))
 }
 
 #[tauri::command]
@@ -114,5 +116,8 @@ pub fn search_log(
         0
     };
 
-    Ok(matched[start..].to_vec())
+    Ok(matched[start..]
+        .iter()
+        .map(super::secret_redaction::redact_secrets)
+        .collect())
 }

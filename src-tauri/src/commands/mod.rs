@@ -40,6 +40,7 @@ pub mod openclaw_version;
 pub mod pairing;
 pub mod proxy_diagnostics;
 pub mod service;
+pub mod secret_redaction;
 pub mod skillhub;
 pub mod skills;
 pub mod status_summary;

@@ -103,7 +103,7 @@ fn collect_env() -> DiagnoseEnv {
         } else {
             &bytes[..]
         };
-        String::from_utf8_lossy(tail).to_string()
+        super::secret_redaction::redact_secrets(String::from_utf8_lossy(tail))
     } else {
         String::new()
     };
@@ -114,7 +114,7 @@ fn collect_env() -> DiagnoseEnv {
         port,
         auth_mode,
         device_key_exists,
-        gateway_owner,
+        gateway_owner: gateway_owner.map(super::secret_redaction::redact_secrets),
         err_log_excerpt,
     }
 }

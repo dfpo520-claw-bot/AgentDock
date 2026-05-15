@@ -13,7 +13,10 @@ fn audit_log(action: &str, detail: &str) {
     let _ = std::fs::create_dir_all(&log_dir);
     let log_path = log_dir.join("assistant-audit.log");
     let ts = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
-    let line = format!("[{ts}] [{action}] {detail}\n");
+    let line = format!(
+        "[{ts}] [{action}] {}\n",
+        super::secret_redaction::redact_secrets(detail)
+    );
     let _ = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -197,7 +200,7 @@ pub async fn assistant_exec(command: String, cwd: Option<String>) -> Result<Stri
         result.push_str("\n...(输出已截断)");
     }
 
-    Ok(result)
+    Ok(super::secret_redaction::redact_secrets(result))
 }
 
 /// 读取文件内容

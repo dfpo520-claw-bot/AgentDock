@@ -458,6 +458,23 @@ test('installation lifecycle public contract stays stable during phase 5', () =>
   }
 })
 
+test('phase 5 masks sensitive data before logs and diagnostics reach the UI', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/secret_redaction.rs'), true)
+
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+  const redactionRs = fs.readFileSync('src-tauri/src/commands/secret_redaction.rs', 'utf8')
+  const logsRs = fs.readFileSync('src-tauri/src/commands/logs.rs', 'utf8')
+  const diagnoseRs = fs.readFileSync('src-tauri/src/commands/diagnose.rs', 'utf8')
+  const assistantRs = fs.readFileSync('src-tauri/src/commands/assistant.rs', 'utf8')
+
+  assert.match(modRs, /pub mod secret_redaction;/)
+  assert.match(redactionRs, /pub\(crate\) fn redact_secrets\b/)
+  assert.match(redactionRs, /token|password|api\[_-\]\?key|secret/i)
+  assert.match(logsRs, /secret_redaction::redact_secrets/)
+  assert.match(diagnoseRs, /secret_redaction::redact_secrets/)
+  assert.match(assistantRs, /secret_redaction::redact_secrets/)
+})
+
 test('git runtime commands move out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/git_runtime.rs'), true)
 
