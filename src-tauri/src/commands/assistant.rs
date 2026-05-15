@@ -29,6 +29,46 @@ fn data_dir() -> PathBuf {
     super::openclaw_dir().join("clawpanel")
 }
 
+const MAX_ASSISTANT_COMMAND_LEN: usize = 8 * 1024;
+
+fn validate_assistant_command(command: &str) -> Result<(), String> {
+    if command.trim().is_empty() {
+        return Err("assistant command is empty".into());
+    }
+    if command.len() > MAX_ASSISTANT_COMMAND_LEN {
+        return Err(format!(
+            "assistant command is too long: {} > {} bytes",
+            command.len(),
+            MAX_ASSISTANT_COMMAND_LEN
+        ));
+    }
+    if command.contains('\0') {
+        return Err("assistant command contains an invalid null byte".into());
+    }
+    Ok(())
+}
+
+fn resolve_assistant_cwd(cwd: Option<String>) -> Result<PathBuf, String> {
+    let raw = cwd.unwrap_or_else(|| {
+        dirs::home_dir()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string()
+    });
+    if raw.contains('\0') {
+        return Err("assistant cwd contains an invalid null byte".into());
+    }
+
+    let path = PathBuf::from(&raw);
+    if !path.exists() {
+        return Err(format!("assistant cwd does not exist: {}", path.display()));
+    }
+    if !path.is_dir() {
+        return Err(format!("assistant cwd is not a directory: {}", path.display()));
+    }
+    Ok(path)
+}
+
 /// 确保数据目录及子目录存在，返回目录路径
 #[tauri::command]
 pub async fn assistant_ensure_data_dir() -> Result<String, String> {
@@ -138,14 +178,20 @@ pub async fn assistant_delete_image(id: String) -> Result<(), String> {
 /// 执行 shell 命令，返回 stdout + stderr
 #[tauri::command]
 pub async fn assistant_exec(command: String, cwd: Option<String>) -> Result<String, String> {
-    let work_dir = cwd.unwrap_or_else(|| {
-        dirs::home_dir()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string()
-    });
+    if let Err(err) = validate_assistant_command(&command) {
+        audit_log("EXEC_REJECTED", &format!("reason={err} cmd={command}"));
+        return Err(err);
+    }
+    let work_dir = match resolve_assistant_cwd(cwd) {
+        Ok(path) => path,
+        Err(err) => {
+            audit_log("EXEC_REJECTED", &format!("reason={err} cmd={command}"));
+            return Err(err);
+        }
+    };
+    let work_dir_display = work_dir.to_string_lossy().to_string();
 
-    audit_log("EXEC", &format!("cmd={command} cwd={work_dir}"));
+    audit_log("EXEC", &format!("cmd={command} cwd={work_dir_display}"));
 
     let output;
 
@@ -159,7 +205,14 @@ pub async fn assistant_exec(command: String, cwd: Option<String>) -> Result<Stri
             .creation_flags(CREATE_NO_WINDOW)
             .output()
             .await
-            .map_err(|e| format!("执行失败: {e}"))?;
+            .map_err(|e| {
+                let msg = format!("execution failed: {e}");
+                audit_log(
+                    "EXEC_RESULT",
+                    &format!("status=spawn_error code=-1 cmd={command} cwd={work_dir_display} error={msg}"),
+                );
+                msg
+            })?;
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -170,12 +223,28 @@ pub async fn assistant_exec(command: String, cwd: Option<String>) -> Result<Stri
             .env("PATH", super::enhanced_path())
             .output()
             .await
-            .map_err(|e| format!("执行失败: {e}"))?;
+            .map_err(|e| {
+                let msg = format!("execution failed: {e}");
+                audit_log(
+                    "EXEC_RESULT",
+                    &format!("status=spawn_error code=-1 cmd={command} cwd={work_dir_display} error={msg}"),
+                );
+                msg
+            })?;
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let code = output.status.code().unwrap_or(-1);
+    let status = if output.status.success() { "success" } else { "failure" };
+    audit_log(
+        "EXEC_RESULT",
+        &format!(
+            "status={status} code={code} stdout_bytes={} stderr_bytes={} cmd={command} cwd={work_dir_display}",
+            output.stdout.len(),
+            output.stderr.len()
+        ),
+    );
 
     let mut result = String::new();
     if !stdout.is_empty() {
@@ -189,15 +258,14 @@ pub async fn assistant_exec(command: String, cwd: Option<String>) -> Result<Stri
         result.push_str(&stderr);
     }
     if result.is_empty() {
-        result = format!("(命令已执行，退出码: {code})");
+        result = format!("(command completed, exit code: {code})");
     } else if code != 0 {
-        result.push_str(&format!("\n(退出码: {code})"));
+        result.push_str(&format!("\n(exit code: {code})"));
     }
 
-    // 限制输出长度
     if result.len() > 10000 {
         result.truncate(10000);
-        result.push_str("\n...(输出已截断)");
+        result.push_str("\n...(output truncated)");
     }
 
     Ok(super::secret_redaction::redact_secrets(result))

@@ -475,6 +475,17 @@ test('phase 5 masks sensitive data before logs and diagnostics reach the UI', ()
   assert.match(assistantRs, /secret_redaction::redact_secrets/)
 })
 
+test('phase 5 assistant backend validates and audits command execution', () => {
+  const assistantRs = fs.readFileSync('src-tauri/src/commands/assistant.rs', 'utf8')
+
+  assert.match(assistantRs, /MAX_ASSISTANT_COMMAND_LEN/)
+  assert.match(assistantRs, /validate_assistant_command/)
+  assert.match(assistantRs, /resolve_assistant_cwd/)
+  assert.match(assistantRs, /EXEC_REJECTED/)
+  assert.match(assistantRs, /EXEC_RESULT/)
+  assert.match(assistantRs, /status=.*code=/)
+})
+
 test('phase 5 assistant unlimited mode still confirms dangerous tools', () => {
   const assistantJs = fs.readFileSync('src/pages/assistant.js', 'utf8')
   const assistantLocaleJs = fs.readFileSync('src/locales/modules/assistant.js', 'utf8')
