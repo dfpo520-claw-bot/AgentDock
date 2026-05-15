@@ -329,7 +329,7 @@ export class WsClient {
           }, 30000)
           return
         }
-        // Gateway 内核过旧：不支持 ClawPanel 0.15+ 使用的 v3 签名 payload / minProtocol=3
+        // Gateway 内核过旧：不支持 AgentDock 0.15+ 使用的 v3 签名 payload / minProtocol=3
         // 关闭 reason 通常是 'device signature invalid' / 'protocol mismatch'
         if (isProtocolIncompatReason(reason)) {
           console.warn('[ws] Gateway 协议/签名不兼容（内核过旧）:', e.reason)

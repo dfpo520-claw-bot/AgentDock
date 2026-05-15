@@ -1,6 +1,6 @@
 /**
  * CLI 冲突横幅 (cli-conflict-banner) 文案
- * 用于 OpenClaw 仪表盘提示用户存在非 ClawPanel 管理的 CLI 冲突项
+ * 用于 OpenClaw 仪表盘提示用户存在非 AgentDock 管理的 CLI 冲突项
  */
 import { _ } from '../helper.js'
 
@@ -11,9 +11,9 @@ export default {
     '偵測到 {count} 處可能衝突的 OpenClaw 安裝',
   ),
   desc: _(
-    '系统 PATH 中存在非 ClawPanel 管理的 OpenClaw（如 Cherry Studio 内嵌、旧 npm 全局），可能导致终端命令拿到老版本，引发 schema 不兼容、doctor --fix 卡死等问题。',
-    'Your PATH has OpenClaw installations not managed by ClawPanel (e.g. Cherry Studio bundled, legacy npm global). They can cause terminal commands to pick up old versions, triggering schema mismatches and doctor --fix hangs.',
-    '系統 PATH 中存在非 ClawPanel 管理的 OpenClaw（如 Cherry Studio 內嵌、舊 npm 全域），可能導致終端指令取得舊版本，引發 schema 不相容、doctor --fix 卡住等問題。',
+    '系统 PATH 中存在非 AgentDock 管理的 OpenClaw（如 Cherry Studio 内嵌、旧 npm 全局），可能导致终端命令拿到老版本，引发 schema 不兼容、doctor --fix 卡死等问题。',
+    'Your PATH has OpenClaw installations not managed by AgentDock (e.g. Cherry Studio bundled, legacy npm global). They can cause terminal commands to pick up old versions, triggering schema mismatches and doctor --fix hangs.',
+    '系統 PATH 中存在非 AgentDock 管理的 OpenClaw（如 Cherry Studio 內嵌、舊 npm 全域），可能導致終端指令取得舊版本，引發 schema 不相容、doctor --fix 卡住等問題。',
   ),
   viewDetails: _('查看详情', 'View details', '查看詳情'),
   hideDetails: _('收起详情', 'Hide details', '收起詳情'),

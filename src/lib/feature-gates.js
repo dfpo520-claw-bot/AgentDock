@@ -1,7 +1,7 @@
 /**
  * 功能版本门控 — 向后兼容适配层
  *
- * 从 ClawPanel 0.15.0 开始，内核版本门控逻辑迁移到 `./kernel.js`，
+ * 从 AgentDock 0.15.0 开始，内核版本门控逻辑迁移到 `./kernel.js`，
  * 本文件仅作为 **别名**，保持旧调用代码可用而无需立刻修改所有页面。
  *
  * 新代码请直接 `import { hasFeature, onKernelChange, getKernelSnapshot } from './kernel.js'`

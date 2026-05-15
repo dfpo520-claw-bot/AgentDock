@@ -1,7 +1,7 @@
 /**
  * Web Push 推送通知封装（P1-0）
  *
- * 对接 OpenClaw 内核的 4 个 push.web.* RPC，让 ClawPanel 关掉也能弹系统通知。
+ * 对接 OpenClaw 内核的 4 个 push.web.* RPC，让 AgentDock 关掉也能弹系统通知。
  */
 import { wsClient } from './ws-client.js'
 
@@ -158,7 +158,7 @@ export async function unsubscribePush() {
  */
 export async function sendTestPush(title, body) {
   return await wsClient.request('push.web.test', {
-    title: title || 'ClawPanel',
+    title: title || 'AgentDock',
     body: body || '这是一条测试通知，证明推送链路通了 ✓',
   })
 }

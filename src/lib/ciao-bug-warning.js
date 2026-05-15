@@ -4,7 +4,7 @@
  * 背景：openclaw 的依赖 @homebridge/ciao (<= 1.3.6) 在 Windows 上每 15-30 秒
  * 调用 `child_process.exec("arp -a ...")` 时未传 `windowsHide: true`，
  * 导致 cmd.exe / conhost.exe 窗口闪烁。这是上游库的 bug，
- * 不在 ClawPanel 控制范围内。上游 issue #64 和 PR #65 尚未合并。
+ * 不在 AgentDock 控制范围内。上游 issue #64 和 PR #65 尚未合并。
  *
  * 我们只做两件事：检测 + 给用户展示修复指引。不触碰用户 node_modules。
  */

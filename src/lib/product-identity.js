@@ -2,6 +2,8 @@ export const PRODUCT_IDENTITY = Object.freeze({
   id: 'agentdock',
   name: 'AgentDock',
   displayName: 'AgentDock',
+  assistantNameZh: 'DeepAi助手',
+  assistantNameEn: 'DeepAi Assistant',
   tagline: 'Multi-engine AI agent operations console',
   description: 'AgentDock - production desktop console for multi-engine AI agent operations',
   tauriIdentifier: 'com.agentdock.desktop',

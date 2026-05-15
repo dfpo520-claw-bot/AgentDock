@@ -10,6 +10,8 @@ test('PRODUCT_IDENTITY exposes the production fork identity', () => {
   assert.equal(PRODUCT_IDENTITY.id, 'agentdock')
   assert.equal(PRODUCT_IDENTITY.name, 'AgentDock')
   assert.equal(PRODUCT_IDENTITY.displayName, 'AgentDock')
+  assert.equal(PRODUCT_IDENTITY.assistantNameZh, 'DeepAi助手')
+  assert.equal(PRODUCT_IDENTITY.assistantNameEn, 'DeepAi Assistant')
   assert.equal(PRODUCT_IDENTITY.tagline, 'Multi-engine AI agent operations console')
   assert.equal(PRODUCT_IDENTITY.description, 'AgentDock - production desktop console for multi-engine AI agent operations')
   assert.equal(PRODUCT_IDENTITY.tauriIdentifier, 'com.agentdock.desktop')
@@ -26,6 +28,8 @@ test('visible identity fields no longer use the fork app name', () => {
   const visible = [
     PRODUCT_IDENTITY.name,
     PRODUCT_IDENTITY.displayName,
+    PRODUCT_IDENTITY.assistantNameZh,
+    PRODUCT_IDENTITY.assistantNameEn,
     PRODUCT_IDENTITY.tagline,
     PRODUCT_IDENTITY.description,
     PRODUCT_IDENTITY.homepage,

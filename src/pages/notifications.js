@@ -6,7 +6,7 @@
  *   - 展示当前订阅状态（含端点摘要）
  *   - 发测试通知（让用户立刻确认链路通了）
  *
- * 即使 ClawPanel 关掉，系统通知中心依然能收到 Agent / Cron / 渠道消息。
+ * 即使 AgentDock 关掉，系统通知中心依然能收到 Agent / Cron / 渠道消息。
  */
 import { t } from '../lib/i18n.js'
 import { toast } from '../components/toast.js'

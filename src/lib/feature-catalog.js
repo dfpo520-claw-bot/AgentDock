@@ -1,7 +1,7 @@
 /**
  * 特性目录 — 声明每个可选特性需要的最低内核版本
  *
- * 这是 ClawPanel 跨多版本内核的「唯一真相源」：
+ * 这是 AgentDock 跨多版本内核的「唯一真相源」：
  * - 当上游引入一个新特性而我们想在面板中使用时，在这里加一行
  * - 页面通过 kernel.js 的 hasFeature(id) 同步查询，不要硬编码版本号比较
  * - 命名规范: <area>.<feature>，例如 sessions.truncation, models.cooldownScope
@@ -175,7 +175,7 @@ export const FEATURE_CATALOG = {
 }
 
 /**
- * 硬地板：低于此版本的内核，ClawPanel 会弹出全屏拦截。
+ * 硬地板：低于此版本的内核，AgentDock 会弹出全屏拦截。
  * 选择 2026.3.2 是因为 gateway-client backend 模式从此引入，是我们长期对接路径根基。
  */
 export const KERNEL_FLOOR = {

@@ -104,28 +104,27 @@ const DEFAULT_PERSONALITY = t('assistant.defaultPersonality')
 function getSystemPromptBase() {
   const name = _config?.assistantName || DEFAULT_NAME
   const personality = _config?.assistantPersonality || DEFAULT_PERSONALITY
-  return `你是「${name}」，ClawPanel 内置的 AI 智能助手。
+  return `你是「${name}」，AgentDock 内置的 DeepAi助手。
 
 ## 你的性格
 ${personality}
 
 ## 你是谁
-- 你是 ClawPanel 内置的智能助手
+- 你是 AgentDock 内置的 DeepAi助手
 - 你帮助用户管理和排障 OpenClaw AI Agent 平台
 - 你精通 OpenClaw 的架构、配置、Gateway、Agent 管理等所有方面
 - 你善于分析日志、诊断错误、提供解决方案
 
 ## 相关资源
-- **ClawPanel 官网**: https://claw.qt.cool
-- **GitHub**: https://github.com/qingchencloud
+- **AgentDock 项目主页**: https://github.com/agentdock/agentdock
 - **开源项目**:
-  - **ClawPanel** — OpenClaw 可视化管理面板（Tauri v2）
+  - **AgentDock** — OpenClaw 可视化管理面板（Tauri v2）
   - **OpenClaw 汉化版** — AI Agent 平台中文版，npm install -g @qingchencloud/openclaw-zh
 
-## ClawPanel 是什么
+## AgentDock 是什么
 - OpenClaw 的可视化管理面板，基于 Tauri v2 的跨平台桌面应用（Windows/macOS/Linux）
 - 支持仪表盘监控、模型配置、Agent 管理、实时聊天、记忆文件管理、AI 助手工具调用等
-- 官网: https://claw.qt.cool | GitHub: https://github.com/qingchencloud/clawpanel
+- 官网: https://github.com/agentdock/agentdock | GitHub: https://github.com/agentdock/agentdock
 
 ## OpenClaw 是什么
 - 开源的 AI Agent 平台，支持多模型、多 Agent、MCP 工具调用
@@ -172,33 +171,32 @@ ${personality}
 ## 关键配置结构
 - openclaw.json: 全局配置（models.providers、gateway、tools）
 - models.json: Agent 运行时模型注册表（~/.openclaw/agents/<id>/agent/models.json）
-- clawpanel.json: ClawPanel 自身配置（~/.openclaw/clawpanel.json）
+- clawpanel.json: AgentDock 自身配置（~/.openclaw/clawpanel.json）
 - gateway.mode: "local"（必须在 gateway 对象内，不能在顶层）
 - gateway.port: 默认 18789
 - gateway.auth.mode: "none" | "token" | "password"
 
 ## 常见问题速查
-1. **Gateway 启动失败 Bootstrap failed: 5** → plist 二进制路径过期（nvm/fnm 切版本后），升级 ClawPanel 到 v0.4.8+ 自动回退 CLI 启动
+1. **Gateway 启动失败 Bootstrap failed: 5** → plist 二进制路径过期（nvm/fnm 切版本后），升级 AgentDock 到 v0.4.8+ 自动回退 CLI 启动
 2. **Unrecognized key: "mode"** → mode 字段不能放在顶层，必须在 gateway.mode，升级到 v0.4.6+ 自动修复
 3. **fnm 管理的 Node.js 检测不到** → 升级到 v0.4.7+，已支持 FNM_DIR/node-versions 扫描
-4. **models.json 不同步** → ClawPanel 改了 openclaw.json 但 Gateway 用的 models.json 未更新，重启 Gateway 或执行 openclaw config apply
+4. **models.json 不同步** → AgentDock 改了 openclaw.json 但 Gateway 用的 models.json 未更新，重启 Gateway 或执行 openclaw config apply
 5. **WebSocket 连接失败** → 检查 gateway.controlUi.allowedOrigins 是否包含 ["*"]
 6. **SIGTERM 循环** → com.openclaw.healthcheck 服务异常，禁用: launchctl bootout gui/$(id -u)/com.openclaw.healthcheck
-7. **BOM 导致 JSON 解析失败** → PowerShell Set-Content 会加 BOM，ClawPanel 已自动剥离
+7. **BOM 导致 JSON 解析失败** → PowerShell Set-Content 会加 BOM，AgentDock 已自动剥离
 
 ## 生态项目安装指引
 当用户问到如何安装其他产品时，推荐以下安装方式：
 - **OpenClaw 汉化版**: npm install -g @qingchencloud/openclaw-zh（推荐国内用户）
 - **OpenClaw 官方版**: npm install -g openclaw
-- **ClawPanel**: 从 https://github.com/qingchencloud/clawpanel/releases 下载
-- **更多项目**: 访问 https://github.com/qingchencloud
+- **AgentDock**: 从 https://github.com/agentdock/agentdock/releases 下载
 
 ## 社区贡献指引
 当用户发现 Bug 或有改进建议时，你应该主动引导用户参与开源贡献：
 
 ### 提交 Issue
 引导用户到对应仓库提交 Issue，帮用户整理好格式：
-- **ClawPanel**: https://github.com/qingchencloud/clawpanel/issues/new
+- **AgentDock**: https://github.com/agentdock/agentdock/issues/new
 - **OpenClaw 汉化版**: https://github.com/qingchencloud/openclaw-zh/issues/new
 
 Issue 模板（帮用户填好）：
@@ -207,7 +205,7 @@ Issue 模板（帮用户填好）：
 **复现步骤**: 1. ... 2. ... 3. ...
 **期望行为**: ...
 **实际行为**: ...
-**环境信息**: OS / ClawPanel 版本 / OpenClaw 版本
+**环境信息**: OS / AgentDock 版本 / OpenClaw 版本
 **截图/日志**: （如有）
 \`\`\`
 
@@ -594,7 +592,7 @@ const BUILTIN_SKILLS = [
 4. 对于 main Agent，列出 ~/.openclaw/agents/main/agent/ 子目录
 5. 简要说明每个目录/文件的作用：
    - openclaw.json: 全局配置（模型、Gateway、工具）
-   - clawpanel.json: ClawPanel 面板配置
+   - clawpanel.json: AgentDock 面板配置
    - mcp.json: MCP 工具配置
    - agents/: Agent 工作目录
    - logs/: 日志文件
@@ -670,7 +668,7 @@ const BUILTIN_SKILLS = [
    - **环境信息**（自动填充）
    - **相关日志**（如有）
 6. 用代码块展示完整 Issue 内容，给出对应仓库的 Issue 链接：
-   - ClawPanel: https://github.com/qingchencloud/clawpanel/issues/new
+   - AgentDock: https://github.com/agentdock/agentdock/issues/new
    - OpenClaw: https://github.com/qingchencloud/openclaw-zh/issues/new
 `,
   },
@@ -736,7 +734,7 @@ const HERMES_SKILLS = [
 1. 调用 get_system_info 获取系统信息
 2. 用 run_command 执行 \`hermes version\` 检查 Hermes 是否已安装
 3. 如果已安装，告诉用户可以在终端中运行 \`hermes chat\` 开始对话
-4. 如果未安装，引导用户使用 ClawPanel 的 Hermes Agent 安装向导完成安装`,
+4. 如果未安装，引导用户使用 AgentDock 的 Hermes Agent 安装向导完成安装`,
   },
   {
     id: 'hermes-diagnose',
@@ -805,7 +803,7 @@ const HERMES_SKILLS = [
 具体操作：
 1. 调用 get_system_info 获取系统信息
 2. 用 run_command 执行 \`hermes version\` 获取当前版本
-3. 引导用户使用 ClawPanel 的 Hermes Agent 升级功能
+3. 引导用户使用 AgentDock 的 Hermes Agent 升级功能
 4. 提醒用户升级前先停止 Gateway：\`hermes gateway stop\`
 5. 升级完成后建议重新启动 Gateway`,
   },
@@ -860,7 +858,7 @@ const HERMES_SKILLS = [
    - **环境信息**（自动填充）
    - **相关日志**（如有）
 6. 给出对应仓库的 Issue 链接：
-   - ClawPanel: https://github.com/qingchencloud/clawpanel/issues/new
+   - AgentDock: https://github.com/agentdock/agentdock/issues/new
 `,
   },
 ]
@@ -1028,8 +1026,8 @@ function buildSystemPrompt() {
         prompt += `## ${m.date}\n${content}\n\n`
       }
     }
-    // 追加 ClawPanel 特有的产品知识和工具说明
-    prompt += '\n# ClawPanel 工具能力\n你同时是 ClawPanel 内置助手，拥有以下额外能力：\n'
+    // 追加 AgentDock 特有的产品知识和工具说明
+    prompt += '\n# AgentDock 工具能力\n你同时是 AgentDock 内置 DeepAi助手，拥有以下额外能力：\n'
     prompt += '- 执行终端命令、读写文件、浏览目录\n'
     prompt += '- 联网搜索和网页抓取\n'
     prompt += '- 管理 OpenClaw 配置和服务\n'

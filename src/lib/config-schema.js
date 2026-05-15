@@ -46,7 +46,7 @@ export async function getFieldSchema(path) {
 }
 
 /**
- * 清缓存（极少需要 — 内核 schema 在 ClawPanel 一次会话内不会变）
+ * 清缓存（极少需要 — 内核 schema 在 AgentDock 一次会话内不会变）
  */
 export function clearSchemaCache(path) {
   if (path) _cache.delete(path)
