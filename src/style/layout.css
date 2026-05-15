@@ -2,13 +2,22 @@
 #sidebar {
   width: var(--sidebar-width);
   height: 100vh;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-primary);
+  background: var(--surface-elevated);
+  box-shadow: 1px 0 0 var(--border-secondary);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   transition: width var(--transition-normal);
   overflow: hidden;
+}
+
+.app-content-frame {
+  flex: 1;
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
 }
 
 /* 桌面端折叠态 */
@@ -54,14 +63,27 @@
 }
 
 .sidebar-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.sidebar-logo-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 850;
+  background: linear-gradient(135deg, var(--accent-ops), var(--accent-release));
+  letter-spacing: 0;
 }
 
 .sidebar-logo img {

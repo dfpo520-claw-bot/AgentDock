@@ -197,7 +197,7 @@ export function renderSidebar(el) {
   let html = `
     <div class="sidebar-header">
       <div class="sidebar-logo">
-        <img src="/images/logo.png" alt="${PRODUCT_IDENTITY.name}">
+        <div class="sidebar-logo-mark" aria-hidden="true">AD</div>
       </div>
       <span class="sidebar-title">${PRODUCT_IDENTITY.name}</span>
       <button class="sidebar-collapse-btn" id="btn-sidebar-collapse" title="${t('sidebar.collapse')}">${collapsed ? '»' : '«'}</button>
