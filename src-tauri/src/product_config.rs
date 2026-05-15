@@ -5,11 +5,14 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub const PRODUCT_ID: &str = "agentdock";
+pub const PRODUCT_NAME: &str = "AgentDock";
 pub const PRODUCT_CONFIG_FILENAME: &str = "agentdock.json";
 pub const PRODUCT_DATA_DIR_NAME: &str = ".agentdock";
 pub const LEGACY_PANEL_CONFIG_FILENAME: &str = "clawpanel.json";
 pub const LEGACY_DATA_DIR_NAME: &str = ".openclaw";
 pub const LEGACY_PRODUCT_NAME: &str = "ClawPanel";
+pub const UPDATE_MANIFEST_URL: &str =
+    "https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json";
 
 const IMPORTABLE_PANEL_KEYS: &[&str] = &[
     "networkProxy",
@@ -52,6 +55,14 @@ pub struct LegacyConfigDecisionResult {
 
 pub fn product_config_filename() -> &'static str {
     PRODUCT_CONFIG_FILENAME
+}
+
+pub fn product_name() -> &'static str {
+    PRODUCT_NAME
+}
+
+pub fn update_manifest_url() -> &'static str {
+    UPDATE_MANIFEST_URL
 }
 
 pub fn legacy_panel_config_filename() -> &'static str {
@@ -148,7 +159,8 @@ fn read_json_file(path: &Path) -> Option<Value> {
 }
 
 fn has_recorded_migration(value: &Value) -> bool {
-    value.pointer("/agentdock/migration/decision")
+    value
+        .pointer("/agentdock/migration/decision")
         .and_then(Value::as_str)
         .is_some()
 }
@@ -200,9 +212,7 @@ fn detect_legacy_config_for_paths(
         detected_items.push("legacyDataDir".to_string());
     }
 
-    let already_decided = product_config
-        .as_ref()
-        .is_some_and(has_recorded_migration);
+    let already_decided = product_config.as_ref().is_some_and(has_recorded_migration);
     let needed = product_config.is_none()
         && !already_decided
         && (legacy_config.is_some() || legacy_dir_exists);
@@ -319,10 +329,8 @@ mod tests {
     use super::*;
 
     fn temp_root(name: &str) -> PathBuf {
-        let root = std::env::temp_dir().join(format!(
-            "agentdock-product-config-{name}-{}",
-            now_millis()
-        ));
+        let root =
+            std::env::temp_dir().join(format!("agentdock-product-config-{name}-{}", now_millis()));
         fs::create_dir_all(&root).unwrap();
         root
     }
@@ -330,7 +338,9 @@ mod tests {
     #[test]
     fn detects_legacy_config_when_product_config_is_missing() {
         let root = temp_root("detect");
-        let product = root.join(PRODUCT_DATA_DIR_NAME).join(PRODUCT_CONFIG_FILENAME);
+        let product = root
+            .join(PRODUCT_DATA_DIR_NAME)
+            .join(PRODUCT_CONFIG_FILENAME);
         let legacy_dir = root.join(LEGACY_DATA_DIR_NAME);
         fs::create_dir_all(&legacy_dir).unwrap();
         let legacy = legacy_dir.join(LEGACY_PANEL_CONFIG_FILENAME);
@@ -340,7 +350,9 @@ mod tests {
 
         assert!(detected.needed);
         assert_eq!(detected.recommended_action, "import");
-        assert!(detected.detected_items.contains(&"legacyPanelConfig".to_string()));
+        assert!(detected
+            .detected_items
+            .contains(&"legacyPanelConfig".to_string()));
     }
 
     #[test]
@@ -349,7 +361,11 @@ mod tests {
         let product_dir = root.join(PRODUCT_DATA_DIR_NAME);
         fs::create_dir_all(&product_dir).unwrap();
         let product = product_dir.join(PRODUCT_CONFIG_FILENAME);
-        fs::write(&product, r#"{"agentdock":{"migration":{"decision":"ignored"}}}"#).unwrap();
+        fs::write(
+            &product,
+            r#"{"agentdock":{"migration":{"decision":"ignored"}}}"#,
+        )
+        .unwrap();
         let legacy_dir = root.join(LEGACY_DATA_DIR_NAME);
         fs::create_dir_all(&legacy_dir).unwrap();
         let legacy = legacy_dir.join(LEGACY_PANEL_CONFIG_FILENAME);
@@ -363,7 +379,9 @@ mod tests {
     #[test]
     fn import_copies_compatible_keys_and_records_metadata() {
         let root = temp_root("import");
-        let product = root.join(PRODUCT_DATA_DIR_NAME).join(PRODUCT_CONFIG_FILENAME);
+        let product = root
+            .join(PRODUCT_DATA_DIR_NAME)
+            .join(PRODUCT_CONFIG_FILENAME);
         let legacy_dir = root.join(LEGACY_DATA_DIR_NAME);
         fs::create_dir_all(&legacy_dir).unwrap();
         let legacy = legacy_dir.join(LEGACY_PANEL_CONFIG_FILENAME);
@@ -374,7 +392,9 @@ mod tests {
         .unwrap();
 
         let result = apply_legacy_config_decision_for_paths(
-            LegacyConfigDecision { action: "import".into() },
+            LegacyConfigDecision {
+                action: "import".into(),
+            },
             product.clone(),
             legacy,
         )
@@ -392,11 +412,17 @@ mod tests {
     #[test]
     fn ignore_records_decision_without_importing_legacy_keys() {
         let root = temp_root("ignore");
-        let product = root.join(PRODUCT_DATA_DIR_NAME).join(PRODUCT_CONFIG_FILENAME);
-        let legacy = root.join(LEGACY_DATA_DIR_NAME).join(LEGACY_PANEL_CONFIG_FILENAME);
+        let product = root
+            .join(PRODUCT_DATA_DIR_NAME)
+            .join(PRODUCT_CONFIG_FILENAME);
+        let legacy = root
+            .join(LEGACY_DATA_DIR_NAME)
+            .join(LEGACY_PANEL_CONFIG_FILENAME);
 
         let result = apply_legacy_config_decision_for_paths(
-            LegacyConfigDecision { action: "ignore".into() },
+            LegacyConfigDecision {
+                action: "ignore".into(),
+            },
             product.clone(),
             legacy,
         )
@@ -405,7 +431,10 @@ mod tests {
 
         assert_eq!(result.action, "ignore");
         assert!(result.imported_keys.is_empty());
-        assert_eq!(written.pointer("/agentdock/migration/decision").unwrap(), "ignored");
+        assert_eq!(
+            written.pointer("/agentdock/migration/decision").unwrap(),
+            "ignored"
+        );
         assert!(written.get("networkProxy").is_none());
     }
 }

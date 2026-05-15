@@ -32,12 +32,18 @@ function stripJavaScriptComments(text) {
     .replace(/(^|[^:])\/\/.*$/gm, '$1')
 }
 
+function stripReadmeAttribution(text) {
+  return text.replace(/\n## Upstream and Referenced Projects[\s\S]*$/m, '')
+}
+
 test('first-run brand surfaces use AgentDock identity', () => {
   for (const file of BRAND_SURFACE_FILES) {
     const raw = fs.readFileSync(file, 'utf8')
-    const text = file.endsWith('.js') || file.endsWith('.rs')
-      ? stripJavaScriptComments(raw)
-      : raw
+    const text = file === 'README.md'
+      ? stripReadmeAttribution(raw)
+      : file.endsWith('.js') || file.endsWith('.rs')
+        ? stripJavaScriptComments(raw)
+        : raw
     for (const pattern of OLD_APP_PATTERNS) {
       assert.doesNotMatch(text, pattern, `${file} still matches ${pattern}`)
     }
@@ -47,9 +53,11 @@ test('first-run brand surfaces use AgentDock identity', () => {
 test('production brand surfaces do not ship reserved placeholder domains', () => {
   for (const file of BRAND_SURFACE_FILES) {
     const raw = fs.readFileSync(file, 'utf8')
-    const text = file.endsWith('.js') || file.endsWith('.rs')
-      ? stripJavaScriptComments(raw)
-      : raw
+    const text = file === 'README.md'
+      ? stripReadmeAttribution(raw)
+      : file.endsWith('.js') || file.endsWith('.rs')
+        ? stripJavaScriptComments(raw)
+        : raw
     for (const pattern of RESERVED_PLACEHOLDER_PATTERNS) {
       assert.doesNotMatch(text, pattern, `${file} still matches ${pattern}`)
     }

@@ -510,6 +510,37 @@ test('phase 5 release builds generate artifact manifests and checksums', () => {
   assert.doesNotMatch(script, /new Date\(\)\.toISOString/)
 })
 
+test('phase 5 README records upstream and referenced open source projects', () => {
+  const readme = fs.readFileSync('README.md', 'utf8')
+  const packageJson = fs.readFileSync('package.json', 'utf8')
+  const cargoToml = fs.readFileSync('src-tauri/Cargo.toml', 'utf8')
+  const docsIndex = fs.readFileSync('docs/index.html', 'utf8')
+
+  assert.match(readme, /Upstream and Referenced Projects/)
+  assert.match(readme, /ClawPanel/)
+  assert.match(readme, /OpenClaw/)
+  assert.match(readme, /Hermes/)
+  assert.doesNotMatch(`${readme}\n${packageJson}\n${cargoToml}\n${docsIndex}`, /AGPL-3\.0/)
+})
+
+test('phase 5 update manifest and rollback behavior are product-owned', () => {
+  const productConfig = fs.readFileSync('src-tauri/src/product_config.rs', 'utf8')
+  const updateRs = fs.readFileSync('src-tauri/src/commands/update.rs', 'utf8')
+  const latestJson = fs.readFileSync('docs/update/latest.json', 'utf8')
+
+  assert.match(productConfig, /UPDATE_MANIFEST_URL/)
+  assert.match(productConfig, /raw\.githubusercontent\.com\/agentdock\/agentdock/)
+  assert.match(updateRs, /product_config::update_manifest_url\(\)/)
+  assert.match(updateRs, /product_config::product_name\(\)/)
+  assert.match(updateRs, /rollbackAction/)
+  assert.match(updateRs, /\.manifest\.json/)
+  assert.doesNotMatch(updateRs, /claw\.qt\.cool\/update\/latest\.json/)
+  assert.doesNotMatch(updateRs, /Some\("ClawPanel"\)/)
+  assert.match(latestJson, /github\.com\/agentdock\/agentdock/)
+  assert.match(latestJson, /"rollback"/)
+  assert.match(latestJson, /"strategy":\s*"removeDownloadedWebUpdate"/)
+})
+
 test('git runtime commands move out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/git_runtime.rs'), true)
 

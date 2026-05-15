@@ -6,7 +6,6 @@ description = "AgentDock - production desktop console for multi-engine AI agent 
 authors = ["AgentDock Team"]
 repository = "https://github.com/agentdock/agentdock"
 homepage = "https://github.com/agentdock/agentdock"
-license = "AGPL-3.0"
 
 [lib]
 name = "agentdock_lib"

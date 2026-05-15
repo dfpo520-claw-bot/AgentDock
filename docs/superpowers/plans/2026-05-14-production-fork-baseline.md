@@ -372,7 +372,7 @@ Edit the top-level metadata in `package.json` to:
   "description": "AgentDock - production desktop console for multi-engine AI agent operations",
   "type": "module",
   "author": "AgentDock Team",
-  "license": "AGPL-3.0",
+  "license": "TBD",
   "homepage": "https://agentdock.example.com",
   "repository": {
     "type": "git",
@@ -453,7 +453,7 @@ description = "AgentDock - production desktop console for multi-engine AI agent 
 authors = ["AgentDock Team"]
 repository = "https://agentdock.example.com/source"
 homepage = "https://agentdock.example.com"
-license = "AGPL-3.0"
+license = "TBD"
 
 [lib]
 name = "agentdock_lib"

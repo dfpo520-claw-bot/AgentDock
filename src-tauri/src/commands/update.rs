@@ -10,16 +10,17 @@ pub fn update_dir() -> PathBuf {
 }
 
 /// 更新清单 URL（GitHub Pages 托管）
-const LATEST_JSON_URL: &str = "https://claw.qt.cool/update/latest.json";
-
 /// 检查前端是否有新版本可用
 #[tauri::command]
 pub async fn check_frontend_update() -> Result<Value, String> {
-    let client = super::build_http_client(std::time::Duration::from_secs(10), Some("ClawPanel"))
-        .map_err(|e| format!("HTTP 客户端错误: {e}"))?;
+    let client = super::build_http_client(
+        std::time::Duration::from_secs(10),
+        Some(crate::product_config::product_name()),
+    )
+    .map_err(|e| format!("HTTP 客户端错误: {e}"))?;
 
     let resp = client
-        .get(LATEST_JSON_URL)
+        .get(crate::product_config::update_manifest_url())
         .send()
         .await
         .map_err(|e| format!("请求失败: {e}"))?;
@@ -63,6 +64,8 @@ pub async fn check_frontend_update() -> Result<Value, String> {
         "hasUpdate": has_update,
         "compatible": compatible,
         "updateReady": update_ready,
+        "manifestUrl": crate::product_config::update_manifest_url(),
+        "rollbackAction": "removeDownloadedWebUpdate",
         "manifest": manifest
     }))
 }
@@ -74,8 +77,11 @@ pub async fn download_frontend_update(
     expected_hash: String,
     version: String,
 ) -> Result<Value, String> {
-    let client = super::build_http_client(std::time::Duration::from_secs(120), Some("ClawPanel"))
-        .map_err(|e| format!("HTTP 客户端错误: {e}"))?;
+    let client = super::build_http_client(
+        std::time::Duration::from_secs(120),
+        Some(crate::product_config::product_name()),
+    )
+    .map_err(|e| format!("HTTP 客户端错误: {e}"))?;
 
     let resp = client
         .get(&url)
@@ -140,6 +146,16 @@ pub async fn download_frontend_update(
     if !version.is_empty() {
         let _ = std::fs::write(dir.join(".version"), &version);
     }
+    let update_manifest = serde_json::json!({
+        "version": version,
+        "url": url,
+        "hash": expected_hash,
+        "rollbackAction": "removeDownloadedWebUpdate"
+    });
+    let _ = std::fs::write(
+        dir.join(".manifest.json"),
+        serde_json::to_vec_pretty(&update_manifest).unwrap_or_default(),
+    );
 
     Ok(serde_json::json!({
         "success": true,
@@ -155,7 +171,11 @@ pub fn rollback_frontend_update() -> Result<Value, String> {
     if dir.exists() {
         fs::remove_dir_all(&dir).map_err(|e| format!("回退失败: {e}"))?;
     }
-    Ok(serde_json::json!({ "success": true }))
+    Ok(serde_json::json!({
+        "success": true,
+        "rollbackAction": "removeDownloadedWebUpdate",
+        "currentVersion": env!("CARGO_PKG_VERSION")
+    }))
 }
 
 /// 获取当前热更新状态
@@ -178,6 +198,8 @@ pub fn get_update_status() -> Result<Value, String> {
     Ok(serde_json::json!({
         "currentVersion": env!("CARGO_PKG_VERSION"),
         "updateReady": ready,
+        "rollbackAvailable": ready,
+        "rollbackAction": "removeDownloadedWebUpdate",
         "updateVersion": update_version,
         "updateDir": dir.to_string_lossy()
     }))
