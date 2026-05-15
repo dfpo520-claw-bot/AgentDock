@@ -193,7 +193,7 @@ function parseArgs(argv) {
   return args
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url))) {
   try {
     const args = parseArgs(process.argv.slice(2))
     if (args.help) {

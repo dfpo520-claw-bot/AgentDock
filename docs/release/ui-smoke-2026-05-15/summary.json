@@ -1,0 +1,79 @@
+{
+  "baseUrl": "http://127.0.0.1:1421",
+  "generatedAt": "2026-05-15T07:09:04.836Z",
+  "routes": [
+    {
+      "route": "/dashboard",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 695,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\n仪表盘\n\nOpenClaw 运行状态概览\n\nGateway\n外部实例\n检测到外部 Gateway · PID 27700\n检测到外部 Gateway，建议先查看引导或进入设置修正绑定。\n",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\dashboard.png"
+    },
+    {
+      "route": "/settings",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 2256,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\n面板设置\n\n管理 ClawPanel 的网络、代理和下载源配置\n\n网络代理\n保存\n测试连通\n关闭代理\n设置后，npm 安装/升级、版本检测、GitHub/Gitee 更新检查、ClawH",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\settings.png"
+    },
+    {
+      "route": "/services",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 1995,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\n服务管理\n\n管理 OpenClaw 服务、检查更新、配置备份\n\n当前版本 · 官方原版\n2026.5.7\n已对齐推荐稳定版: 2026.5.7 · 最新上游: 2026.5.12\n切换到",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\services.png"
+    },
+    {
+      "route": "/assistant",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 1417,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\n会话列表\n暂无会话\n晴辰助手\n未配置\n聊天\n规划\n执行\n无限\n设置\n晴辰助手\n\n你好！我是你的 AI 助手，有什么可以帮你的？\n\n内置 AI\n这是 ClawPanel 内置的 AI 助手",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\assistant.png"
+    },
+    {
+      "route": "/logs",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 2529,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\n日志查看\n\n查看 OpenClaw 各服务日志\n\nGateway 日志\nGateway 错误\n守护进程\n备份日志\n审计日志\n刷新\n自动滚动\n[2026-05-15T14:27:13.50",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\logs.png"
+    },
+    {
+      "route": "/about",
+      "ok": true,
+      "title": "AgentDock",
+      "textLength": 2379,
+      "hasPage": true,
+      "hasLogin": false,
+      "hasSplash": false,
+      "errorText": null,
+      "excerpt": "当前使用的是系统生成的默认密码，为了安全请尽快修改\n前往安全设置\n✕\nAgentDock\n«\n引擎\nOpenClaw\n监控\n仪表盘\n晴辰助手\n实时聊天\n路由地图\n服务管理\n日志查看\n配置\n模型配置\nAgent 管理\nGateway\n消息渠道\n通信与自动化\n推送通知\n安全设置\n数据\n记忆文件\n梦境模式\n定时任务\n使用情况\n扩展\nSkills\n插件中心\n面板设置\n检测与修复\n术语\n关于\n夜间模式\n简体中文\n简体中文\nzh-CN\n繁體中文\nzh-TW\nEnglish\nen\n日本語\nja\n한국어\nko\nTiếng Việt\nvi\nEspañol\nes\nPortuguês\npt\nРусский\nru\nFrançais\nfr\nDeutsch\nde\ngithub.com/agentdock/agentdock\nv0.15.3\n检测到外部 Gateway 正在运行，当前面板无法管理\n认领 Gateway\n服务管理\n×\nAgentDock\n\nMulti-engine AI agent operations console - github.com/agentdock/agentdock\n\nAgentDo",
+      "screenshot": "docs\\release\\ui-smoke-2026-05-15\\about.png"
+    }
+  ],
+  "pass": true
+}

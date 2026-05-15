@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
-import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
 import { writeReleaseManifest } from '../scripts/generate-release-manifest.mjs'
+import { verifyReleaseSmoke } from '../scripts/verify-release-smoke.mjs'
 
 function createBundleWithArtifacts(files) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'agentdock-release-smoke-'))
@@ -27,16 +27,11 @@ test('release smoke verifier accepts a complete windows installer bundle', () =>
     ['msi/AgentDock.msi', 'msi-bytes'],
   ])
 
-  const output = execFileSync(
-    process.execPath,
-    ['scripts/verify-release-smoke.mjs', '--bundle-dir', bundleDir, '--platform', 'windows'],
-    { cwd: process.cwd(), encoding: 'utf8' },
-  )
+  const result = verifyReleaseSmoke({ rootDir: process.cwd(), bundleDir, platform: 'windows' })
 
-  assert.match(output, /Release smoke verification passed/)
-  assert.match(output, /2 artifacts/)
-  assert.match(output, /nsis/)
-  assert.match(output, /msi/)
+  assert.equal(result.artifactCount, 2)
+  assert.deepEqual(result.kinds, ['msi', 'nsis'])
+  assert.equal(result.platform, 'windows')
 })
 
 test('release smoke verifier rejects checksum drift', () => {
@@ -46,11 +41,7 @@ test('release smoke verifier rejects checksum drift', () => {
   fs.writeFileSync(path.join(bundleDir, 'nsis', 'AgentDock-setup.exe'), 'tampered-bytes!')
 
   assert.throws(
-    () => execFileSync(
-      process.execPath,
-      ['scripts/verify-release-smoke.mjs', '--bundle-dir', bundleDir, '--platform', 'windows'],
-      { cwd: process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-    ),
+    () => verifyReleaseSmoke({ rootDir: process.cwd(), bundleDir, platform: 'windows' }),
     /sha256 mismatch/,
   )
 })
@@ -61,11 +52,7 @@ test('release smoke verifier rejects bundles without a platform installer', () =
   ])
 
   assert.throws(
-    () => execFileSync(
-      process.execPath,
-      ['scripts/verify-release-smoke.mjs', '--bundle-dir', bundleDir, '--platform', 'windows'],
-      { cwd: process.cwd(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-    ),
+    () => verifyReleaseSmoke({ rootDir: process.cwd(), bundleDir, platform: 'windows' }),
     /missing windows installer artifact/,
   )
 })

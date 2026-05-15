@@ -11,6 +11,7 @@ src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\AgentDock_0.15.3_x64
 | Check | Result | Evidence |
 | --- | --- | --- |
 | Authenticode status | Local smoke only | `Windows signing status: NotSigned`, `Publishable: no` |
+| Signing execution readiness | Blocked | `signtool.exe` exists, but no Code Signing certificate was found in `CurrentUser/My` or `LocalMachine/My` |
 | NSIS silent install | Pass | Installer exited with `ExitCode=0` |
 | Installed metadata | Pass | Registry showed `AgentDock`, version `0.15.3`, publisher `AgentDock Team`, install location `D:\AgentDock` |
 | Installed executable | Pass | `D:\AgentDock\AgentDock.exe`, `24521728` bytes |

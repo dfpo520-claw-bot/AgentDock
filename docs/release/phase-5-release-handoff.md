@@ -6,6 +6,14 @@ This handoff records the remaining release work in the order currently selected 
 
 Windows installers are not publishable until Authenticode verification returns `Valid`.
 
+The signing execution entrypoint is:
+
+```powershell
+npm run release:sign:windows -- --file src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\AgentDock_0.15.3_x64-setup.exe
+```
+
+It requires a real code-signing certificate in `Cert:\CurrentUser\My` or `Cert:\LocalMachine\My` with a private key. Provide the certificate thumbprint through `WINDOWS_CODESIGN_CERT_THUMBPRINT` or `--thumbprint <sha1>`.
+
 Local smoke may inspect an unsigned installer without treating it as publishable:
 
 ```powershell
@@ -26,6 +34,12 @@ Required signing inputs remain secret-only environment or CI values:
 
 The release manifest may record whether signing inputs are present, but must never include certificate contents, private keys, passwords, or tokens.
 
+Current Windows build-host status:
+
+- `signtool.exe` is installed.
+- No usable Code Signing certificate was found in the current user or local machine certificate stores.
+- Signing is wired but blocked until a real certificate and thumbprint are provided.
+
 ## 2. Manual Installer Smoke
 
 Use the generated Windows installer artifact for the current manual pass:
@@ -35,6 +49,8 @@ src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\AgentDock_0.15.3_x64
 ```
 
 The automated install/start/uninstall evidence for the current artifact is recorded in `docs/release/phase-5-windows-smoke-2026-05-15.md`.
+
+The browser-driven UI route smoke evidence is recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`, with screenshots under `docs/release/ui-smoke-2026-05-15`.
 
 Record pass/fail notes for each item before treating the installer as production-ready:
 

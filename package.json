@@ -29,8 +29,10 @@
     "icon:regen": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-brand-assets.ps1 && tauri icon docs/agentdock-icon.png -o src-tauri/icons && node -e \"require('fs').copyFileSync('src-tauri/icons/icon.ico','public/favicon.ico')\"",
     "serve": "node scripts/serve.js",
     "release:manifest": "node scripts/generate-release-manifest.mjs",
+    "release:sign:windows": "node scripts/sign-windows-artifact.mjs",
     "release:smoke": "node scripts/verify-release-smoke.mjs",
     "release:signing:windows": "node scripts/verify-windows-signing.mjs",
+    "smoke:ui": "node scripts/smoke-ui-routes.mjs",
     "version:sync": "node scripts/sync-version.js",
     "version:set": "node scripts/sync-version.js"
   },
