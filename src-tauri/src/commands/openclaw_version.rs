@@ -88,7 +88,7 @@ pub(crate) async fn get_local_version() -> Option<String> {
             }
         }
 
-        if let Some(npm_bin) = super::config::npm_global_bin_dir() {
+        if let Some(npm_bin) = super::openclaw_install_runtime::npm_global_bin_dir() {
             let shim_path = npm_bin.join("openclaw.cmd");
             if shim_path.exists() {
                 let is_zh = detect_source_from_cmd_shim(&shim_path)
@@ -215,6 +215,54 @@ async fn get_latest_version_for(source: &str) -> Option<String> {
         .map(String::from)
 }
 
+fn parse_version(value: &str) -> Vec<u32> {
+    value
+        .split(|c: char| !c.is_ascii_digit())
+        .filter_map(|segment| segment.parse().ok())
+        .collect()
+}
+
+#[tauri::command]
+pub async fn list_openclaw_versions(source: String) -> Result<Vec<String>, String> {
+    let client = crate::commands::build_http_client(std::time::Duration::from_secs(10), None)
+        .map_err(|err| format!("HTTP 初始化失败: {err}"))?;
+    let pkg = super::config::npm_package_name(&source).replace('/', "%2F");
+    let registry = super::config::get_configured_registry();
+    let url = format!("{registry}/{pkg}");
+    let resp = client
+        .get(&url)
+        .header("Accept", "application/json")
+        .send()
+        .await
+        .map_err(|err| format!("查询版本失败: {err}"))?;
+    let json: Value = resp
+        .json()
+        .await
+        .map_err(|err| format!("解析响应失败: {err}"))?;
+    let mut versions = json
+        .get("versions")
+        .and_then(|value| value.as_object())
+        .map(|object| {
+            let mut versions: Vec<String> = object.keys().cloned().collect();
+            versions.sort_by(|left, right| {
+                let left_parts = parse_version(left);
+                let right_parts = parse_version(right);
+                right_parts.cmp(&left_parts)
+            });
+            versions
+        })
+        .unwrap_or_default();
+    if let Some(recommended) = super::config::recommended_version_for(&source) {
+        if let Some(pos) = versions.iter().position(|version| version == &recommended) {
+            let version = versions.remove(pos);
+            versions.insert(0, version);
+        } else {
+            versions.insert(0, recommended);
+        }
+    }
+    Ok(versions)
+}
+
 #[cfg(target_os = "windows")]
 fn detect_source_from_cmd_shim(cmd_path: &std::path::Path) -> Option<String> {
     let content = std::fs::read_to_string(cmd_path).ok()?;
@@ -331,7 +379,7 @@ pub(crate) fn detect_installed_source() -> String {
                 return shim_source;
             }
         }
-        if let Some(npm_bin) = super::config::npm_global_bin_dir() {
+        if let Some(npm_bin) = super::openclaw_install_runtime::npm_global_bin_dir() {
             let shim = npm_bin.join("openclaw.cmd");
             if let Some(source) = detect_source_from_cmd_shim(&shim) {
                 return source;
@@ -382,7 +430,7 @@ pub(crate) fn detect_installed_source() -> String {
                     .unwrap_or_else(|| "chinese".into());
             }
         }
-        if let Ok(output) = super::config::npm_command()
+        if let Ok(output) = super::openclaw_install_runtime::npm_command()
             .args(["list", "-g", "@qingchencloud/openclaw-zh", "--depth=0"])
             .output()
         {

@@ -103,7 +103,7 @@ pub fn run() {
             config::test_model,
             config::test_model_verbose,
             config::list_remote_models,
-            config::list_openclaw_versions,
+            openclaw_version::list_openclaw_versions,
             config::upgrade_openclaw,
             config::uninstall_openclaw,
             gateway_runtime::install_gateway,

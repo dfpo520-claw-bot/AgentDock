@@ -284,13 +284,17 @@ test('openclaw version summary moves out of config.rs ownership', () => {
 
   assert.match(modRs, /pub mod openclaw_version;/)
   assert.match(openclawVersionRs, /pub async fn get_version_info\b/)
+  assert.match(openclawVersionRs, /pub async fn list_openclaw_versions\b/)
   assert.match(openclawVersionRs, /pub\(crate\) fn detect_installed_source\b/)
   assert.match(openclawVersionRs, /pub\(crate\) async fn get_local_version\b/)
   assert.match(libRs, /openclaw_version::get_version_info/)
+  assert.match(libRs, /openclaw_version::list_openclaw_versions/)
   assert.doesNotMatch(libRs, /config::get_version_info/)
+  assert.doesNotMatch(libRs, /config::list_openclaw_versions/)
 
   for (const name of [
     'get_version_info',
+    'list_openclaw_versions',
     'get_local_version',
     'get_latest_version_for',
     'detect_source_from_cmd_shim',
@@ -299,6 +303,62 @@ test('openclaw version summary moves out of config.rs ownership', () => {
     'detect_installed_source',
   ]) {
     assert.doesNotMatch(configRs, new RegExp(`\\b(?:pub(?:\\(crate\\))?\\s+)?(?:async\\s+)?fn ${name}\\b`))
+  }
+})
+
+test('openclaw install runtime helpers move out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_install_runtime.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const installRuntimeRs = fs.readFileSync('src-tauri/src/commands/openclaw_install_runtime.rs', 'utf8')
+  const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_install_runtime;/)
+
+  for (const name of [
+    'standalone_platform_key',
+    'standalone_archive_ext',
+    'standalone_install_dir',
+    'npm_command',
+    'npm_command_elevated',
+    'pre_install_cleanup',
+    'r2_platform_key',
+    'npm_global_modules_dir',
+    'npm_global_bin_dir',
+  ]) {
+    assert.match(installRuntimeRs, new RegExp(`pub\\(crate\\) fn ${name}\\b`))
+    assert.doesNotMatch(configRs, new RegExp(`\\bfn ${name}\\b`))
+  }
+
+  assert.match(configRs, /openclaw_install_runtime::pre_install_cleanup\(\)/)
+  assert.match(configRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
+  assert.match(configRs, /openclaw_install_runtime::standalone_install_dir\(\)/)
+  assert.match(openclawVersionRs, /openclaw_install_runtime::npm_global_bin_dir\(\)/)
+  assert.match(openclawVersionRs, /openclaw_install_runtime::npm_command\(\)/)
+})
+
+test('installation lifecycle public contract stays stable during phase 5', () => {
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
+  const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+
+  assert.match(openclawVersionRs, /pub async fn list_openclaw_versions\b/)
+  assert.match(configRs, /pub async fn upgrade_openclaw\b/)
+  assert.match(configRs, /pub async fn uninstall_openclaw\b/)
+
+  assert.match(libRs, /openclaw_version::list_openclaw_versions/)
+  assert.match(libRs, /config::upgrade_openclaw/)
+  assert.match(libRs, /config::uninstall_openclaw/)
+  assert.doesNotMatch(libRs, /config::list_openclaw_versions/)
+
+  for (const eventName of [
+    'upgrade-log',
+    'upgrade-progress',
+    'upgrade-done',
+    'upgrade-error',
+  ]) {
+    assert.match(configRs, new RegExp(`"${eventName}"`))
   }
 })
 
