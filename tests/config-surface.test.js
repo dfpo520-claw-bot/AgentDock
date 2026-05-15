@@ -423,17 +423,24 @@ test('openclaw standalone installer moves out of config.rs ownership', () => {
 
 test('installation lifecycle public contract stays stable during phase 5', () => {
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const lifecycleRs = fs.readFileSync('src-tauri/src/commands/openclaw_lifecycle.rs', 'utf8')
   const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
   const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
 
+  assert.match(modRs, /pub mod openclaw_lifecycle;/)
   assert.match(openclawVersionRs, /pub async fn list_openclaw_versions\b/)
   assert.match(configRs, /pub async fn upgrade_openclaw\b/)
-  assert.match(configRs, /pub async fn uninstall_openclaw\b/)
+  assert.match(lifecycleRs, /#\[tauri::command\]\s+pub async fn uninstall_openclaw\b/)
+  assert.match(lifecycleRs, /\basync fn uninstall_openclaw_inner\b/)
+  assert.doesNotMatch(configRs, /pub async fn uninstall_openclaw\b/)
+  assert.doesNotMatch(configRs, /\basync fn uninstall_openclaw_inner\b/)
 
   assert.match(libRs, /openclaw_version::list_openclaw_versions/)
   assert.match(libRs, /config::upgrade_openclaw/)
-  assert.match(libRs, /config::uninstall_openclaw/)
+  assert.match(libRs, /openclaw_lifecycle::uninstall_openclaw/)
   assert.doesNotMatch(libRs, /config::list_openclaw_versions/)
+  assert.doesNotMatch(libRs, /config::uninstall_openclaw/)
 
   for (const eventName of [
     'upgrade-log',
@@ -441,7 +448,7 @@ test('installation lifecycle public contract stays stable during phase 5', () =>
     'upgrade-done',
     'upgrade-error',
   ]) {
-    assert.match(configRs, new RegExp(`"${eventName}"`))
+    assert.match(`${configRs}\n${lifecycleRs}`, new RegExp(`"${eventName}"`))
   }
 })
 

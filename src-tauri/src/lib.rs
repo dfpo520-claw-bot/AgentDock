@@ -10,8 +10,8 @@ mod utils;
 use commands::{
     agent, assistant, cli_conflict, config, device, diagnose, extensions, gateway_runtime,
     git_runtime, hermes, hermes_providers, installation_status, logs, memory, messaging,
-    node_runtime, openclaw_installations, openclaw_version, pairing, proxy_diagnostics, service,
-    skills, status_summary, update,
+    node_runtime, openclaw_installations, openclaw_lifecycle, openclaw_version, pairing,
+    proxy_diagnostics, service, skills, status_summary, update,
 };
 
 pub fn run() {
@@ -105,7 +105,7 @@ pub fn run() {
             config::list_remote_models,
             openclaw_version::list_openclaw_versions,
             config::upgrade_openclaw,
-            config::uninstall_openclaw,
+            openclaw_lifecycle::uninstall_openclaw,
             gateway_runtime::install_gateway,
             gateway_runtime::uninstall_gateway,
             config::patch_model_vision,
