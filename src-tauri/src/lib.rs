@@ -1,5 +1,6 @@
 mod commands;
 mod models;
+mod product_config;
 mod tray;
 mod utils;
 
