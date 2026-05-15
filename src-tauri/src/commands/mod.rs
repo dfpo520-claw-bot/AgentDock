@@ -31,6 +31,7 @@ pub mod memory;
 pub mod messaging;
 pub mod node_runtime;
 pub mod openclaw_installations;
+pub mod openclaw_install_policy;
 pub mod openclaw_install_runtime;
 pub mod openclaw_version;
 pub mod pairing;

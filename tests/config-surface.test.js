@@ -306,6 +306,52 @@ test('openclaw version summary moves out of config.rs ownership', () => {
   }
 })
 
+test('openclaw install policy moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_install_policy.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const installPolicyRs = fs.readFileSync('src-tauri/src/commands/openclaw_install_policy.rs', 'utf8')
+  const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_install_policy;/)
+
+  for (const name of [
+    'panel_version',
+    'npm_package_name',
+    'versions_match',
+    'recommended_is_newer',
+    'recommended_version_for',
+    'r2_config',
+    'standalone_config',
+  ]) {
+    assert.match(installPolicyRs, new RegExp(`pub\\(crate\\) fn ${name}\\b`))
+    assert.doesNotMatch(configRs, new RegExp(`\\bfn ${name}\\b`))
+  }
+
+  for (const name of [
+    'VersionPolicySource',
+    'VersionPolicyEntry',
+    'VersionPolicy',
+    'R2Config',
+    'StandaloneConfig',
+  ]) {
+    assert.match(installPolicyRs, new RegExp(`\\bstruct ${name}\\b`))
+    assert.doesNotMatch(configRs, new RegExp(`\\bstruct ${name}\\b`))
+  }
+
+  assert.match(openclawVersionRs, /openclaw_install_policy::npm_package_name\(/)
+  assert.match(openclawVersionRs, /openclaw_install_policy::recommended_version_for\(/)
+  assert.match(openclawVersionRs, /openclaw_install_policy::recommended_is_newer\(/)
+  assert.match(openclawVersionRs, /openclaw_install_policy::versions_match\(/)
+  assert.match(openclawVersionRs, /openclaw_install_policy::panel_version\(/)
+  assert.doesNotMatch(openclawVersionRs, /config::npm_package_name\(/)
+  assert.doesNotMatch(openclawVersionRs, /config::recommended_version_for\(/)
+  assert.doesNotMatch(openclawVersionRs, /config::recommended_is_newer\(/)
+  assert.doesNotMatch(openclawVersionRs, /config::versions_match\(/)
+  assert.doesNotMatch(openclawVersionRs, /config::panel_version\(/)
+})
+
 test('openclaw install runtime helpers move out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_install_runtime.rs'), true)
 

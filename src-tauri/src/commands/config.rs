@@ -1,6 +1,5 @@
 use crate::utils::openclaw_command;
 /// 配置读写命令
-use serde::Deserialize;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
@@ -12,143 +11,6 @@ use std::process::Command;
 /// 预设 npm 源列表
 const DEFAULT_REGISTRY: &str = "https://registry.npmmirror.com";
 
-#[derive(Debug, Deserialize, Default)]
-struct VersionPolicySource {
-    recommended: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Default)]
-struct VersionPolicyEntry {
-    #[serde(default)]
-    official: VersionPolicySource,
-    #[serde(default)]
-    chinese: VersionPolicySource,
-}
-
-#[allow(dead_code)]
-#[derive(Debug, Deserialize, Default)]
-struct R2Config {
-    #[serde(default)]
-    #[serde(rename = "baseUrl")]
-    base_url: Option<String>,
-    #[serde(default)]
-    enabled: bool,
-}
-
-#[derive(Debug, Deserialize, Default)]
-struct StandaloneConfig {
-    #[serde(default)]
-    #[serde(rename = "baseUrl")]
-    base_url: Option<String>,
-    #[serde(default)]
-    enabled: bool,
-}
-
-#[derive(Debug, Deserialize, Default)]
-struct VersionPolicy {
-    #[serde(default)]
-    standalone: StandaloneConfig,
-    #[serde(default)]
-    r2: R2Config,
-    #[serde(default)]
-    default: VersionPolicyEntry,
-    #[serde(default)]
-    panels: HashMap<String, VersionPolicyEntry>,
-}
-
-pub(crate) fn panel_version() -> &'static str {
-    env!("CARGO_PKG_VERSION")
-}
-
-fn find_panel_policy_entry<'a>(
-    policy: &'a VersionPolicy,
-    current_version: &str,
-) -> Option<&'a VersionPolicyEntry> {
-    if let Some(entry) = policy.panels.get(current_version) {
-        return Some(entry);
-    }
-
-    let current_parts = parse_version(current_version);
-    if current_parts.len() < 2 {
-        return None;
-    }
-
-    policy
-        .panels
-        .iter()
-        .filter_map(|(version, entry)| {
-            let parts = parse_version(version);
-            if parts.len() < 2 {
-                return None;
-            }
-            if parts[0] != current_parts[0] || parts[1] != current_parts[1] {
-                return None;
-            }
-            if parts > current_parts {
-                return None;
-            }
-            Some((parts, entry))
-        })
-        .max_by(|(left, _), (right, _)| left.cmp(right))
-        .map(|(_, entry)| entry)
-}
-
-fn parse_version(value: &str) -> Vec<u32> {
-    value
-        .split(|c: char| !c.is_ascii_digit())
-        .filter_map(|s| s.parse().ok())
-        .collect()
-}
-
-/// 提取基础版本号（去掉 -zh.x / -nightly.xxx 等后缀，只保留主版本数字部分）
-/// "2026.3.13-zh.1" → "2026.3.13", "2026.3.13" → "2026.3.13"
-fn base_version(v: &str) -> String {
-    // 在第一个 '-' 处截断
-    let base = v.split('-').next().unwrap_or(v);
-    base.to_string()
-}
-
-/// 判断 CLI 报告的版本是否与推荐版匹配（考虑汉化版 -zh.x 后缀差异）
-pub(crate) fn versions_match(cli_version: &str, recommended: &str) -> bool {
-    if cli_version == recommended {
-        return true;
-    }
-    // CLI 报告 "2026.3.13"，推荐版 "2026.3.13-zh.1" → 基础版本相同即视为匹配
-    base_version(cli_version) == base_version(recommended)
-}
-
-/// 判断推荐版是否真的比当前版本更新（忽略 -zh.x 后缀）
-pub(crate) fn recommended_is_newer(recommended: &str, current: &str) -> bool {
-    let r = parse_version(&base_version(recommended));
-    let c = parse_version(&base_version(current));
-    r > c
-}
-
-fn load_version_policy() -> VersionPolicy {
-    serde_json::from_str(include_str!("../../../openclaw-version-policy.json")).unwrap_or_default()
-}
-
-#[allow(dead_code)]
-fn r2_config() -> R2Config {
-    load_version_policy().r2
-}
-
-fn standalone_config() -> StandaloneConfig {
-    load_version_policy().standalone
-}
-
-pub(crate) fn recommended_version_for(source: &str) -> Option<String> {
-    let policy = load_version_policy();
-    let panel_entry = find_panel_policy_entry(&policy, panel_version());
-    match source {
-        "official" => panel_entry
-            .and_then(|entry| entry.official.recommended.clone())
-            .or(policy.default.official.recommended),
-        _ => panel_entry
-            .and_then(|entry| entry.chinese.recommended.clone())
-            .or(policy.default.chinese.recommended),
-    }
-}
 
 pub(crate) fn get_configured_registry() -> String {
     let path = super::openclaw_dir().join("npm-registry.txt");
@@ -386,7 +248,7 @@ fn calibration_required_origins() -> Vec<String> {
 }
 
 fn calibration_last_touched_version() -> String {
-    recommended_version_for("chinese").unwrap_or_else(|| "2026.1.1".to_string())
+    super::openclaw_install_policy::recommended_version_for("chinese").unwrap_or_else(|| "2026.1.1".to_string())
 }
 
 fn calibration_default_workspace() -> String {
@@ -1419,13 +1281,6 @@ pub fn write_mcp_config(config: Value) -> Result<(), String> {
 /// Windows/Linux: 优先读文件系统，fallback 到 CLI
 /// 获取 OpenClaw 运行时状态摘要（openclaw status --json）
 /// 包含 runtimeVersion、会话列表（含 token 用量、fastMode 等标签）
-/// npm 包名映射
-pub(crate) fn npm_package_name(source: &str) -> &'static str {
-    match source {
-        "official" => "openclaw",
-        _ => "@qingchencloud/openclaw-zh",
-    }
-}
 
 /// 获取指定源的所有可用版本列表（从 npm registry 查询）
 /// 执行 npm 全局安装/升级/降级 openclaw（后台执行，通过 event 推送进度）
@@ -1475,7 +1330,7 @@ async fn try_standalone_install(
     };
     use tauri::Emitter;
 
-    let cfg = standalone_config();
+    let cfg = super::openclaw_install_policy::standalone_config();
     if !cfg.enabled {
         return Err("standalone 安装未启用".into());
     }
@@ -1532,7 +1387,7 @@ async fn try_standalone_install(
     };
 
     // 版本匹配检查
-    if version != "latest" && !versions_match(remote_version, version) {
+    if version != "latest" && !super::openclaw_install_policy::versions_match(remote_version, version) {
         return Err(format!(
             "standalone 版本 {remote_version} 与请求版本 {version} 不匹配"
         ));
@@ -1771,7 +1626,7 @@ async fn try_r2_install(
     use sha2::{Digest, Sha256};
     use tauri::Emitter;
 
-    let r2 = r2_config();
+    let r2 = super::openclaw_install_policy::r2_config();
     if !r2.enabled {
         return Err("R2 加速未启用".into());
     }
@@ -1846,7 +1701,7 @@ async fn try_r2_install(
     };
 
     // 版本匹配检查（如果用户指定了版本，CDN 版本必须匹配）
-    if version != "latest" && !versions_match(cdn_version, version) {
+    if version != "latest" && !super::openclaw_install_policy::versions_match(cdn_version, version) {
         return Err(format!(
             "CDN 版本 {cdn_version} 与请求版本 {version} 不匹配"
         ));
@@ -2068,9 +1923,9 @@ async fn upgrade_openclaw_inner(
     let _guardian_pause = crate::runtime_support::GuardianPause::new("upgrade");
 
     let current_source = super::openclaw_version::detect_installed_source();
-    let pkg_name = npm_package_name(&source);
+    let pkg_name = super::openclaw_install_policy::npm_package_name(&source);
     let requested_version = version.clone();
-    let recommended_version = recommended_version_for(&source);
+    let recommended_version = super::openclaw_install_policy::recommended_version_for(&source);
     let ver = requested_version
         .as_deref()
         .or(recommended_version.as_deref())
@@ -2154,7 +2009,7 @@ async fn upgrade_openclaw_inner(
 
     // 切换源时需要卸载旧包，但为避免安装失败导致 CLI 丢失，
     // 先安装新包，成功后再卸载旧包
-    let old_pkg = npm_package_name(&current_source);
+    let old_pkg = super::openclaw_install_policy::npm_package_name(&current_source);
     let need_uninstall_old = current_source != source && old_pkg != pkg_name;
 
     if requested_version.is_none() {
@@ -2163,7 +2018,7 @@ async fn upgrade_openclaw_inner(
                 "upgrade-log",
                 format!(
                     "ClawPanel {} 默认绑定 OpenClaw 稳定版: {}",
-                    panel_version(),
+                    super::openclaw_install_policy::panel_version(),
                     recommended
                 ),
             );
@@ -2561,7 +2416,7 @@ async fn uninstall_openclaw_inner(
     crate::commands::service::guardian_mark_manual_stop();
 
     let source = super::openclaw_version::detect_installed_source();
-    let pkg = npm_package_name(&source);
+    let pkg = super::openclaw_install_policy::npm_package_name(&source);
 
     // 1. 先停止 Gateway
     let _ = app.emit("upgrade-log", "正在停止 Gateway...");

@@ -203,7 +203,7 @@ pub(crate) async fn get_local_version() -> Option<String> {
 async fn get_latest_version_for(source: &str) -> Option<String> {
     let client =
         crate::commands::build_http_client(std::time::Duration::from_secs(2), None).ok()?;
-    let pkg = super::config::npm_package_name(source)
+    let pkg = super::openclaw_install_policy::npm_package_name(source)
         .replace('/', "%2F")
         .replace('@', "%40");
     let registry = super::config::get_configured_registry();
@@ -226,7 +226,7 @@ fn parse_version(value: &str) -> Vec<u32> {
 pub async fn list_openclaw_versions(source: String) -> Result<Vec<String>, String> {
     let client = crate::commands::build_http_client(std::time::Duration::from_secs(10), None)
         .map_err(|err| format!("HTTP 初始化失败: {err}"))?;
-    let pkg = super::config::npm_package_name(&source).replace('/', "%2F");
+    let pkg = super::openclaw_install_policy::npm_package_name(&source).replace('/', "%2F");
     let registry = super::config::get_configured_registry();
     let url = format!("{registry}/{pkg}");
     let resp = client
@@ -252,7 +252,7 @@ pub async fn list_openclaw_versions(source: String) -> Result<Vec<String>, Strin
             versions
         })
         .unwrap_or_default();
-    if let Some(recommended) = super::config::recommended_version_for(&source) {
+    if let Some(recommended) = super::openclaw_install_policy::recommended_version_for(&source) {
         if let Some(pos) = versions.iter().position(|version| version == &recommended) {
             let version = versions.remove(pos);
             versions.insert(0, version);
@@ -460,29 +460,29 @@ pub async fn get_version_info() -> Result<VersionInfo, String> {
     let recommended = if source == "unknown" {
         None
     } else {
-        super::config::recommended_version_for(&source)
+        super::openclaw_install_policy::recommended_version_for(&source)
     };
     let update_available = match (&current, &recommended) {
         (Some(current), Some(recommended)) => {
-            super::config::recommended_is_newer(recommended, current)
+            super::openclaw_install_policy::recommended_is_newer(recommended, current)
         }
         (None, Some(_)) => true,
         _ => false,
     };
     let latest_update_available = match (&current, &latest) {
-        (Some(current), Some(latest)) => super::config::recommended_is_newer(latest, current),
+        (Some(current), Some(latest)) => super::openclaw_install_policy::recommended_is_newer(latest, current),
         (None, Some(_)) => true,
         _ => false,
     };
     let is_recommended = match (&current, &recommended) {
         (Some(current), Some(recommended)) => {
-            super::config::versions_match(current, recommended)
+            super::openclaw_install_policy::versions_match(current, recommended)
         }
         _ => false,
     };
     let ahead_of_recommended = match (&current, &recommended) {
         (Some(current), Some(recommended)) => {
-            super::config::recommended_is_newer(current, recommended)
+            super::openclaw_install_policy::recommended_is_newer(current, recommended)
         }
         _ => false,
     };
@@ -501,7 +501,7 @@ pub async fn get_version_info() -> Result<VersionInfo, String> {
         latest_update_available,
         is_recommended,
         ahead_of_recommended,
-        panel_version: super::config::panel_version().to_string(),
+        panel_version: super::openclaw_install_policy::panel_version().to_string(),
         source,
         cli_path,
         cli_source,
