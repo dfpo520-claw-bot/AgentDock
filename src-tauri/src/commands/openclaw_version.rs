@@ -9,15 +9,14 @@ pub(crate) async fn get_local_version() -> Option<String> {
             let resolved = std::fs::canonicalize(&cli_path)
                 .ok()
                 .unwrap_or_else(|| PathBuf::from(&cli_path));
-            if let Some(ver) =
-                super::openclaw_installations::read_version_from_installation(&resolved).or_else(
-                    || {
-                        super::openclaw_installations::read_version_from_installation(
-                            std::path::Path::new(&cli_path),
-                        )
-                    },
-                )
-            {
+            if let Some(ver) = super::openclaw_installations::read_version_from_installation(
+                &resolved,
+            )
+            .or_else(|| {
+                super::openclaw_installations::read_version_from_installation(std::path::Path::new(
+                    &cli_path,
+                ))
+            }) {
                 return Some(ver);
             }
         }
@@ -48,11 +47,10 @@ pub(crate) async fn get_local_version() -> Option<String> {
         if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
             let cli_pb = PathBuf::from(&cli_path);
             let resolved = std::fs::canonicalize(&cli_pb).unwrap_or_else(|_| cli_pb.clone());
-            if let Some(ver) =
-                super::openclaw_installations::read_version_from_installation(&resolved)
-                    .or_else(|| {
-                        super::openclaw_installations::read_version_from_installation(&cli_pb)
-                    })
+            if let Some(ver) = super::openclaw_installations::read_version_from_installation(
+                &resolved,
+            )
+            .or_else(|| super::openclaw_installations::read_version_from_installation(&cli_pb))
             {
                 return Some(ver);
             }
@@ -119,11 +117,10 @@ pub(crate) async fn get_local_version() -> Option<String> {
         if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
             let cli_pb = PathBuf::from(&cli_path);
             let resolved = std::fs::canonicalize(&cli_pb).unwrap_or_else(|_| cli_pb.clone());
-            if let Some(ver) =
-                super::openclaw_installations::read_version_from_installation(&resolved)
-                    .or_else(|| {
-                        super::openclaw_installations::read_version_from_installation(&cli_pb)
-                    })
+            if let Some(ver) = super::openclaw_installations::read_version_from_installation(
+                &resolved,
+            )
+            .or_else(|| super::openclaw_installations::read_version_from_installation(&cli_pb))
             {
                 return Some(ver);
             }
@@ -470,7 +467,9 @@ pub async fn get_version_info() -> Result<VersionInfo, String> {
         _ => false,
     };
     let latest_update_available = match (&current, &latest) {
-        (Some(current), Some(latest)) => super::openclaw_install_policy::recommended_is_newer(latest, current),
+        (Some(current), Some(latest)) => {
+            super::openclaw_install_policy::recommended_is_newer(latest, current)
+        }
         (None, Some(_)) => true,
         _ => false,
     };

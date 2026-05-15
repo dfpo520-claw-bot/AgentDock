@@ -375,7 +375,10 @@ pub(crate) fn npm_global_modules_dir() -> Option<PathBuf> {
     }
     #[cfg(target_os = "linux")]
     {
-        if let Ok(output) = Command::new("npm").args(["config", "get", "prefix"]).output() {
+        if let Ok(output) = Command::new("npm")
+            .args(["config", "get", "prefix"])
+            .output()
+        {
             let prefix = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !prefix.is_empty() {
                 return Some(PathBuf::from(prefix).join("lib").join("node_modules"));
@@ -407,7 +410,10 @@ pub(crate) fn npm_global_bin_dir() -> Option<PathBuf> {
     }
     #[cfg(target_os = "linux")]
     {
-        if let Ok(output) = Command::new("npm").args(["config", "get", "prefix"]).output() {
+        if let Ok(output) = Command::new("npm")
+            .args(["config", "get", "prefix"])
+            .output()
+        {
             let prefix = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !prefix.is_empty() {
                 return Some(PathBuf::from(prefix).join("bin"));

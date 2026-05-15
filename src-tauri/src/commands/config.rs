@@ -7,7 +7,6 @@ use std::path::PathBuf;
 /// 预设 npm 源列表
 const DEFAULT_REGISTRY: &str = "https://registry.npmmirror.com";
 
-
 pub(crate) fn get_configured_registry() -> String {
     let path = super::openclaw_dir().join("npm-registry.txt");
     fs::read_to_string(&path)
@@ -244,7 +243,8 @@ fn calibration_required_origins() -> Vec<String> {
 }
 
 fn calibration_last_touched_version() -> String {
-    super::openclaw_install_policy::recommended_version_for("chinese").unwrap_or_else(|| "2026.1.1".to_string())
+    super::openclaw_install_policy::recommended_version_for("chinese")
+        .unwrap_or_else(|| "2026.1.1".to_string())
 }
 
 fn calibration_default_workspace() -> String {

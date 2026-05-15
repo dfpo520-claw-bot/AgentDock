@@ -307,7 +307,10 @@ pub fn scan_node_paths() -> Result<Value, String> {
             format!("{}/.nvm/current/bin", home.display()),
             "NVM_ACTIVE".to_string(),
         ));
-        candidates.push((format!("{}/.volta/bin", home.display()), "VOLTA".to_string()));
+        candidates.push((
+            format!("{}/.volta/bin", home.display()),
+            "VOLTA".to_string(),
+        ));
         candidates.push((
             format!("{}/.nodenv/shims", home.display()),
             "NODENV".to_string(),
@@ -403,8 +406,8 @@ pub fn save_custom_node_path(node_dir: String) -> Result<(), String> {
         serde_json::Map::new()
     };
     config.insert("nodePath".into(), Value::String(node_dir));
-    let json =
-        serde_json::to_string_pretty(&Value::Object(config)).map_err(|e| format!("序列化失败: {e}"))?;
+    let json = serde_json::to_string_pretty(&Value::Object(config))
+        .map_err(|e| format!("序列化失败: {e}"))?;
     std::fs::write(&config_path, json).map_err(|e| format!("写入配置失败: {e}"))?;
     super::refresh_enhanced_path();
     crate::commands::service::invalidate_cli_detection_cache();

@@ -85,7 +85,8 @@ pub(crate) async fn try_r2_install(
     };
 
     // 版本匹配检查（如果用户指定了版本，CDN 版本必须匹配）
-    if version != "latest" && !super::openclaw_install_policy::versions_match(cdn_version, version) {
+    if version != "latest" && !super::openclaw_install_policy::versions_match(cdn_version, version)
+    {
         return Err(format!(
             "CDN 版本 {cdn_version} 与请求版本 {version} 不匹配"
         ));
@@ -186,7 +187,8 @@ pub(crate) async fn try_r2_install(
         let _ = app.emit("upgrade-log", "npm install 完成 ✓");
     } else {
         // 平台特定归档模式：直接解压到 npm 全局 node_modules
-        let modules_dir = super::openclaw_install_runtime::npm_global_modules_dir().ok_or("无法确定 npm 全局 node_modules 目录")?;
+        let modules_dir = super::openclaw_install_runtime::npm_global_modules_dir()
+            .ok_or("无法确定 npm 全局 node_modules 目录")?;
         if !modules_dir.exists() {
             std::fs::create_dir_all(&modules_dir)
                 .map_err(|e| format!("创建 node_modules 目录失败: {e}"))?;
@@ -242,7 +244,8 @@ pub(crate) async fn try_r2_install(
         let _ = app.emit("upgrade-log", "解压完成，创建 bin 链接...");
 
         // 创建 bin 链接
-        let bin_dir = super::openclaw_install_runtime::npm_global_bin_dir().ok_or("无法确定 npm bin 目录")?;
+        let bin_dir =
+            super::openclaw_install_runtime::npm_global_bin_dir().ok_or("无法确定 npm bin 目录")?;
         let openclaw_js = modules_dir
             .join("@qingchencloud")
             .join("openclaw-zh")

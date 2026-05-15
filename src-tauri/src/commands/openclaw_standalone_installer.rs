@@ -28,7 +28,8 @@ pub(crate) async fn try_standalone_install(
     if platform == "unknown" {
         return Err("当前平台不支持 standalone 安装包".into());
     }
-    let install_dir = super::openclaw_install_runtime::standalone_install_dir().ok_or("无法确定 standalone 安装目录")?;
+    let install_dir = super::openclaw_install_runtime::standalone_install_dir()
+        .ok_or("无法确定 standalone 安装目录")?;
 
     // 1. 动态查询最新版本
     let _ = app.emit(
@@ -76,7 +77,9 @@ pub(crate) async fn try_standalone_install(
     };
 
     // 版本匹配检查
-    if version != "latest" && !super::openclaw_install_policy::versions_match(remote_version, version) {
+    if version != "latest"
+        && !super::openclaw_install_policy::versions_match(remote_version, version)
+    {
         return Err(format!(
             "standalone 版本 {remote_version} 与请求版本 {version} 不匹配"
         ));

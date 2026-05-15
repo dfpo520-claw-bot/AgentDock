@@ -67,7 +67,13 @@ async fn upgrade_openclaw_inner(
 
         if method == "standalone-github" {
             // standalone-github 模式：只走 GitHub
-            match super::openclaw_standalone_installer::try_standalone_install(&app, ver, Some(&github_release_base)).await {
+            match super::openclaw_standalone_installer::try_standalone_install(
+                &app,
+                ver,
+                Some(&github_release_base),
+            )
+            .await
+            {
                 Ok(installed_ver) => {
                     let _ = app.emit("upgrade-progress", 100);
                     super::refresh_enhanced_path();
@@ -82,7 +88,9 @@ async fn upgrade_openclaw_inner(
             }
         } else {
             // auto / standalone-r2 模式：R2 CDN → GitHub Releases fallback
-            match super::openclaw_standalone_installer::try_standalone_install(&app, ver, None).await {
+            match super::openclaw_standalone_installer::try_standalone_install(&app, ver, None)
+                .await
+            {
                 Ok(installed_ver) => {
                     let _ = app.emit("upgrade-progress", 100);
                     super::refresh_enhanced_path();
@@ -98,7 +106,13 @@ async fn upgrade_openclaw_inner(
                     );
                     let _ = app.emit("upgrade-progress", 5);
                     // Fallback: GitHub Releases
-                    match super::openclaw_standalone_installer::try_standalone_install(&app, ver, Some(&github_release_base)).await {
+                    match super::openclaw_standalone_installer::try_standalone_install(
+                        &app,
+                        ver,
+                        Some(&github_release_base),
+                    )
+                    .await
+                    {
                         Ok(installed_ver) => {
                             let _ = app.emit("upgrade-progress", 100);
                             super::refresh_enhanced_path();
@@ -507,7 +521,6 @@ async fn upgrade_openclaw_inner(
 
 /// 卸载 OpenClaw（后台执行，通过 event 推送进度）
 
-
 #[tauri::command]
 pub async fn uninstall_openclaw(
     app: tauri::AppHandle,
@@ -713,4 +726,3 @@ async fn uninstall_openclaw_inner(
     let _ = app.emit("upgrade-log", msg);
     Ok(msg.into())
 }
-

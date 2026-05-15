@@ -39,8 +39,10 @@ pub(crate) fn https_rewrite_rule_count() -> usize {
 
 pub(crate) fn ensure_https_rewrites() -> usize {
     let git = executable();
-    let targets: std::collections::HashSet<&str> =
-        GIT_HTTPS_REWRITES.iter().map(|(target, _)| *target).collect();
+    let targets: std::collections::HashSet<&str> = GIT_HTTPS_REWRITES
+        .iter()
+        .map(|(target, _)| *target)
+        .collect();
 
     for target in &targets {
         let key = format!("url.{target}.insteadOf");
@@ -252,7 +254,10 @@ pub fn scan_git_paths() -> Result<Value, String> {
 
         candidates.push((format!(r"{}\Git\mingw64\bin\git.exe", pf), "MINGW".into()));
         for drive in &["C", "D"] {
-            candidates.push((format!(r"{}:\msys64\usr\bin\git.exe", drive), "MSYS2".into()));
+            candidates.push((
+                format!(r"{}:\msys64\usr\bin\git.exe", drive),
+                "MSYS2".into(),
+            ));
             candidates.push((format!(r"{}:\msys2\usr\bin\git.exe", drive), "MSYS2".into()));
         }
 
@@ -286,8 +291,14 @@ pub fn scan_git_paths() -> Result<Value, String> {
         ));
         candidates.push(("/snap/bin/git".into(), "SNAP".into()));
         let home = dirs::home_dir().unwrap_or_default();
-        candidates.push((format!("{}/.nix-profile/bin/git", home.display()), "NIX".into()));
-        candidates.push((format!("{}/.linuxbrew/bin/git", home.display()), "BREW".into()));
+        candidates.push((
+            format!("{}/.nix-profile/bin/git", home.display()),
+            "NIX".into(),
+        ));
+        candidates.push((
+            format!("{}/.linuxbrew/bin/git", home.display()),
+            "BREW".into(),
+        ));
         candidates.push(("/home/linuxbrew/.linuxbrew/bin/git".into(), "BREW".into()));
     }
 
@@ -395,7 +406,10 @@ pub async fn auto_install_git(app: tauri::AppHandle) -> Result<String, String> {
             crate::commands::service::invalidate_cli_detection_cache();
             return Ok("已触发 xcode-select 安装，请在弹窗中确认".to_string());
         }
-        Err("xcode-select 安装失败，请手动安装 Xcode Command Line Tools 或 brew install git".to_string())
+        Err(
+            "xcode-select 安装失败，请手动安装 Xcode Command Line Tools 或 brew install git"
+                .to_string(),
+        )
     }
 
     #[cfg(target_os = "linux")]
@@ -445,7 +459,10 @@ pub async fn auto_install_git(app: tauri::AppHandle) -> Result<String, String> {
             _ => return Err("不支持的包管理器".to_string()),
         };
 
-        let _ = app.emit("upgrade-log", format!("执行: {} {}", cmd_name, args.join(" ")));
+        let _ = app.emit(
+            "upgrade-log",
+            format!("执行: {} {}", cmd_name, args.join(" ")),
+        );
         let mut child = Command::new(cmd_name)
             .args(&args)
             .stdout(Stdio::piped())

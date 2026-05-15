@@ -7,11 +7,9 @@ pub async fn test_proxy(url: Option<String>) -> Result<Value, String> {
 
     let target = url.unwrap_or_else(|| "https://registry.npmjs.org/-/ping".to_string());
 
-    let client = crate::commands::build_http_client(
-        std::time::Duration::from_secs(10),
-        Some("ClawPanel"),
-    )
-    .map_err(|e| format!("创建代理客户端失败: {e}"))?;
+    let client =
+        crate::commands::build_http_client(std::time::Duration::from_secs(10), Some("ClawPanel"))
+            .map_err(|e| format!("创建代理客户端失败: {e}"))?;
 
     let start = std::time::Instant::now();
     let resp = client.get(&target).send().await.map_err(|e| {

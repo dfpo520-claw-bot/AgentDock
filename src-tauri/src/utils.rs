@@ -9,9 +9,7 @@ fn bound_cli_path() -> Option<std::path::PathBuf> {
         return None;
     }
     let p = std::path::PathBuf::from(raw);
-    if p.exists()
-        && !crate::openclaw_cli_paths::is_rejected_cli_path(&p.to_string_lossy())
-    {
+    if p.exists() && !crate::openclaw_cli_paths::is_rejected_cli_path(&p.to_string_lossy()) {
         Some(p)
     } else {
         None

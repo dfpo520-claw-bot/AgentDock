@@ -9,7 +9,8 @@ use std::process::Command;
 #[allow(dead_code)]
 async fn reload_gateway_via_http() -> Result<String, String> {
     let config_path = super::openclaw_dir().join("openclaw.json");
-    let content = std::fs::read_to_string(&config_path).map_err(|e| format!("读取配置失败: {e}"))?;
+    let content =
+        std::fs::read_to_string(&config_path).map_err(|e| format!("读取配置失败: {e}"))?;
     let config: serde_json::Value =
         serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))?;
 
@@ -30,7 +31,8 @@ async fn reload_gateway_via_http() -> Result<String, String> {
 
     for ctrl_port in control_ports {
         let url = format!("http://127.0.0.1:{}/__api/reload", ctrl_port);
-        let client = super::build_http_client(std::time::Duration::from_secs(5), Some("ClawPanel"))?;
+        let client =
+            super::build_http_client(std::time::Duration::from_secs(5), Some("ClawPanel"))?;
 
         let mut req = client.post(&url);
         if !token.is_empty() {
@@ -198,12 +200,10 @@ pub async fn install_gateway() -> Result<String, String> {
     match cli_check {
         Ok(o) if o.status.success() => {}
         _ => {
-            return Err(
-                "openclaw CLI 未检测到，请先安装：\n\n\
+            return Err("openclaw CLI 未检测到，请先安装：\n\n\
                  npm install -g @qingchencloud/openclaw-zh\n\n\
                  安装完成后再继续安装 Gateway"
-                    .into(),
-            );
+                .into());
         }
     }
 
@@ -230,7 +230,9 @@ pub fn uninstall_gateway() -> Result<String, String> {
         let uid = crate::runtime_support::get_uid()?;
         let target = format!("gui/{uid}/ai.openclaw.gateway");
 
-        let _ = Command::new("launchctl").args(["bootout", &target]).output();
+        let _ = Command::new("launchctl")
+            .args(["bootout", &target])
+            .output();
 
         let home = dirs::home_dir().unwrap_or_default();
         let plist = home.join("Library/LaunchAgents/ai.openclaw.gateway.plist");
