@@ -171,6 +171,7 @@ else
   else
     BUNDLE_DIR="src-tauri/target/release/bundle"
   fi
+  node scripts/generate-release-manifest.mjs --bundle-dir "$BUNDLE_DIR"
   if [[ "$OS" == "Darwin" ]]; then
     DMG=$(find "$BUNDLE_DIR/dmg" -name "*.dmg" 2>/dev/null | head -1)
     APP=$(find "$BUNDLE_DIR/macos" -name "*.app" -maxdepth 1 2>/dev/null | head -1)

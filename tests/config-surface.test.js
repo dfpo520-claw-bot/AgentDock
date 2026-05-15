@@ -496,6 +496,20 @@ test('phase 5 masks Hermes logs on read and download surfaces', () => {
   assert.match(hermesRs, /pub async fn hermes_logs_download\b[\s\S]*secret_redaction::redact_secrets/)
 })
 
+test('phase 5 release builds generate artifact manifests and checksums', () => {
+  const packageJson = fs.readFileSync('package.json', 'utf8')
+  const buildPs1 = fs.readFileSync('build.ps1', 'utf8')
+  const buildSh = fs.readFileSync('build.sh', 'utf8')
+  const script = fs.readFileSync('scripts/generate-release-manifest.mjs', 'utf8')
+
+  assert.match(packageJson, /"release:manifest":\s*"node scripts\/generate-release-manifest\.mjs"/)
+  assert.match(buildPs1, /generate-release-manifest\.mjs --bundle-dir \$bundleDir/)
+  assert.match(buildSh, /generate-release-manifest\.mjs --bundle-dir "\$BUNDLE_DIR"/)
+  assert.match(script, /release-manifest\.json/)
+  assert.match(script, /checksums\.sha256/)
+  assert.doesNotMatch(script, /new Date\(\)\.toISOString/)
+})
+
 test('git runtime commands move out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/git_runtime.rs'), true)
 

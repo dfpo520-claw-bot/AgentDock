@@ -111,6 +111,7 @@ if ($Debug) {
     Write-Host "  可执行文件: $exePath" -ForegroundColor White
 } else {
     Write-Host "  安装包目录: $bundleDir" -ForegroundColor White
+    node scripts/generate-release-manifest.mjs --bundle-dir $bundleDir
     $msi = Get-ChildItem "$bundleDir\msi\*.msi" -ErrorAction SilentlyContinue | Select-Object -First 1
     $exe = Get-ChildItem "$bundleDir\nsis\*-setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($msi) { Write-Host "  MSI: $($msi.FullName)" -ForegroundColor DarkGray }
