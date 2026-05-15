@@ -97,65 +97,8 @@ fn panel_path_key(path: &std::path::Path) -> String {
     }
 }
 
-fn push_unique_panel_config_path(paths: &mut Vec<PathBuf>, path: PathBuf) {
-    let key = panel_path_key(&path);
-    if paths.iter().any(|existing| panel_path_key(existing) == key) {
-        return;
-    }
-    paths.push(path);
-}
-
 fn panel_config_candidate_paths() -> Vec<PathBuf> {
-    let mut paths = Vec::new();
-    push_unique_panel_config_path(&mut paths, default_openclaw_dir().join("clawpanel.json"));
-
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(profile) = std::env::var("USERPROFILE") {
-            let trimmed = profile.trim();
-            if !trimmed.is_empty() {
-                push_unique_panel_config_path(
-                    &mut paths,
-                    PathBuf::from(trimmed)
-                        .join(".openclaw")
-                        .join("clawpanel.json"),
-                );
-            }
-        }
-
-        if let (Ok(home_drive), Ok(home_path)) =
-            (std::env::var("HOMEDRIVE"), std::env::var("HOMEPATH"))
-        {
-            let combined = format!("{}{}", home_drive.trim(), home_path.trim());
-            let trimmed = combined.trim();
-            if !trimmed.is_empty() {
-                push_unique_panel_config_path(
-                    &mut paths,
-                    PathBuf::from(trimmed)
-                        .join(".openclaw")
-                        .join("clawpanel.json"),
-                );
-            }
-        }
-
-        if let Ok(appdata) = std::env::var("APPDATA") {
-            let appdata_path = PathBuf::from(appdata.trim());
-            if let Some(profile_dir) = appdata_path.parent().and_then(|p| p.parent()) {
-                push_unique_panel_config_path(
-                    &mut paths,
-                    profile_dir.join(".openclaw").join("clawpanel.json"),
-                );
-            }
-        }
-    }
-
-    paths
-}
-
-fn read_panel_config_from(path: &std::path::Path) -> Option<serde_json::Value> {
-    std::fs::read_to_string(path)
-        .ok()
-        .and_then(|content| serde_json::from_str(&content).ok())
+    crate::product_config::panel_config_candidate_paths()
 }
 
 fn normalize_custom_openclaw_dir(raw: &str) -> Option<PathBuf> {
@@ -247,21 +190,7 @@ fn read_gateway_port_from_config() -> u16 {
 }
 
 fn panel_config_path() -> PathBuf {
-    let candidates = panel_config_candidate_paths();
-    for path in &candidates {
-        if read_panel_config_from(path).is_some() {
-            return path.clone();
-        }
-    }
-    for path in &candidates {
-        if path.exists() {
-            return path.clone();
-        }
-    }
-    candidates
-        .into_iter()
-        .next()
-        .unwrap_or_else(|| default_openclaw_dir().join("clawpanel.json"))
+    crate::product_config::panel_config_path()
 }
 
 #[cfg(target_os = "windows")]
@@ -290,12 +219,7 @@ pub(crate) fn windows_npm_global_prefix() -> Option<String> {
 }
 
 pub fn read_panel_config_value() -> Option<serde_json::Value> {
-    for path in panel_config_candidate_paths() {
-        if let Some(value) = read_panel_config_from(&path) {
-            return Some(value);
-        }
-    }
-    None
+    crate::product_config::read_panel_config_value()
 }
 
 pub fn configured_proxy_url() -> Option<String> {

@@ -15,10 +15,12 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 import { statusIcon } from './lib/icons.js'
 import { isForeignGatewayError, showGatewayConflictGuidance } from './lib/gateway-ownership.js'
 import { tryShowEngagement } from './components/engagement.js'
+import { showContentModal } from './components/modal.js'
 import { toast } from './components/toast.js'
 import { initI18n, t } from './lib/i18n.js'
 import { initFeatureGates } from './lib/feature-gates.js'
 import { onKernelChange } from './lib/kernel.js'
+import { applyLegacyConfigDecision, checkLegacyConfigMigration, describeLegacyConfigDetection } from './lib/product-config.js'
 import { PRODUCT_IDENTITY } from './lib/product-identity.js'
 import { showFloorBlocker, hideFloorBlocker } from './components/floor-blocker.js'
 import { registerEngine, initEngineManager, getActiveEngine, getActiveEngineId, needsInitialEngineChoice, isEngineSetupDeferred, adoptActiveEngineSelection, onEngineChange } from './lib/engine-manager.js'
@@ -948,6 +950,74 @@ function startUpdateChecker() {
 }
 
 // 启动：先检查后端 → 认证 → 加载应用
+let legacyMigrationChecked = false
+
+async function checkLegacyConfigMigrationOnStartup() {
+  if (!isTauri || legacyMigrationChecked) return
+  legacyMigrationChecked = true
+
+  let detection
+  try {
+    detection = await checkLegacyConfigMigration()
+  } catch (err) {
+    console.warn('[AgentDock] legacy config detection failed', err)
+    return
+  }
+
+  const summary = describeLegacyConfigDetection(detection)
+  if (!summary.needed) return
+
+  const overlay = showContentModal({
+    title: 'Import existing configuration?',
+    width: 520,
+    content: `
+      <div style="display:grid;gap:12px;line-height:1.6">
+        <p style="margin:0;color:var(--text-secondary)">${escapeHtml(PRODUCT_IDENTITY.displayName || 'AgentDock')} found an existing legacy OpenClaw configuration. You can copy compatible panel settings into this app or ignore them and start fresh.</p>
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);word-break:break-all">
+          ${escapeHtml(summary.legacyPath || 'Legacy configuration detected')}
+        </div>
+        <p style="margin:0;color:var(--text-tertiary);font-size:var(--font-size-sm)">Import and Ignore are both non-destructive. Legacy files will not be moved or deleted.</p>
+        <div id="legacy-migration-error" style="display:none;color:var(--danger);font-size:var(--font-size-sm)"></div>
+      </div>
+    `,
+    buttons: [
+      { id: 'btn-legacy-import', label: 'Import', className: 'btn btn-primary btn-sm' },
+      { id: 'btn-legacy-ignore', label: 'Ignore', className: 'btn btn-secondary btn-sm' },
+    ],
+  })
+
+  const errorEl = overlay.querySelector('#legacy-migration-error')
+  const importBtn = overlay.querySelector('#btn-legacy-import')
+  const ignoreBtn = overlay.querySelector('#btn-legacy-ignore')
+
+  const setBusy = (busy) => {
+    if (importBtn) importBtn.disabled = busy
+    if (ignoreBtn) ignoreBtn.disabled = busy
+  }
+
+  const apply = async (action) => {
+    if (errorEl) {
+      errorEl.style.display = 'none'
+      errorEl.textContent = ''
+    }
+    setBusy(true)
+    try {
+      await applyLegacyConfigDecision(action)
+      overlay.close?.()
+      toast(action === 'import' ? 'Configuration imported' : 'Legacy configuration ignored', 'success')
+    } catch (err) {
+      setBusy(false)
+      if (errorEl) {
+        errorEl.style.display = 'block'
+        errorEl.textContent = err?.message || String(err)
+      }
+    }
+  }
+
+  importBtn?.addEventListener('click', () => apply('import'))
+  ignoreBtn?.addEventListener('click', () => apply('ignore'))
+}
+
 ;(async () => {
   // Web 模式：先检测后端是否在线（不在线则显示提示，不加载应用）
   if (!isTauri) {
@@ -978,6 +1048,7 @@ function startUpdateChecker() {
       </div>`
   }
   startUpdateChecker()
+  checkLegacyConfigMigrationOnStartup()
 
   // 初始化全局 AI 助手浮动按钮（延迟加载，不阻塞启动）
   setTimeout(async () => {

@@ -369,6 +369,14 @@ export const api = {
   },
   readPanelConfig: () => invoke('read_panel_config'),
   writePanelConfig: (config) => { invalidate(); return invoke('write_panel_config', { config }).then(r => { invoke('invalidate_path_cache').catch(() => {}); return r }) },
+  detectLegacyConfigMigration: () => invoke('detect_legacy_config_migration'),
+  applyLegacyConfigMigration: (action) => {
+    invalidate()
+    return invoke('apply_legacy_config_migration', { action }).then(r => {
+      invoke('invalidate_path_cache').catch(() => {})
+      return r
+    })
+  },
   testProxy: (url) => invoke('test_proxy', { url: url || null }),
 
   // 安装/部署

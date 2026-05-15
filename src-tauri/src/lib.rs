@@ -108,6 +108,8 @@ pub fn run() {
             config::get_openclaw_dir,
             config::read_panel_config,
             config::write_panel_config,
+            config::detect_legacy_config_migration,
+            config::apply_legacy_config_migration,
             config::test_proxy,
             config::get_npm_registry,
             config::set_npm_registry,

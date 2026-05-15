@@ -6152,6 +6152,21 @@ pub async fn relaunch_app(app: tauri::AppHandle) -> Result<(), String> {
 
 /// 测试代理连通性：通过配置的代理访问指定 URL，返回状态码和耗时
 #[tauri::command]
+pub fn detect_legacy_config_migration() -> Result<Value, String> {
+    serde_json::to_value(crate::product_config::detect_legacy_config())
+        .map_err(|e| format!("serialize legacy migration detection failed: {e}"))
+}
+
+#[tauri::command]
+pub fn apply_legacy_config_migration(action: String) -> Result<Value, String> {
+    let result = crate::product_config::apply_legacy_config_decision(
+        crate::product_config::LegacyConfigDecision { action },
+    )?;
+    serde_json::to_value(result)
+        .map_err(|e| format!("serialize legacy migration result failed: {e}"))
+}
+
+#[tauri::command]
 pub async fn test_proxy(url: Option<String>) -> Result<Value, String> {
     let proxy_url = crate::commands::configured_proxy_url()
         .ok_or("未配置代理地址，请先在面板设置中保存代理地址")?;

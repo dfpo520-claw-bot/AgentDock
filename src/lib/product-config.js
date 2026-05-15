@@ -24,3 +24,14 @@ export function checkLegacyConfigMigration() {
 export function applyLegacyConfigDecision(decision) {
   return api.applyLegacyConfigMigration(decision)
 }
+
+export function describeLegacyConfigDetection(detection) {
+  const items = Array.isArray(detection?.detectedItems) ? detection.detectedItems : []
+  const legacyPath = detection?.legacyConfigPath || detection?.legacyDataDir || ''
+  return {
+    needed: detection?.needed === true,
+    items,
+    legacyPath,
+    recommendedAction: detection?.recommendedAction || 'ignore',
+  }
+}
