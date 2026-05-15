@@ -475,6 +475,27 @@ test('phase 5 masks sensitive data before logs and diagnostics reach the UI', ()
   assert.match(assistantRs, /secret_redaction::redact_secrets/)
 })
 
+test('phase 5 assistant unlimited mode still confirms dangerous tools', () => {
+  const assistantJs = fs.readFileSync('src/pages/assistant.js', 'utf8')
+
+  assert.match(assistantJs, /const DANGEROUS_TOOLS = new Set\(\[/)
+  assert.match(
+    assistantJs,
+    /unlimited:\s*\{[^}]*confirmDanger:\s*true/
+  )
+  assert.match(
+    assistantJs,
+    /mode\.confirmDanger && DANGEROUS_TOOLS\.has\(toolName\)/
+  )
+})
+
+test('phase 5 masks Hermes logs on read and download surfaces', () => {
+  const hermesRs = fs.readFileSync('src-tauri/src/commands/hermes.rs', 'utf8')
+
+  assert.match(hermesRs, /pub async fn hermes_logs_read\b[\s\S]*secret_redaction::redact_secrets/)
+  assert.match(hermesRs, /pub async fn hermes_logs_download\b[\s\S]*secret_redaction::redact_secrets/)
+})
+
 test('git runtime commands move out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/git_runtime.rs'), true)
 

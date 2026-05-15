@@ -4818,8 +4818,9 @@ pub async fn hermes_logs_read(
         return Err("Access denied".into());
     }
 
-    let content =
-        std::fs::read_to_string(&canonical).map_err(|e| format!("Failed to read log: {e}"))?;
+    let content = super::secret_redaction::redact_secrets(
+        std::fs::read_to_string(&canonical).map_err(|e| format!("Failed to read log: {e}"))?,
+    );
     let all_lines: Vec<&str> = content.lines().collect();
     let start = if all_lines.len() > max_lines {
         all_lines.len() - max_lines
@@ -5488,8 +5489,9 @@ pub async fn hermes_logs_download(name: String) -> Result<Value, String> {
     if !canon_file.starts_with(&canon_dir) {
         return Err("Access denied".into());
     }
-    let content =
-        std::fs::read_to_string(&canon_file).map_err(|e| format!("Failed to read log: {e}"))?;
+    let content = super::secret_redaction::redact_secrets(
+        std::fs::read_to_string(&canon_file).map_err(|e| format!("Failed to read log: {e}"))?,
+    );
     let out_dir = downloads_dir_fallback().join("ClawPanel");
     std::fs::create_dir_all(&out_dir).map_err(|e| format!("Failed to create download dir: {e}"))?;
     let out_path = out_dir.join(safe_download_filename(&name));
