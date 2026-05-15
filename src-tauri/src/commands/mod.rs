@@ -34,6 +34,7 @@ pub mod openclaw_installations;
 pub mod openclaw_install_policy;
 pub mod openclaw_install_runtime;
 pub mod openclaw_r2_installer;
+pub mod openclaw_standalone_installer;
 pub mod openclaw_version;
 pub mod pairing;
 pub mod proxy_diagnostics;

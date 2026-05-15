@@ -357,6 +357,7 @@ test('openclaw install runtime helpers move out of config.rs ownership', () => {
 
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
   const installRuntimeRs = fs.readFileSync('src-tauri/src/commands/openclaw_install_runtime.rs', 'utf8')
+  const standaloneInstallerRs = fs.readFileSync('src-tauri/src/commands/openclaw_standalone_installer.rs', 'utf8')
   const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
   const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
 
@@ -379,7 +380,8 @@ test('openclaw install runtime helpers move out of config.rs ownership', () => {
 
   assert.match(configRs, /openclaw_install_runtime::pre_install_cleanup\(\)/)
   assert.match(configRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
-  assert.match(configRs, /openclaw_install_runtime::standalone_install_dir\(\)/)
+  assert.match(installRuntimeRs, /pub\(crate\) fn standalone_install_dir\b/)
+  assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_install_dir\(\)/)
   assert.match(openclawVersionRs, /openclaw_install_runtime::npm_global_bin_dir\(\)/)
   assert.match(openclawVersionRs, /openclaw_install_runtime::npm_command\(\)/)
 })
@@ -399,6 +401,24 @@ test('openclaw r2 installer moves out of config.rs ownership', () => {
   assert.match(r2InstallerRs, /openclaw_install_runtime::r2_platform_key\(\)/)
   assert.match(r2InstallerRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
   assert.match(r2InstallerRs, /openclaw_install_runtime::npm_global_bin_dir\(\)/)
+})
+
+test('openclaw standalone installer moves out of config.rs ownership', () => {
+  assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_standalone_installer.rs'), true)
+
+  const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const standaloneInstallerRs = fs.readFileSync('src-tauri/src/commands/openclaw_standalone_installer.rs', 'utf8')
+  const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
+
+  assert.match(modRs, /pub mod openclaw_standalone_installer;/)
+  assert.match(standaloneInstallerRs, /pub\(crate\) async fn try_standalone_install\b/)
+  assert.doesNotMatch(configRs, /\basync fn try_standalone_install\b/)
+  assert.match(configRs, /openclaw_standalone_installer::try_standalone_install\(/)
+  assert.match(standaloneInstallerRs, /openclaw_install_policy::standalone_config\(\)/)
+  assert.match(standaloneInstallerRs, /openclaw_install_policy::versions_match\(/)
+  assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_platform_key\(\)/)
+  assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_archive_ext\(\)/)
+  assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_install_dir\(\)/)
 })
 
 test('installation lifecycle public contract stays stable during phase 5', () => {
