@@ -14,6 +14,10 @@ import { QTCOOL, PROVIDER_PRESETS, API_TYPES as SHARED_API_TYPES, fetchQtcoolMod
 import { t } from '../lib/i18n.js'
 import { getActiveEngineId } from '../lib/engine-manager.js'
 import { enhanceModelCallError } from '../lib/model-error-diagnosis.js'
+import {
+  ASSISTANT_TOOL_POLICY,
+  evaluateAssistantToolRequest,
+} from '../lib/assistant-tool-policy.js'
 
 // ── 常量 ──
 const STORAGE_KEY = 'clawpanel-assistant'
@@ -509,13 +513,14 @@ const TOOL_DEFS = {
 }
 
 // 危险工具（需要用户确认）
-const INTERACTIVE_TOOLS = new Set(['ask_user']) // 交互式工具，不走 confirmToolCall
-const DANGEROUS_TOOLS = new Set(['run_command', 'write_file', 'skills_install_dep', 'skillhub_install'])
-
 // 安全围栏：极端危险命令模式（任何模式都必须确认，包括无限模式）
 const CRITICAL_PATTERNS = [
   /rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+)?[\/~]/i,  // rm -rf / 或 rm -f ~/
   /rm\s+-[a-zA-Z]*r[a-zA-Z]*\s+\//i,          // rm -r /
+  /Remove-Item\s+.*(-Recurse|-r)\b.*(-Force|-f)\b.*([a-zA-Z]:\\|\$env:USERPROFILE|~)/i,
+  /Remove-Item\s+.*([a-zA-Z]:\\|\$env:USERPROFILE|~).*(-Recurse|-r)\b/i,
+  /rmdir\s+\/s\s+\/q\s+[a-zA-Z]:\\/i,
+  /del\s+.*\/[fsq].*[a-zA-Z]:\\/i,
   /format\s+[a-zA-Z]:/i,                       // format C:
   /mkfs\./i,                                    // mkfs.ext4 等
   /dd\s+.*of=\/dev\//i,                         // dd of=/dev/sda
@@ -877,7 +882,12 @@ function getEnabledTools() {
   const tools = [...TOOL_DEFS.system, ...TOOL_DEFS.process, ...TOOL_DEFS.interaction]
 
   // 终端工具：受设置开关控制（优先级高于模式）
-  if (tc.terminal !== false) tools.push(...TOOL_DEFS.terminal)
+  if (tc.terminal !== false) {
+    const terminalTools = mode.readOnly
+      ? TOOL_DEFS.terminal.filter(td => !ASSISTANT_TOOL_POLICY.readOnlyBlockedTools.includes(td.function.name))
+      : TOOL_DEFS.terminal
+    tools.push(...terminalTools)
+  }
 
   // 联网搜索工具：受设置开关控制
   if (tc.webSearch !== false) tools.push(...TOOL_DEFS.webSearch)
@@ -885,7 +895,7 @@ function getEnabledTools() {
   // 文件工具：受设置开关控制 + 规划模式排除写入
   if (tc.fileOps !== false) {
     if (mode.readOnly) {
-      tools.push(...TOOL_DEFS.fileOps.filter(td => td.function.name !== 'write_file'))
+      tools.push(...TOOL_DEFS.fileOps.filter(td => !ASSISTANT_TOOL_POLICY.readOnlyBlockedTools.includes(td.function.name)))
     } else {
       tools.push(...TOOL_DEFS.fileOps)
     }
@@ -893,7 +903,7 @@ function getEnabledTools() {
 
   // Skills 管理工具：始终启用（规划模式下排除安装操作）
   if (mode.readOnly) {
-    tools.push(...TOOL_DEFS.skills.filter(td => !['skills_install_dep', 'skillhub_install'].includes(td.function.name)))
+    tools.push(...TOOL_DEFS.skills.filter(td => !ASSISTANT_TOOL_POLICY.readOnlyBlockedTools.includes(td.function.name)))
   } else {
     tools.push(...TOOL_DEFS.skills)
   }
@@ -1042,17 +1052,19 @@ function buildSystemPrompt() {
     if (modeKey === 'plan') {
       prompt += '\n**你处于规划模式**：可以调用工具读取信息、分析问题，但 **绝对不能修改任何文件**（write_file 已禁用）。'
       prompt += '\n你的任务是：分析问题 → 制定方案 → 输出详细步骤，让用户确认后再切换到执行模式操作。'
-      prompt += '\n即使使用 run_command，也只能执行只读命令（查看、检查、列出），不要执行任何修改操作。'
+      prompt += '\nPlan mode exposes read-only inspection tools only; run_command is not available.'
     }
     if (modeKey === 'unlimited') {
-      prompt += '\n**你处于无限模式**：所有工具调用无需用户确认，请高效完成任务。'
+      prompt += '\nUnlimited mode may call tools continuously, but writes, network access, installs, and high-risk commands still follow confirmation policy.'
     }
 
     prompt += '\n\n### 可用工具'
     prompt += '\n- **用户交互**: ask_user — 向用户提问（单选/多选/文本），获取结构化回答。需要用户做决定时优先用此工具。'
     prompt += '\n- **系统信息**: get_system_info — 获取 OS 类型、架构、主目录等。**在执行任何命令前必须先调用此工具**。'
     prompt += '\n- **进程/端口**: list_processes（按名称过滤）、check_port（检测端口占用）'
-    prompt += '\n- **终端**: run_command — 执行 shell 命令'
+    prompt += mode.readOnly
+      ? '\n- **Terminal**: read-only inspection tools only (run_command unavailable)'
+      : '\n- **Terminal**: run_command - execute shell commands'
     if (mode.readOnly) {
       prompt += '\n- **文件**: read_file、list_directory（只读，write_file 已禁用）'
     } else {
@@ -2362,6 +2374,16 @@ async function confirmToolCall(tc, critical = false) {
   } else if (name === 'write_file') {
     const preview = (args.content || '').slice(0, 200)
     desc = `${t('assistant.confirmWriteFile')}:\n${args.path}\n\n${t('assistant.confirmPreview')}:\n${preview}${(args.content || '').length > 200 ? '\n...(' + t('assistant.confirmTruncated') + ')' : ''}`
+  } else if (name === 'web_search') {
+    desc = `web_search:\n\n${args.query || ''}`
+  } else if (name === 'fetch_url') {
+    desc = `fetch_url:\n\n${args.url || ''}`
+  } else if (name === 'skills_install_dep') {
+    desc = `skills_install_dep:\n\n${args.kind || ''}\n${JSON.stringify(args.spec || {}, null, 2)}`.trim()
+  } else if (name === 'skillhub_install') {
+    desc = `skillhub_install:\n\n${args.slug || ''}`
+  } else {
+    desc = `${name}:\n\n${JSON.stringify(args, null, 2)}`
   }
 
   const prefix = critical
@@ -2397,13 +2419,18 @@ function convertToolsForGemini(tools) {
 async function executeToolWithSafety(toolName, args, tcForConfirm) {
   let result = '', approved = true
   const mode = MODES[currentMode()]
-  const isCritical = toolName === 'run_command' && isCriticalCommand(args.command)
-  if (isCritical) {
-    approved = await confirmToolCall(tcForConfirm || { function: { name: toolName, arguments: JSON.stringify(args) } }, true)
-    if (!approved) result = t('assistant.toolRejectedDanger')
-  } else if (mode.confirmDanger && DANGEROUS_TOOLS.has(toolName)) {
-    approved = await confirmToolCall(tcForConfirm || { function: { name: toolName, arguments: JSON.stringify(args) } })
-    if (!approved) result = t('assistant.toolRejected')
+  const decision = evaluateAssistantToolRequest(toolName, args, mode, { isCriticalCommand })
+  if (!decision.allowed) {
+    approved = false
+    result = decision.rejectionKey === 'assistant.toolUnknown'
+      ? `${t('assistant.toolUnknown')}: ${toolName}`
+      : t(decision.rejectionKey)
+  } else if (decision.requiresConfirmation) {
+    approved = await confirmToolCall(
+      tcForConfirm || { function: { name: toolName, arguments: JSON.stringify(args) } },
+      decision.critical,
+    )
+    if (!approved) result = t(decision.rejectionKey)
   }
   if (approved) {
     try { result = await executeTool(toolName, args) }

@@ -477,16 +477,40 @@ test('phase 5 masks sensitive data before logs and diagnostics reach the UI', ()
 
 test('phase 5 assistant unlimited mode still confirms dangerous tools', () => {
   const assistantJs = fs.readFileSync('src/pages/assistant.js', 'utf8')
+  const assistantLocaleJs = fs.readFileSync('src/locales/modules/assistant.js', 'utf8')
 
-  assert.match(assistantJs, /const DANGEROUS_TOOLS = new Set\(\[/)
+  assert.match(assistantJs, /assistant-tool-policy\.js/)
+  assert.match(assistantJs, /evaluateAssistantToolRequest/)
   assert.match(
     assistantJs,
     /unlimited:\s*\{[^}]*confirmDanger:\s*true/
   )
   assert.match(
     assistantJs,
-    /mode\.confirmDanger && DANGEROUS_TOOLS\.has\(toolName\)/
+    /decision\.requiresConfirmation/
   )
+  assert.match(assistantJs, /still follow confirmation policy/)
+  assert.match(assistantLocaleJs, /risky actions still confirm/)
+  assert.doesNotMatch(assistantLocaleJs, /Skip danger confirmations/)
+})
+
+test('phase 5 assistant permission policy is centralized and covers network access', () => {
+  const policyJs = fs.readFileSync('src/lib/assistant-tool-policy.js', 'utf8')
+  const assistantJs = fs.readFileSync('src/pages/assistant.js', 'utf8')
+  const assistantLocaleJs = fs.readFileSync('src/locales/modules/assistant.js', 'utf8')
+
+  assert.match(policyJs, /NETWORK_TOOLS = \['web_search', 'fetch_url'\]/)
+  assert.match(policyJs, /readOnlyBlockedTools/)
+  assert.match(policyJs, /confirmationRequiredTools/)
+  assert.match(policyJs, /assistant\.toolRejectedReadOnly/)
+  assert.match(assistantLocaleJs, /toolRejectedReadOnly/)
+  assert.match(assistantJs, /decision\.allowed/)
+  assert.match(assistantJs, /decision\.rejectionKey/)
+  assert.match(assistantJs, /run_command unavailable/)
+  assert.match(assistantJs, /run_command - execute shell commands/)
+  assert.match(assistantJs, /Remove-Item\\s\+\.\*\(-Recurse\|-r\)/)
+  assert.match(assistantJs, /rmdir\\s\+\\\/s\\s\+\\\/q/)
+  assert.doesNotMatch(assistantJs, /const DANGEROUS_TOOLS = new Set/)
 })
 
 test('phase 5 masks Hermes logs on read and download surfaces', () => {
