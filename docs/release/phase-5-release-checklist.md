@@ -19,6 +19,7 @@ This checklist closes the release and installer surface for AgentDock production
 ## Signing
 
 - Windows release jobs must provide `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` before publishing installer artifacts.
+- Windows local smoke may run `npm run release:signing:windows -- --file <installer> --allow-unsigned`, but publish candidates must run the same command without `--allow-unsigned`.
 - macOS release jobs must provide `APPLE_SIGNING_IDENTITY`, `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, and `APPLE_TEAM_ID` before notarized publishing.
 - Linux release jobs may publish unsigned packages for the first production fork milestone, but any detached signature must be recorded beside the package and reflected in the artifact manifest.
 - The generated `release-manifest.json` must show the signing status block without embedding certificate contents, passwords, tokens, or secrets.

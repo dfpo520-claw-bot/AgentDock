@@ -30,6 +30,7 @@
     "serve": "node scripts/serve.js",
     "release:manifest": "node scripts/generate-release-manifest.mjs",
     "release:smoke": "node scripts/verify-release-smoke.mjs",
+    "release:signing:windows": "node scripts/verify-windows-signing.mjs",
     "version:sync": "node scripts/sync-version.js",
     "version:set": "node scripts/sync-version.js"
   },
