@@ -27,6 +27,7 @@ This checklist closes the release and installer surface for AgentDock production
 
 - Build the desktop bundle with `npm run tauri build`.
 - Generate or refresh the artifact manifest with `npm run release:manifest -- --bundle-dir src-tauri/target/release/bundle`.
+- Run the automated release smoke verifier with `npm run release:smoke -- --bundle-dir src-tauri/target/release/bundle`.
 - Confirm `release-manifest.json` lists every installer or archive artifact with `path`, `kind`, `bytes`, and `sha256`.
 - Confirm `checksums.sha256` contains one SHA256 line per release artifact and excludes generated manifest files.
 - Recompute at least one installer checksum locally and compare it with `release-manifest.json`.

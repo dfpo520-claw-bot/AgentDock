@@ -562,6 +562,7 @@ test('phase 5 release checklist covers installer metadata, signing, artifacts, a
     'cargo check --manifest-path src-tauri/Cargo.toml',
     'npm run tauri build',
     'npm run release:manifest',
+    'npm run release:smoke',
     'release-manifest.json',
     'checksums.sha256',
     'TAURI_SIGNING_PRIVATE_KEY',
@@ -580,11 +581,26 @@ test('phase 5 release checklist covers installer metadata, signing, artifacts, a
   }
 })
 
+test('phase 5 release smoke verifier is exposed as a package script', () => {
+  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'))
+  const script = fs.readFileSync('scripts/verify-release-smoke.mjs', 'utf8')
+
+  assert.equal(
+    packageJson.scripts['release:smoke'],
+    'node scripts/verify-release-smoke.mjs',
+  )
+  assert.match(script, /verifyReleaseSmoke/)
+  assert.match(script, /release-manifest\.json/)
+  assert.match(script, /checksums\.sha256/)
+  assert.match(script, /missing windows installer artifact/)
+})
+
 test('phase 5 tauri installer metadata remains product-owned', () => {
   const tauriConfig = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'))
 
   assert.equal(tauriConfig.productName, 'AgentDock')
   assert.equal(tauriConfig.identifier, 'com.agentdock.desktop')
+  assert.equal(tauriConfig.build.beforeBuildCommand, 'node node_modules/vite/bin/vite.js build')
   assert.equal(tauriConfig.bundle.active, true)
   assert.deepEqual(tauriConfig.bundle.targets, 'all')
   assert.match(tauriConfig.bundle.publisher, /AgentDock/)
