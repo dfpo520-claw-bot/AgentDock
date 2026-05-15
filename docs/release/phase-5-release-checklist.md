@@ -51,8 +51,10 @@ This checklist closes the release and installer surface for AgentDock production
 - Confirm logs, diagnostics, assistant command audit output, and Hermes log export apply secret redaction.
 - Confirm update check reads `docs/update/latest.json` shape and failed update handling follows the configured rollback behavior.
 - Confirm uninstall removes the application while preserving user data unless the installer explicitly asks for removal.
+- Browser-driven UI route smoke has already passed for `/dashboard`, `/settings`, `/services`, `/assistant`, `/logs`, and `/about`; evidence is recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
+- The remaining manual smoke items should focus on installed-app actions that mutate local state or services: Gateway restart, install/upgrade/uninstall flows, Settings writes, assistant tool execution, log export, and uninstall UX.
 
 ## Known Warnings To Recheck
 
-- Vite may report existing dynamic/static import and chunk size warnings; record them in release notes if they remain.
-- Rust may report existing unused product config helper warnings; remove those once the remaining command migration no longer needs compatibility helpers.
+- Vite may report the existing `i18n` chunk size warning; record it in release notes if it remains.
+- Rust product config helper warnings were cleaned in the Phase 5 hardening pass; re-run `cargo check --manifest-path src-tauri/Cargo.toml` before publishing.

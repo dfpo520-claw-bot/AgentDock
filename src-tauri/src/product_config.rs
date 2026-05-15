@@ -53,20 +53,12 @@ pub struct LegacyConfigDecisionResult {
     pub imported_keys: Vec<String>,
 }
 
-pub fn product_config_filename() -> &'static str {
-    PRODUCT_CONFIG_FILENAME
-}
-
 pub fn product_name() -> &'static str {
     PRODUCT_NAME
 }
 
 pub fn update_manifest_url() -> &'static str {
     UPDATE_MANIFEST_URL
-}
-
-pub fn legacy_panel_config_filename() -> &'static str {
-    LEGACY_PANEL_CONFIG_FILENAME
 }
 
 fn home_dir() -> PathBuf {

@@ -5,6 +5,7 @@
 import { api, invalidate, isTauriRuntime } from '../lib/tauri-api.js'
 import { navigate } from '../router.js'
 import { wsClient, uuid } from '../lib/ws-client.js'
+import { refreshGatewayStatus } from '../lib/app-state.js'
 import { renderMarkdown } from '../lib/markdown.js'
 import { saveMessage, saveMessages, getLocalMessages, isStorageAvailable } from '../lib/message-db.js'
 import { toast } from '../components/toast.js'
@@ -1183,7 +1184,7 @@ async function connectGateway() {
         if (bar) bar.style.display = 'none'
         if (overlay) overlay.style.display = 'none'
         // WS 已连接，主动刷新 Gateway 状态以消除顶部横条延迟
-        import('../lib/app-state.js').then(m => m.refreshGatewayStatus()).catch(() => {})
+        refreshGatewayStatus().catch(() => {})
       } else if (status === 'error') {
         // 连接错误：显示引导遮罩而非底部条
         if (bar) bar.style.display = 'none'

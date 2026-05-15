@@ -5,6 +5,7 @@ This handoff records the remaining release work in the order currently selected 
 ## 1. Signing Closure
 
 Windows installers are not publishable until Authenticode verification returns `Valid`.
+Formal certificate hookup is deferred until the real certificate and thumbprint are provided. Development and local QA may continue with unsigned artifacts, but any publish candidate must still pass the signed verification gate.
 
 The signing execution entrypoint is:
 
@@ -66,7 +67,7 @@ Record pass/fail notes for each item before treating the installer as production
 
 ## 3. Automation Deferred
 
-CI/release automation is intentionally paused for this pass. Do not expand workflow files until signing closure, manual smoke, and environment cleanup are finished.
+CI/release automation is intentionally paused for this pass. Do not expand workflow files until signing certificate hookup and the publish strategy are confirmed.
 
 When resumed, the automation scope should be limited to:
 
@@ -90,8 +91,12 @@ New PowerShell commands no longer emit the startup warning during release verifi
 
 Defer these until signing, manual smoke, automation decision, and environment cleanup are settled:
 
-- Vite dynamic/static import and chunk-size warning cleanup.
-- Rust unused helper warning cleanup.
+- i18n bundle size optimization through locale/module lazy loading.
 - Brand asset final replacement.
 - Formal upstream fork and license strategy.
 - Deeper backend command migration beyond current fork compatibility.
+
+## Completed In This Pass
+
+- Rust product-config unused helper warnings were removed and `cargo check --manifest-path src-tauri/Cargo.toml` completed without Rust warnings.
+- Vite circular chunk and mixed toast dynamic/static import warnings were cleaned. The remaining Vite warning is the real `i18n` chunk size warning, which should be optimized by lazy-loading locale modules rather than hidden with a larger warning limit.

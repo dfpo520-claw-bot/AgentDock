@@ -65,5 +65,18 @@ export default defineConfig({
     target: ['es2021', 'chrome100', 'safari13'],
     minify: !process.env.TAURI_DEBUG ? 'esbuild' : false,
     sourcemap: !!process.env.TAURI_DEBUG,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const normalized = id.replace(/\\/g, '/')
+          if (normalized.includes('/node_modules/')) return 'vendor'
+          if (normalized.includes('/src/locales/')) return 'i18n'
+          if (normalized.includes('/src/engines/hermes/')) return 'engine-hermes'
+          if (normalized.includes('/src/engines/openclaw/')) return 'engine-openclaw'
+          if (normalized.includes('/src/lib/')) return 'runtime'
+          return undefined
+        },
+      },
+    },
   },
 })

@@ -23,11 +23,10 @@ src-tauri\target\x86_64-pc-windows-msvc\release\bundle\nsis\AgentDock_0.15.3_x64
 
 ## Manual UI Checks Still Required
 
-These checks require an interactive installed-app pass and are not covered by the automated smoke above:
+Automated route-level UI smoke completed separately in `docs/release/phase-5-ui-smoke-2026-05-15.md`. These remaining checks require an interactive installed-app pass because they mutate local files, services, credentials, or runtime state:
 
-- Dashboard renders with expected data and no blank WebView.
-- Settings read/write uses product-owned config paths.
 - OpenClaw install detection, upgrade, uninstall, Node detection, Git detection, proxy diagnostics, and gateway restart flows respond from the installed app.
+- Settings read/write uses product-owned config paths from the installed app.
 - Assistant read-only, plan, and unlimited modes enforce dangerous tool confirmation policy.
 - Logs, diagnostics, assistant command audit output, and Hermes log export redact secrets in visible UI/download surfaces.
 - Update check reads the product update manifest shape and failed update handling follows rollback policy.
@@ -35,4 +34,4 @@ These checks require an interactive installed-app pass and are not covered by th
 
 ## Release Decision
 
-This artifact is suitable for local QA smoke only. It is not publishable until Windows signing verification returns `Valid` without `--allow-unsigned`.
+This artifact is suitable for local QA smoke only. Certificate hookup is deferred by product decision, and this artifact is not publishable until Windows signing verification returns `Valid` without `--allow-unsigned`.

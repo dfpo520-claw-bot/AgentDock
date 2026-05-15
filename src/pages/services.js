@@ -6,7 +6,7 @@ import { api } from '../lib/tauri-api.js'
 import { toast } from '../components/toast.js'
 import { humanizeError } from '../lib/humanize-error.js'
 import { showConfirm, showModal, showUpgradeModal } from '../components/modal.js'
-import { isMacPlatform, isInDocker, setUpgrading, setUserStopped, resetAutoRestart } from '../lib/app-state.js'
+import { isMacPlatform, isInDocker, setUpgrading, setUserStopped, resetAutoRestart, refreshGatewayStatus } from '../lib/app-state.js'
 import { isForeignGatewayError, isForeignGatewayService, maybeShowForeignGatewayBindingPrompt, showGatewayConflictGuidance } from '../lib/gateway-ownership.js'
 import { diagnoseInstallError } from '../lib/error-diagnosis.js'
 import { icon, statusIcon } from '../lib/icons.js'
@@ -731,7 +731,7 @@ async function handleServiceAction(action, label, page) {
       if (svc && svc.running === expectRunning) {
         toast(t('services.actionDone', { label, action: actionLabel }) + (svc.pid ? ' (PID: ' + svc.pid + ')' : ''), 'success')
         // 立刻同步全局 Gateway 状态（顶部 banner + WS 连接）
-        import('../lib/app-state.js').then(m => m.refreshGatewayStatus()).catch(() => {})
+        refreshGatewayStatus().catch(() => {})
         await loadServices(page)
         return
       }
@@ -997,7 +997,6 @@ async function handleClaimGateway(btn, page) {
     await api.claimGateway()
     toast(t('services.claimSuccess'), 'success')
     // 立刻刷新全局 Gateway 状态
-    const { refreshGatewayStatus } = await import('../lib/app-state.js')
     await refreshGatewayStatus()
     await loadServices(page)
   } catch (e) {

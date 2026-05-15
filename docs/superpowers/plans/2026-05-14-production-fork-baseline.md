@@ -1223,6 +1223,10 @@ If no notes were added, skip this commit.
 - Follow-up: rerun the desktop debug smoke in a shell where `npm` or `npm.cmd` is available on PATH, using `node_modules\\.bin\\tauri.cmd build --debug` or `npm run tauri -- build --debug`.
 - `cargo tauri icon docs/agentdock-icon.png -o src-tauri/icons` succeeded and regenerated the Tauri icon set from the new AgentDock source icon.
 - `public/favicon.ico` was synchronized from `src-tauri/icons/icon.ico`.
+- Later Phase 5 release hardening produced a Windows NSIS release artifact and recorded install/launch/uninstall smoke evidence in `docs/release/phase-5-windows-smoke-2026-05-15.md`.
+- Browser-driven UI route smoke passed for the core routes recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
+- Windows signing execution and verification are wired, but formal certificate hookup is deferred until a real certificate and thumbprint are available.
+- Rust product-config helper warnings and Vite mixed dynamic/static import warnings were cleaned; the remaining frontend build warning is the real `i18n` chunk size warning.
 
 ## Task 8: Final Review And Handoff
 

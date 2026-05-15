@@ -176,13 +176,13 @@ Success criteria:
 - No rewrite of all Rust commands in Phase 1.
 - No broad framework migration such as React/Vue unless a later product decision justifies it.
 
-## Immediate Next Step
+## Current Release Hardening Status
 
-After this design is approved, create an implementation plan that starts with a production baseline branch and then proceeds through small tasks:
+The production baseline has advanced through Phase 5 release hardening:
 
-1. Verify build and packaging commands.
-2. Create product identity constants.
-3. Replace visible brand and package metadata.
-4. Generate temporary brand assets.
-5. Verify desktop launch and build.
-6. Document remaining release blockers.
+1. Product identity, installer metadata, release manifest checks, signing verification, and UI smoke tooling are in place.
+2. Windows NSIS installer local smoke passed for install, launch, and uninstall.
+3. Browser-driven route smoke passed for the core routes recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
+4. Windows signing execution is wired, but formal certificate hookup is deferred until a real certificate and thumbprint are available.
+5. Rust product-config helper warnings and Vite mixed dynamic/static import warnings were cleaned; the remaining frontend warning is the real `i18n` chunk size warning.
+6. CI/release automation remains paused until signing inputs and publish strategy are confirmed.

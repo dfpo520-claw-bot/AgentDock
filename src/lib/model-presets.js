@@ -4,6 +4,8 @@
  */
 
 // API 接口类型选项
+import { api } from './tauri-api.js'
+
 export const API_TYPES = [
   { value: 'openai-completions', label: 'OpenAI Chat Completions (最常用)' },
   { value: 'anthropic-messages', label: 'Anthropic Messages' },
@@ -113,7 +115,6 @@ export async function fetchQtcoolModels(apiKey) {
   // 没有 key 时尝试从已有的 qtcool provider 配置读取
   if (!key) {
     try {
-      const { api } = await import('../lib/tauri-api.js')
       const cfg = await api.readOpenclawConfig()
       key = cfg?.models?.providers?.qtcool?.apiKey || ''
     } catch { /* ignore */ }

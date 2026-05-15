@@ -7,6 +7,7 @@ import {
   loadHermesProviders,
   inferProviderByBaseUrl,
 } from '../lib/providers.js'
+import { toast } from '../../../components/toast.js'
 
 const ICONS = {
   running: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--success, #22c55e)" stroke-width="2.5" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>`,
@@ -475,7 +476,6 @@ export function render() {
         // 首次启动可能慢（Hermes 会跑 npm build 构建前端），给用户一个 toast 安抚
         let firstHintTimer = null
         const showFirstHint = async () => {
-          const { toast } = await import('../../../components/toast.js')
           toast(t('engine.dashNativePanelStartFirstHint'), 'info', { duration: 8000 })
         }
         firstHintTimer = setTimeout(showFirstHint, 5000)
@@ -489,7 +489,6 @@ export function render() {
               await tryOpen(result.port || 9119)
               return { ok: true, ...result }
             } catch (err) {
-              const { toast } = await import('../../../components/toast.js')
               toast(t('engine.dashNativePanelOpenFail') + ': ' + (err?.message || err), 'error')
               return { ok: false, kind: 'open_failed', ...result }
             }
@@ -513,8 +512,6 @@ export function render() {
 
         // 启动失败，按 kind 分发
         const port = startResult.port || probe?.port || 9119
-        const { toast } = await import('../../../components/toast.js')
-
         if (startResult.kind === 'timeout') {
           toast(t('engine.dashNativePanelStartTimeout', { port }), 'warning', { duration: 6000 })
           return
@@ -642,7 +639,6 @@ export function render() {
           }
         })
       } catch (err) {
-        const { toast } = await import('../../../components/toast.js')
         toast(t('engine.dashNativePanelOpenFail') + ': ' + (err?.message || err), 'error')
       } finally {
         btn.disabled = false
@@ -870,7 +866,6 @@ export function render() {
 
       // 监听 config.yaml 自愈事件（api_server guardian）
       const unlisten3 = await safeTauriListen('hermes-config-patched', async (evt) => {
-        const { toast } = await import('../../../components/toast.js')
         const msg = evt?.payload?.message || t('engine.dashConfigPatched')
         toast(msg, 'info', { duration: 6000 })
       })

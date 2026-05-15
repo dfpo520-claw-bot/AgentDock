@@ -14,6 +14,7 @@
  */
 import { wsClient } from './ws-client.js'
 import { hasFeature } from './kernel.js'
+import { api } from './tauri-api.js'
 
 /**
  * @typedef {Object} PagedResult
@@ -161,8 +162,6 @@ export async function modelStatusProbe(opts = {}) {
  * 注意：底层调用的是 Tauri 命令 `list_agents`（封装了 Gateway RPC），不直接走 WS。
  */
 export async function listAgentsCompat() {
-  // 动态导入避免顶层依赖
-  const { api } = await import('./tauri-api.js')
   const list = await api.listAgents()
   if (!Array.isArray(list)) return []
 

@@ -5,20 +5,14 @@
 import { toast } from '../components/toast.js'
 import { statusIcon } from '../lib/icons.js'
 import { t } from '../lib/i18n.js'
+import { api as tauriApi } from '../lib/tauri-api.js'
 
 const isTauri = !!window.__TAURI_INTERNALS__
-let _tauriApi = null
-
-async function getTauriApi() {
-  if (!_tauriApi) _tauriApi = (await import('../lib/tauri-api.js')).api
-  return _tauriApi
-}
 
 async function apiCall(cmd, args = {}) {
   if (isTauri) {
     // 桌面端：通过 Tauri IPC 读写 clawpanel.json
-    const api = await getTauriApi()
-    const cfg = await api.readPanelConfig()
+    const cfg = await tauriApi.readPanelConfig()
 
     if (cmd === 'auth_status') {
       const isDefault = cfg.accessPassword === '123456'
@@ -34,7 +28,7 @@ async function apiCall(cmd, args = {}) {
       cfg.accessPassword = args.newPassword
       delete cfg.mustChangePassword
       delete cfg.ignoreRisk
-      await api.writePanelConfig(cfg)
+      await tauriApi.writePanelConfig(cfg)
       sessionStorage.setItem('clawpanel_authed', '1')
       return { success: true }
     }
@@ -47,7 +41,7 @@ async function apiCall(cmd, args = {}) {
       } else {
         delete cfg.ignoreRisk
       }
-      await api.writePanelConfig(cfg)
+      await tauriApi.writePanelConfig(cfg)
       return { success: true }
     }
     throw new Error(`${t('common.unknownCommand')}: ${cmd}`)

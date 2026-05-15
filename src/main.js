@@ -11,7 +11,7 @@ import { renderSidebar, openMobileSidebar } from './components/sidebar.js'
 import { initTheme } from './lib/theme.js'
 import { detectOpenclawStatus, isOpenclawReady, isUpgrading, isGatewayRunning, isGatewayForeign, onGatewayChange, startGatewayPoll, onGuardianGiveUp, resetAutoRestart, loadActiveInstance, getActiveInstance, onInstanceChange, refreshGatewayStatus } from './lib/app-state.js'
 import { wsClient } from './lib/ws-client.js'
-import { api, checkBackendHealth, isBackendOnline, isTauriRuntime, onBackendStatusChange } from './lib/tauri-api.js'
+import { api, checkBackendHealth, invalidate, isBackendOnline, isTauriRuntime, onBackendStatusChange } from './lib/tauri-api.js'
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
 import { statusIcon } from './lib/icons.js'
 import { isForeignGatewayError, showGatewayConflictGuidance } from './lib/gateway-ownership.js'
@@ -80,7 +80,6 @@ async function checkAuth() {
   if (isTauri) {
     // 桌面端：读 clawpanel.json，检查密码配置
     try {
-      const { api } = await import('./lib/tauri-api.js')
       const cfg = await api.readPanelConfig()
       if (!cfg.accessPassword) return { ok: true }
       if (sessionStorage.getItem('clawpanel_authed') === '1') return { ok: true }
@@ -261,7 +260,6 @@ function showLoginOverlay(defaultPw) {
       try {
         if (isTauri) {
           // 桌面端：本地比对密码
-          const { api } = await import('./lib/tauri-api.js')
           const cfg = await api.readPanelConfig()
           if (pw !== cfg.accessPassword) {
             _loginFailCount++
@@ -566,7 +564,6 @@ async function boot() {
       import('@tauri-apps/api/event').then(async ({ listen }) => {
         const refreshAfterTask = async () => {
           // 清除 API 缓存，确保拿到最新状态
-          const { invalidate } = await import('./lib/tauri-api.js')
           invalidate('check_installation', 'get_services_status', 'get_version_info')
           await detectOpenclawStatus()
           renderSidebar(sidebar)
@@ -863,9 +860,6 @@ async function checkLegacyConfigMigrationOnStartup() {
 
     // 注册各页面上下文提供器
     registerPageContext('/chat-debug', async () => {
-      const { isOpenclawReady, isGatewayRunning } = await import('./lib/app-state.js')
-      const { wsClient } = await import('./lib/ws-client.js')
-      const { api } = await import('./lib/tauri-api.js')
       const lines = ['## 系统诊断快照']
       lines.push(`- OpenClaw: ${isOpenclawReady() ? '就绪' : '未就绪'}`)
       lines.push(`- Gateway: ${isGatewayRunning() ? '运行中' : '未运行'}`)
@@ -882,8 +876,6 @@ async function checkLegacyConfigMigrationOnStartup() {
     })
 
     registerPageContext('/services', async () => {
-      const { isGatewayRunning } = await import('./lib/app-state.js')
-      const { api } = await import('./lib/tauri-api.js')
       const lines = ['## 服务状态']
       lines.push(`- Gateway: ${isGatewayRunning() ? '运行中' : '未运行'}`)
       try {
@@ -897,7 +889,6 @@ async function checkLegacyConfigMigrationOnStartup() {
     })
 
     registerPageContext('/gateway', async () => {
-      const { api } = await import('./lib/tauri-api.js')
       try {
         const config = await api.readOpenclawConfig()
         const gw = config?.gateway || {}

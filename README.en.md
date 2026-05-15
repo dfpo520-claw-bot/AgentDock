@@ -42,3 +42,11 @@ npm run tauri build
 ## Project Status
 
 The first milestone is a runnable and packageable AgentDock baseline that can be safely refactored in later phases.
+
+Current release-hardening status:
+
+- Windows NSIS installer local smoke passed for install, launch, and uninstall.
+- Browser-driven UI route smoke passed for the core desktop routes recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
+- Windows signing is wired, but formal certificate hookup is deferred until a real code-signing certificate and thumbprint are available.
+- CI/release automation is paused until signing inputs and the publish strategy are confirmed.
+- The remaining known frontend build warning is the `i18n` chunk size warning; optimize it later with locale/module lazy loading.
