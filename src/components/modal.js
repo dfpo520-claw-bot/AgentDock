@@ -183,9 +183,14 @@ export function showContentModal({ title, content, buttons = [], width = 480 }) 
   const overlay = document.createElement('div')
   overlay.className = 'modal-overlay'
 
-  const btnsHtml = buttons.map(b =>
-    `<button class="${b.className || 'btn btn-primary btn-sm'}" id="${b.id || ''}">${b.label}</button>`
-  ).join('')
+  const btnsHtml = buttons.map(btn => {
+    let className = btn.className || (btn.danger ? 'btn btn-danger' : 'btn btn-secondary')
+    if (/\bbtn-(?:primary|secondary|danger|ghost)\b/.test(className) && !/\bbtn\b/.test(className)) {
+      className = `btn ${className}`
+    }
+    if (!/\bbtn-(?:xs|sm|lg)\b/.test(className)) className += ' btn-sm'
+    return `<button class="${className}" id="${btn.id || ''}">${btn.label}</button>`
+  }).join('')
 
   overlay.innerHTML = `
     <div class="modal" style="max-width:${width}px">
