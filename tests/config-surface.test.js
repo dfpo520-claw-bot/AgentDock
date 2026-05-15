@@ -542,7 +542,60 @@ test('phase 5 release builds generate artifact manifests and checksums', () => {
   assert.match(buildSh, /generate-release-manifest\.mjs --bundle-dir "\$BUNDLE_DIR"/)
   assert.match(script, /release-manifest\.json/)
   assert.match(script, /checksums\.sha256/)
+  assert.match(script, /classifyArtifact/)
+  assert.match(script, /signing:/)
+  assert.match(script, /TAURI_SIGNING_PRIVATE_KEY/)
+  assert.match(script, /APPLE_SIGNING_IDENTITY/)
   assert.doesNotMatch(script, /new Date\(\)\.toISOString/)
+})
+
+test('phase 5 release checklist covers installer metadata, signing, artifacts, and smoke', () => {
+  const checklistPath = 'docs/release/phase-5-release-checklist.md'
+  assert.equal(fs.existsSync(checklistPath), true)
+
+  const checklist = fs.readFileSync(checklistPath, 'utf8')
+  for (const required of [
+    'git status --short',
+    'npm run version:sync',
+    'node --test tests/*.test.js',
+    'npm run build',
+    'cargo check --manifest-path src-tauri/Cargo.toml',
+    'npm run tauri build',
+    'npm run release:manifest',
+    'release-manifest.json',
+    'checksums.sha256',
+    'TAURI_SIGNING_PRIVATE_KEY',
+    'APPLE_SIGNING_IDENTITY',
+    'productName',
+    'identifier',
+    'icon',
+    'docs/update/latest.json',
+    'rollback',
+    'install',
+    'launch',
+    'assistant',
+    'redaction',
+  ]) {
+    assert.match(checklist, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+})
+
+test('phase 5 tauri installer metadata remains product-owned', () => {
+  const tauriConfig = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'))
+
+  assert.equal(tauriConfig.productName, 'AgentDock')
+  assert.equal(tauriConfig.identifier, 'com.agentdock.desktop')
+  assert.equal(tauriConfig.bundle.active, true)
+  assert.deepEqual(tauriConfig.bundle.targets, 'all')
+  assert.match(tauriConfig.bundle.publisher, /AgentDock/)
+  assert.match(tauriConfig.bundle.shortDescription, /AgentDock/)
+  assert.match(tauriConfig.bundle.longDescription, /desktop console/)
+  assert.equal(tauriConfig.bundle.windows.nsis.displayLanguageSelector, true)
+  assert.equal(tauriConfig.bundle.windows.webviewInstallMode.type, 'embedBootstrapper')
+  assert.deepEqual(tauriConfig.bundle.windows.nsis.languages, [
+    'SimpChinese',
+    'English',
+  ])
 })
 
 test('phase 5 README records upstream and referenced open source projects', () => {

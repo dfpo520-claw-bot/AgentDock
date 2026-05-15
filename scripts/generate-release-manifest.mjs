@@ -36,6 +36,56 @@ function gitValue(args) {
   }
 }
 
+function normalizeTargets(targets) {
+  if (Array.isArray(targets)) return targets
+  if (typeof targets === 'string') return [targets]
+  return []
+}
+
+export function classifyArtifact(relativePath) {
+  const normalized = relativePath.toLowerCase()
+  if (normalized.endsWith('.tar.gz.sig') || normalized.endsWith('.sig')) return 'signature'
+  if (normalized.endsWith('.app.tar.gz')) return 'macos-app-archive'
+  if (normalized.endsWith('-setup.exe') || normalized.includes('/nsis/')) return 'nsis'
+  if (normalized.endsWith('.msi') || normalized.includes('/msi/')) return 'msi'
+  if (normalized.endsWith('.dmg') || normalized.includes('/dmg/')) return 'dmg'
+  if (normalized.endsWith('.appimage') || normalized.includes('/appimage/')) return 'appimage'
+  if (normalized.endsWith('.deb') || normalized.includes('/deb/')) return 'deb'
+  if (normalized.endsWith('.rpm') || normalized.includes('/rpm/')) return 'rpm'
+  if (
+    normalized.endsWith('.zip') ||
+    normalized.endsWith('.tar.gz') ||
+    normalized.endsWith('.tgz') ||
+    normalized.endsWith('.tar.xz')
+  ) {
+    return 'archive'
+  }
+  return 'other'
+}
+
+function signingStatus() {
+  return {
+    requiredForRelease: true,
+    windows: {
+      certificateEnv: 'TAURI_SIGNING_PRIVATE_KEY',
+      passwordEnv: 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD',
+      present: Boolean(process.env.TAURI_SIGNING_PRIVATE_KEY),
+    },
+    macos: {
+      identityEnv: 'APPLE_SIGNING_IDENTITY',
+      certificateEnv: 'APPLE_CERTIFICATE',
+      passwordEnv: 'APPLE_CERTIFICATE_PASSWORD',
+      notarizationTeamEnv: 'APPLE_TEAM_ID',
+      present: Boolean(process.env.APPLE_SIGNING_IDENTITY || process.env.APPLE_CERTIFICATE),
+    },
+    linux: {
+      detachedSignatureRequired: false,
+      certificateEnv: 'LINUX_SIGNING_KEY',
+      present: Boolean(process.env.LINUX_SIGNING_KEY),
+    },
+  }
+}
+
 function collectArtifactFiles(bundleDir) {
   const files = []
 
@@ -72,8 +122,10 @@ export function buildReleaseManifest({
 
   const artifacts = collectArtifactFiles(resolvedBundleDir).map((filePath) => {
     const stat = fs.statSync(filePath)
+    const relativePath = normalizeRelative(path.relative(resolvedBundleDir, filePath))
     return {
-      path: normalizeRelative(path.relative(resolvedBundleDir, filePath)),
+      path: relativePath,
+      kind: classifyArtifact(relativePath),
       bytes: stat.size,
       sha256: sha256File(filePath),
     }
@@ -84,7 +136,20 @@ export function buildReleaseManifest({
     productName: tauriConfig.productName,
     packageName: packageJson.name,
     version: packageJson.version,
+    releaseChannel: packageJson.releaseChannel || 'production',
     tauriIdentifier: tauriConfig.identifier,
+    bundle: {
+      active: Boolean(tauriConfig.bundle?.active),
+      targets: normalizeTargets(tauriConfig.bundle?.targets),
+      icons: tauriConfig.bundle?.icon || [],
+      publisher: tauriConfig.bundle?.publisher || null,
+      shortDescription: tauriConfig.bundle?.shortDescription || null,
+      windows: {
+        webviewInstallMode: tauriConfig.bundle?.windows?.webviewInstallMode || null,
+        nsis: tauriConfig.bundle?.windows?.nsis || null,
+      },
+    },
+    signing: signingStatus(),
     gitCommit: gitValue(['rev-parse', 'HEAD']),
     gitTag: gitValue(['describe', '--tags', '--exact-match']),
     sourceDateEpoch: process.env.SOURCE_DATE_EPOCH || null,
@@ -128,7 +193,7 @@ function parseArgs(argv) {
   return args
 }
 
-if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   try {
     const args = parseArgs(process.argv.slice(2))
     if (args.help) {
