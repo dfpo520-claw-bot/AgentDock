@@ -358,6 +358,7 @@ test('openclaw install runtime helpers move out of config.rs ownership', () => {
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
   const installRuntimeRs = fs.readFileSync('src-tauri/src/commands/openclaw_install_runtime.rs', 'utf8')
   const standaloneInstallerRs = fs.readFileSync('src-tauri/src/commands/openclaw_standalone_installer.rs', 'utf8')
+  const lifecycleRs = fs.readFileSync('src-tauri/src/commands/openclaw_lifecycle.rs', 'utf8')
   const openclawVersionRs = fs.readFileSync('src-tauri/src/commands/openclaw_version.rs', 'utf8')
   const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
 
@@ -378,8 +379,8 @@ test('openclaw install runtime helpers move out of config.rs ownership', () => {
     assert.doesNotMatch(configRs, new RegExp(`\\bfn ${name}\\b`))
   }
 
-  assert.match(configRs, /openclaw_install_runtime::pre_install_cleanup\(\)/)
-  assert.match(configRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
+  assert.match(lifecycleRs, /openclaw_install_runtime::pre_install_cleanup\(\)/)
+  assert.match(lifecycleRs, /openclaw_install_runtime::npm_command_elevated\(\)/)
   assert.match(installRuntimeRs, /pub\(crate\) fn standalone_install_dir\b/)
   assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_install_dir\(\)/)
   assert.match(openclawVersionRs, /openclaw_install_runtime::npm_global_bin_dir\(\)/)
@@ -407,13 +408,14 @@ test('openclaw standalone installer moves out of config.rs ownership', () => {
   assert.equal(fs.existsSync('src-tauri/src/commands/openclaw_standalone_installer.rs'), true)
 
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
+  const lifecycleRs = fs.readFileSync('src-tauri/src/commands/openclaw_lifecycle.rs', 'utf8')
   const standaloneInstallerRs = fs.readFileSync('src-tauri/src/commands/openclaw_standalone_installer.rs', 'utf8')
   const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
 
   assert.match(modRs, /pub mod openclaw_standalone_installer;/)
   assert.match(standaloneInstallerRs, /pub\(crate\) async fn try_standalone_install\b/)
   assert.doesNotMatch(configRs, /\basync fn try_standalone_install\b/)
-  assert.match(configRs, /openclaw_standalone_installer::try_standalone_install\(/)
+  assert.match(lifecycleRs, /openclaw_standalone_installer::try_standalone_install\(/)
   assert.match(standaloneInstallerRs, /openclaw_install_policy::standalone_config\(\)/)
   assert.match(standaloneInstallerRs, /openclaw_install_policy::versions_match\(/)
   assert.match(standaloneInstallerRs, /openclaw_install_runtime::standalone_platform_key\(\)/)
@@ -430,16 +432,20 @@ test('installation lifecycle public contract stays stable during phase 5', () =>
 
   assert.match(modRs, /pub mod openclaw_lifecycle;/)
   assert.match(openclawVersionRs, /pub async fn list_openclaw_versions\b/)
-  assert.match(configRs, /pub async fn upgrade_openclaw\b/)
+  assert.match(lifecycleRs, /#\[tauri::command\]\s+pub async fn upgrade_openclaw\b/)
   assert.match(lifecycleRs, /#\[tauri::command\]\s+pub async fn uninstall_openclaw\b/)
+  assert.match(lifecycleRs, /\basync fn upgrade_openclaw_inner\b/)
   assert.match(lifecycleRs, /\basync fn uninstall_openclaw_inner\b/)
+  assert.doesNotMatch(configRs, /pub async fn upgrade_openclaw\b/)
   assert.doesNotMatch(configRs, /pub async fn uninstall_openclaw\b/)
+  assert.doesNotMatch(configRs, /\basync fn upgrade_openclaw_inner\b/)
   assert.doesNotMatch(configRs, /\basync fn uninstall_openclaw_inner\b/)
 
   assert.match(libRs, /openclaw_version::list_openclaw_versions/)
-  assert.match(libRs, /config::upgrade_openclaw/)
+  assert.match(libRs, /openclaw_lifecycle::upgrade_openclaw/)
   assert.match(libRs, /openclaw_lifecycle::uninstall_openclaw/)
   assert.doesNotMatch(libRs, /config::list_openclaw_versions/)
+  assert.doesNotMatch(libRs, /config::upgrade_openclaw/)
   assert.doesNotMatch(libRs, /config::uninstall_openclaw/)
 
   for (const eventName of [
@@ -457,6 +463,7 @@ test('git runtime commands move out of config.rs ownership', () => {
 
   const configRs = fs.readFileSync('src-tauri/src/commands/config.rs', 'utf8')
   const gitRuntimeRs = fs.readFileSync('src-tauri/src/commands/git_runtime.rs', 'utf8')
+  const lifecycleRs = fs.readFileSync('src-tauri/src/commands/openclaw_lifecycle.rs', 'utf8')
   const modRs = fs.readFileSync('src-tauri/src/commands/mod.rs', 'utf8')
   const libRs = fs.readFileSync('src-tauri/src/lib.rs', 'utf8')
 
@@ -498,6 +505,6 @@ test('git runtime commands move out of config.rs ownership', () => {
     'https_rewrite_rule_count',
   ]) {
     assert.match(gitRuntimeRs, new RegExp(`\\b${name}\\b`))
-    assert.match(configRs, new RegExp(`git_runtime::${name}\\(`))
+    assert.match(`${configRs}\n${lifecycleRs}`, new RegExp(`git_runtime::${name}\\(`))
   }
 })
