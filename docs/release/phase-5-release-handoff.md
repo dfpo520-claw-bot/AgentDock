@@ -53,6 +53,8 @@ The automated install/start/uninstall evidence for the current artifact is recor
 
 The browser-driven UI route smoke evidence is recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`, with screenshots under `docs/release/ui-smoke-2026-05-15`.
 
+Modern Ops Console UI/brand refactor is complete for the app shell, core routes, secondary OpenClaw routes, and Hermes route surfaces. Route-level UI smoke screenshots were refreshed after the final AgentDock assets and DeepAi assistant naming pass.
+
 Record pass/fail notes for each item before treating the installer as production-ready:
 
 - Install succeeds from the NSIS setup executable.
@@ -100,3 +102,4 @@ Defer these until signing, manual smoke, automation decision, and environment cl
 
 - Rust product-config unused helper warnings were removed and `cargo check --manifest-path src-tauri/Cargo.toml` completed without Rust warnings.
 - Vite circular chunk and mixed toast dynamic/static import warnings were cleaned. The remaining Vite warning is the real `i18n` chunk size warning, which should be optimized by lazy-loading locale modules rather than hidden with a larger warning limit.
+- AgentDock final brand assets, app-shell route styling, secondary route styling, Hermes visual alignment, and refreshed UI smoke screenshots are recorded in the current UI brand refactor pass.

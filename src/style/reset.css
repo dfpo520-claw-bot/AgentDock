@@ -21,6 +21,11 @@ html, body {
   width: 100vw;
 }
 
+body.has-security-banner #app {
+  height: calc(100vh - var(--security-banner-height, 0px));
+  margin-top: var(--security-banner-height, 0px);
+}
+
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-hover); }
 

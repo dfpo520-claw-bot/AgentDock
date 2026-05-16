@@ -148,6 +148,41 @@ function analyzeRoute(route, value) {
   }
 }
 
+async function dismissTransientOverlays(client) {
+  const result = await evaluate(client, `
+    (() => {
+      const overlays = [...document.querySelectorAll('.modal-overlay:not(#login-overlay)')]
+      const unexpected = []
+      let dismissed = 0
+      for (const overlay of overlays) {
+        const isKnownGatewayConflict = !!overlay.querySelector(
+          '#gateway-conflict-open-cleanup, #gateway-conflict-open-settings, #gateway-conflict-refresh'
+        )
+        if (isKnownGatewayConflict) {
+          overlay.remove()
+          dismissed += 1
+          continue
+        }
+        unexpected.push((overlay.innerText || overlay.textContent || '').trim().slice(0, 240))
+      }
+      if (unexpected.length > 0) {
+        return { ok: false, unexpected }
+      }
+      document.scrollingElement?.scrollTo(0, 0)
+      window.scrollTo(0, 0)
+      document.querySelectorAll('*').forEach((element) => {
+        if (element.scrollTop) element.scrollTop = 0
+        if (element.scrollLeft) element.scrollLeft = 0
+      })
+      return { ok: true, dismissed }
+    })()
+  `)
+  if (!result?.ok) {
+    throw new Error(`Unexpected modal overlay before screenshot: ${(result?.unexpected || []).join(' | ')}`)
+  }
+  await wait(250)
+}
+
 export async function runUiSmoke({
   baseUrl,
   password,
@@ -221,6 +256,7 @@ export async function runUiSmoke({
     for (const route of routes) {
       await evaluate(client, `location.hash = ${JSON.stringify(`#${route}`)}`)
       await wait(3500)
+      await dismissTransientOverlays(client)
       const value = await evaluate(client, `({
         title: document.title,
         text: document.body.innerText,

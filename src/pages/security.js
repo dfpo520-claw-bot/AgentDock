@@ -81,6 +81,13 @@ function strengthLevel(pw) {
   return { level: 4, text: t('security.strengthStrong'), color: 'var(--success)' }
 }
 
+function clearDefaultPasswordBanner() {
+  sessionStorage.removeItem('clawpanel_must_change_pw')
+  document.getElementById('pw-change-banner')?.remove()
+  document.body.classList.remove('has-security-banner')
+  document.documentElement.style.removeProperty('--security-banner-height')
+}
+
 export async function render() {
   const page = document.createElement('div')
   page.className = 'page page-shell security-page'
@@ -237,9 +244,7 @@ function bindSecurityEvents(container, status) {
         msgEl.style.color = 'var(--success)'
         toast(t('security.passwordUpdated'), 'success')
         // 清除默认密码横幅
-        sessionStorage.removeItem('clawpanel_must_change_pw')
-        const banner = document.getElementById('pw-change-banner')
-        if (banner) banner.remove()
+        clearDefaultPasswordBanner()
         setTimeout(() => loadStatus(container.closest('.page')), 1000)
       } catch (err) {
         msgEl.textContent = err.message

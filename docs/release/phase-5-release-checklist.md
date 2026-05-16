@@ -50,8 +50,10 @@ This checklist closes the release and installer surface for AgentDock production
 - Confirm assistant read-only, plan, and unlimited modes still enforce dangerous tool confirmation policy.
 - Confirm logs, diagnostics, assistant command audit output, and Hermes log export apply secret redaction.
 - Confirm update check reads `docs/update/latest.json` shape and failed update handling follows the configured rollback behavior.
+- Confirm AgentDock final brand assets, DeepAi assistant naming, and release links are visible in the installed app.
 - Confirm uninstall removes the application while preserving user data unless the installer explicitly asks for removal.
 - Browser-driven UI route smoke has already passed for `/dashboard`, `/settings`, `/services`, `/assistant`, `/logs`, and `/about`; evidence is recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
+- Refreshed UI smoke screenshots should show the AgentDock sidebar brand, security banner without header overlap or shell clipping, and Modern Ops route layout on Dashboard, Settings, Services, Logs, Assistant, and About.
 - The remaining manual smoke items should focus on installed-app actions that mutate local state or services: Gateway restart, install/upgrade/uninstall flows, Settings writes, assistant tool execution, log export, and uninstall UX.
 
 ## Known Warnings To Recheck
