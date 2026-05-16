@@ -13,7 +13,7 @@ let _page = null, _config = null, _dirty = false
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell communication-page'
   _page = page
 
   page.innerHTML = `

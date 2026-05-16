@@ -20,7 +20,7 @@ function escapeHtml(str) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell extensions-page'
 
   page.innerHTML = `
     <div class="page-header">

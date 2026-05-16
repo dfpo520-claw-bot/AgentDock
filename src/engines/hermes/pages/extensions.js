@@ -28,7 +28,7 @@ function formatCost(value) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page hm-extensions-page'
+  el.className = 'page page-shell hm-extensions-page'
   el.dataset.engine = 'hermes'
 
   let loading = true

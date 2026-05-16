@@ -19,7 +19,7 @@ function esc(str) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell skills-page'
 
   // 加载 Agent 列表
   let agents = []

@@ -32,7 +32,7 @@ function CRON_SHORTCUTS() {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell cron-page'
 
   page.innerHTML = `
     <div class="page-header">

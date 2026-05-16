@@ -110,7 +110,7 @@ function uniqueSources(sessions) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page hm-sessions-page'
+  el.className = 'page page-shell hm-sessions-page'
   el.dataset.engine = 'hermes'
 
   const store = getChatStore()

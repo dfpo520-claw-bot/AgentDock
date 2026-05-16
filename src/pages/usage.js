@@ -11,7 +11,7 @@ let _page = null, _unsubReady = null
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell usage-page'
   _page = page
 
   page.innerHTML = `
@@ -20,10 +20,10 @@ export async function render() {
       <p class="page-desc">${t('usage.desc')}</p>
     </div>
     <div class="usage-toolbar" style="display:flex;gap:8px;align-items:center;margin-bottom:var(--space-lg);flex-wrap:wrap">
-      <button class="btn btn-sm ${_days === 1 ? 'btn-primary' : 'btn-secondary'}" data-days="1">${t('usage.today')}</button>
-      <button class="btn btn-sm ${_days === 7 ? 'btn-primary' : 'btn-secondary'}" data-days="7">${t('usage.days7')}</button>
-      <button class="btn btn-sm ${_days === 30 ? 'btn-primary' : 'btn-secondary'}" data-days="30">${t('usage.days30')}</button>
-      <button class="btn btn-sm btn-secondary" id="btn-usage-refresh">${icon('refresh-cw', 14)} ${t('usage.refresh')}</button>
+      <button class="btn btn-sm ad-button ${_days === 1 ? 'btn-primary ad-button-primary' : 'btn-secondary ad-button-secondary'}" data-days="1">${t('usage.today')}</button>
+      <button class="btn btn-sm ad-button ${_days === 7 ? 'btn-primary ad-button-primary' : 'btn-secondary ad-button-secondary'}" data-days="7">${t('usage.days7')}</button>
+      <button class="btn btn-sm ad-button ${_days === 30 ? 'btn-primary ad-button-primary' : 'btn-secondary ad-button-secondary'}" data-days="30">${t('usage.days30')}</button>
+      <button class="btn btn-sm btn-secondary ad-button ad-button-secondary" id="btn-usage-refresh">${icon('refresh-cw', 14)} ${t('usage.refresh')}</button>
     </div>
     <div id="usage-content">
       <div class="stat-card loading-placeholder" style="height:120px"></div>
@@ -33,8 +33,12 @@ export async function render() {
   page.querySelectorAll('[data-days]').forEach(btn => {
     btn.onclick = () => {
       _days = parseInt(btn.dataset.days)
-      page.querySelectorAll('[data-days]').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-secondary') })
-      btn.classList.remove('btn-secondary'); btn.classList.add('btn-primary')
+      page.querySelectorAll('[data-days]').forEach(b => {
+        b.classList.remove('btn-primary', 'ad-button-primary')
+        b.classList.add('btn-secondary', 'ad-button-secondary')
+      })
+      btn.classList.remove('btn-secondary', 'ad-button-secondary')
+      btn.classList.add('btn-primary', 'ad-button-primary')
       loadUsage(page)
     }
   })
@@ -80,7 +84,7 @@ async function loadUsage(page) {
     el.innerHTML = `<div class="usage-empty">
       <div style="color:var(--error);margin-bottom:8px">${t('usage.loadFailed')}: ${esc(e?.message || e)}</div>
       <div class="form-hint">${t('usage.loadFailedHint')}</div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="this.closest('.page').querySelector('#btn-usage-refresh').click()">${t('usage.retry')}</button>
+      <button class="btn btn-secondary btn-sm ad-button ad-button-secondary" style="margin-top:8px" onclick="this.closest('.page').querySelector('#btn-usage-refresh').click()">${t('usage.retry')}</button>
     </div>`
   }
 }
@@ -109,32 +113,32 @@ function renderUsage(el, data) {
   // ── 概览卡片 ──
   const overviewHtml = `
     <div class="stat-cards" style="margin-bottom:var(--space-lg)">
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.messages')}</span></div>
         <div class="stat-card-value">${msgs.total || 0}</div>
         <div class="stat-card-meta">${msgs.user || 0} ${t('usage.userMsgs')} · ${msgs.assistant || 0} ${t('usage.assistantMsgs')}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.toolCalls')}</span></div>
         <div class="stat-card-value">${tools.totalCalls || 0}</div>
         <div class="stat-card-meta">${t('usage.toolKinds', { count: tools.uniqueTools || 0 })}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.errors')}</span></div>
         <div class="stat-card-value">${msgs.errors || 0}</div>
         <div class="stat-card-meta">${t('usage.errorRate')} ${fmtRate(msgs.errors, msgs.total)}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.totalTokens')}</span></div>
         <div class="stat-card-value">${fmtTokens(totals.totalTokens)}</div>
         <div class="stat-card-meta">${fmtTokens(totals.input)} ${t('usage.input')} · ${fmtTokens(totals.output)} ${t('usage.output')}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.cost')}</span></div>
         <div class="stat-card-value">${fmtCost(totals.totalCost)}</div>
         <div class="stat-card-meta">${fmtCost(totals.inputCost)} ${t('usage.input')} · ${fmtCost(totals.outputCost)} ${t('usage.output')}</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card card">
         <div class="stat-card-header"><span class="stat-card-label">${t('usage.sessions')}</span></div>
         <div class="stat-card-value">${(data.sessions || []).length}</div>
         <div class="stat-card-meta">${data.startDate || ''} ~ ${data.endDate || ''}</div>
@@ -215,7 +219,7 @@ function renderUsage(el, data) {
       const key = esc(s.key || '').replace(/^agent:main:/, '')
       const model = s.model || u.modelUsage?.[0]?.model || ''
       const provider = u.modelUsage?.[0]?.provider || s.modelProvider || ''
-      return `<div class="session-row">
+      return `<div class="session-row ad-data-row">
         <div class="session-row-header">
           <span class="session-key" title="${esc(s.key || '')}">${key || s.sessionId?.slice(0, 12) || '—'}</span>
           ${s.agentId ? `<span class="session-flag">${esc(s.agentId)}</span>` : ''}
@@ -228,7 +232,7 @@ function renderUsage(el, data) {
     sessionsHtml = `
       <div class="config-section" style="margin-top:var(--space-lg)">
         <div class="config-section-title">${t('usage.sessionDetail')} <span style="font-weight:normal;color:var(--text-tertiary);font-size:var(--font-size-xs)">${t('usage.recentN', { count: sessions.length })}</span></div>
-        <div class="session-list">${rows}</div>
+        <div class="session-list ad-data-table">${rows}</div>
       </div>
     `
   }

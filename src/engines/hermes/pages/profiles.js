@@ -41,7 +41,7 @@ function renderInlineError(err) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-profiles-page'
   el.dataset.engine = 'hermes'
 
   let profiles = []

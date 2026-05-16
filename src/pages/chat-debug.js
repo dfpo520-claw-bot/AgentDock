@@ -77,7 +77,7 @@ function injectScanCSS() {
 export async function render() {
   injectScanCSS()
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell chat-debug-page'
   _page = page
   _results = null
 

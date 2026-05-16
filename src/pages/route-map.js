@@ -19,7 +19,7 @@ function escAttr(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell route-map-page'
 
   page.innerHTML = `
     <div class="page-header">

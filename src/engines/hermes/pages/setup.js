@@ -32,7 +32,7 @@ let hermesGroups = { apiKeyIntl: [], apiKeyCn: [], aggregators: [], oauth: [], e
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-setup-page'
   el.dataset.engine = 'hermes'
 
   // 状态

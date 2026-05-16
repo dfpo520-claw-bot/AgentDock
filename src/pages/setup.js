@@ -76,7 +76,7 @@ function renderStatusCard(title, ok, meta) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell setup-page'
 
   page.innerHTML = `
     <div class="setup-shell">

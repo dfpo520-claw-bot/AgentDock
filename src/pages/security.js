@@ -83,7 +83,7 @@ function strengthLevel(pw) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell security-page'
 
   page.innerHTML = `
     <div class="page-header"><h1>${t('security.title')}</h1></div>

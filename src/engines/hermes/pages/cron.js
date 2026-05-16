@@ -69,7 +69,7 @@ const ICONS = {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-cron-page'
   el.dataset.engine = 'hermes'
 
   let jobs = []

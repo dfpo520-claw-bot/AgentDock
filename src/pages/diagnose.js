@@ -16,7 +16,7 @@ const STEP_LABELS = {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell diagnose-page'
 
   page.innerHTML = `
     <div class="page-header">

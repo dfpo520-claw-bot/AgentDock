@@ -271,7 +271,7 @@ function activateChannelsPageTab(page, key = 'channels') {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell channels-page'
 
   page.innerHTML = `
     <div class="page-header">
@@ -435,7 +435,7 @@ function renderConfigured(page, state) {
             }).join('')
 
             return `
-              <div class="platform-card ${p.enabled ? 'active' : 'inactive'}" data-pid="${p.id}">
+              <div class="platform-card card ${p.enabled ? 'active' : 'inactive'}" data-pid="${p.id}">
                 <div class="platform-card-header">
                   <span class="platform-emoji">${ic}</span>
                   <span class="platform-name">${label}</span>
@@ -460,7 +460,7 @@ function renderConfigured(page, state) {
             `<span style="font-size:var(--font-size-xs);color:var(--accent);background:var(--accent-muted);padding:1px 6px;border-radius:10px;white-space:nowrap">\u2192 ${escapeAttr(a)}</span>`
           ).join(' ') : ''
           return `
-            <div class="platform-card ${p.enabled ? 'active' : 'inactive'}" data-pid="${p.id}">
+            <div class="platform-card card ${p.enabled ? 'active' : 'inactive'}" data-pid="${p.id}">
               <div class="platform-card-header">
                 <span class="platform-emoji">${ic}</span>
                 <span class="platform-name">${label}</span>
@@ -862,7 +862,7 @@ function renderAgentBindings(page, state) {
 
     const addDisabled = !canBind.length ? 'disabled' : ''
     return `
-      <div class="agent-binding-card" data-agent-id="${escapeAttr(aid)}">
+      <div class="agent-binding-card card" data-agent-id="${escapeAttr(aid)}">
         <div class="agent-binding-card-head">
           <div>
             <div class="agent-binding-title">${icon('package', 18)} <code style="font-size:var(--font-size-sm)">${escapeAttr(aid)}</code></div>

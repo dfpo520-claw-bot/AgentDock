@@ -1,7 +1,7 @@
 /**
  * Hermes 群聊（Batch 3 §N）
  *
- * Hermes 内核没有「群聊」概念，由 ClawPanel 前端编排：
+ * Hermes 内核没有「群聊」概念，由 AgentDock 前端编排：
  *   - 用户选择多个 Profile（每个对应一个 Agent 配置）
  *   - 发消息时并发调用每个 Profile 的 hermes_agent_run
  *   - 把每个 Profile 的回复以 @profile_name 标记后显示
@@ -31,7 +31,7 @@ function formatTime(ts) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-group-chat-page'
   el.dataset.engine = 'hermes'
 
   let profiles = []

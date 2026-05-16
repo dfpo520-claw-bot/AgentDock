@@ -275,7 +275,7 @@ function showContextMenu(x, y, items) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'hermes-chat-page'
+  el.className = 'hermes-chat-page page-shell'
   el.dataset.engine = 'hermes'
 
   const store = getChatStore()

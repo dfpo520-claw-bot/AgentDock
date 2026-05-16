@@ -2,7 +2,7 @@
  * Hermes 多 Gateway 看板（Batch 2 §G）
  *
  * 让用户同时跑多个 Hermes Gateway 实例（每个绑不同 profile）。
- * 端口完全由 profile 的 config.yaml 决定，ClawPanel 只负责 spawn + PID 跟踪。
+ * 端口完全由 profile 的 config.yaml 决定，AgentDock 只负责 spawn + PID 跟踪。
  *
  * 后端 Tauri 命令：
  *   - hermesMultiGatewayList() → [{name, profile, port, running, pid, owned}]
@@ -27,7 +27,7 @@ function escAttr(s) { return escHtml(s) }
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-gateways-page'
   el.dataset.engine = 'hermes'
 
   let gateways = []

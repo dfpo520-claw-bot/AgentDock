@@ -98,7 +98,7 @@ function renderInfoRow(label, value, mono = false) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page hm-services-page'
+  el.className = 'page page-shell hm-services-page'
   el.dataset.engine = 'hermes'
 
   let info = null

@@ -44,7 +44,7 @@ async function openExternalUrl(url) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-dashboard-page'
   // Scope the new Hermes-dense design system to this subtree only,
   // so OpenClaw and other engines stay completely unaffected.
   el.dataset.engine = 'hermes'

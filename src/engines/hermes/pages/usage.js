@@ -317,7 +317,7 @@ function renderContent(usage) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page hm-usage-page'
+  el.className = 'page page-shell hm-usage-page'
   el.dataset.engine = 'hermes'
 
   let loading = true

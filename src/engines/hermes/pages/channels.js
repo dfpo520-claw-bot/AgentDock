@@ -5,7 +5,7 @@ import { t } from '../../../lib/i18n.js'
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-channels-page'
   el.dataset.engine = 'hermes'
   el.innerHTML = `
     <div class="page-header"><h1>${t('engine.hermesChannelsTitle')}</h1></div>

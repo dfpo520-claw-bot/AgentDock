@@ -898,7 +898,7 @@
  * the landing page's mood.
  * ========================================================================== */
 
-/* Swap the hard-coded ClawPanel claw icon for the xintian hexagon logo.
+/* Swap the hard-coded AgentDock claw icon for the xintian hexagon logo.
    The <img src="/images/logo.png"> is hard-coded in sidebar.js, so we
    hide it and paint the new logo on the surrounding .sidebar-logo box. */
 body[data-active-engine="xintian"] .sidebar-logo {

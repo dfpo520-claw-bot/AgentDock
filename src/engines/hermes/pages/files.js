@@ -47,7 +47,7 @@ function iconForKind(kind, name) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-files-page'
   el.dataset.engine = 'hermes'
 
   // 路径用相对路径（相对 hermes_home），空串 = 根

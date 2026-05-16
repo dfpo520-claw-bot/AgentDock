@@ -90,7 +90,7 @@ function basename(p) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'hermes-skills-page'
+  el.className = 'hermes-skills-page page-shell'
   el.dataset.engine = 'hermes'
 
   // --- State ---

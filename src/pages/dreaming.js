@@ -189,7 +189,7 @@ async function ensureGatewayReady(page) {
 
 export function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell dreaming-page'
   _page = page
   _state = createState()
   renderPage(page)

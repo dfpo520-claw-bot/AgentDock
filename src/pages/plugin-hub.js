@@ -21,7 +21,7 @@ function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell plugin-hub-page'
   _searchQuery = ''
 
   page.innerHTML = `

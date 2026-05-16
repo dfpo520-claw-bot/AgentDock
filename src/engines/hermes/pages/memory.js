@@ -5,7 +5,7 @@
  *   GET  /api/hermes/memory            → { memory, user, soul, mtimes }
  *   POST /api/hermes/memory            → { section, content }
  *
- * ClawPanel calls Rust/Web commands so the page works on Tauri and Web modes.
+ * AgentDock calls Rust/Web commands so the page works on Tauri and Web modes.
  *
  * All three files live in `~/.hermes/memories/` and are plain Markdown.
  */
@@ -71,7 +71,7 @@ function contentStats(text) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'hermes-memory-page'
+  el.className = 'hermes-memory-page page-shell'
   el.dataset.engine = 'hermes'
 
   // --- State ---

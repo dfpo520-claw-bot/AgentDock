@@ -2185,7 +2185,7 @@ body[data-active-engine="hermes"][data-theme="dark"] {
   text-underline-offset: 2px;
 }
 
-/* 注意：viewport 宽度并不等于实际内容区宽度——ClawPanel 有 ~280px 侧栏。
+/* 注意：viewport 宽度并不等于实际内容区宽度——AgentDock 有 ~280px 侧栏。
    在 1100px viewport 下内容区只有 ~820px，2 列布局（copy + 320~420px stats）
    会把 copy 压到 230px，标题被迫 4 行。所以 1100px 就该切到单列。 */
 @media (max-width: 1100px) {
@@ -6341,6 +6341,101 @@ body[data-active-engine="hermes"][data-theme="dark"] {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--hm-accent) 0%, color-mix(in srgb, var(--hm-accent) 72%, #f6c453) 100%);
 }
+
+/* ==========================================================================
+ * Modern Ops alignment
+ * --------------------------------------------------------------------------
+ * Keep the Hermes editorial accent, but let surfaces, borders and shell chrome
+ * inherit the AgentDock token system introduced for the main app.
+ * ========================================================================== */
+[data-engine="hermes"] {
+  --hm-surface-0: color-mix(in srgb, var(--surface-0, #f4f7fb) 86%, #fff7e6);
+  --hm-surface-1: var(--surface-elevated, #ffffff);
+  --hm-surface-2: color-mix(in srgb, var(--surface-2, #eef3f8) 84%, #fff3d0);
+  --hm-surface-3: color-mix(in srgb, var(--surface-3, #e5edf5) 82%, #eadfcb);
+  --hm-border: color-mix(in srgb, var(--border-primary, rgba(23, 32, 51, 0.11)) 82%, var(--hm-accent) 18%);
+  --hm-border-subtle: var(--border-secondary, rgba(23, 32, 51, 0.07));
+  --hm-border-strong: color-mix(in srgb, var(--border-primary, rgba(23, 32, 51, 0.11)) 68%, var(--hm-accent) 32%);
+  --hm-text-primary: var(--text-primary, #172033);
+  --hm-text-secondary: var(--text-secondary, #526174);
+  --hm-text-tertiary: var(--text-tertiary, #8a98aa);
+  --hm-text-muted: color-mix(in srgb, var(--text-tertiary, #8a98aa) 82%, var(--hm-accent) 18%);
+  --hm-shadow-sm: var(--shadow-sm, 0 1px 2px rgba(15, 23, 42, 0.05));
+  --hm-shadow-md: var(--shadow-panel, 0 14px 34px rgba(15, 23, 42, 0.08));
+  --hm-shadow-lg: var(--shadow-lg, 0 18px 48px rgba(15, 23, 42, 0.12));
+}
+
+[data-theme="dark"] [data-engine="hermes"],
+[data-engine="hermes"][data-theme="dark"] {
+  --hm-surface-0: color-mix(in srgb, var(--surface-0, #0f1720) 88%, #1c1917);
+  --hm-surface-1: color-mix(in srgb, var(--surface-elevated, #182232) 88%, #1c1917);
+  --hm-surface-2: color-mix(in srgb, var(--surface-2, #1a2533) 84%, #292524);
+  --hm-surface-3: color-mix(in srgb, var(--surface-3, #243244) 78%, #44403c);
+  --hm-border: color-mix(in srgb, var(--border-primary, rgba(226, 232, 240, 0.12)) 84%, var(--hm-accent) 16%);
+  --hm-border-subtle: var(--border-secondary, rgba(226, 232, 240, 0.075));
+  --hm-border-strong: color-mix(in srgb, var(--border-primary, rgba(226, 232, 240, 0.12)) 66%, var(--hm-accent) 34%);
+  --hm-text-primary: var(--text-primary, #edf4fb);
+  --hm-text-secondary: var(--text-secondary, #b6c2d1);
+  --hm-text-tertiary: var(--text-tertiary, #8290a3);
+  --hm-text-muted: color-mix(in srgb, var(--text-tertiary, #8290a3) 84%, var(--hm-accent) 16%);
+}
+
+body[data-active-engine="hermes"],
+body[data-active-engine="hermes"] #content,
+body[data-active-engine="hermes"] .app-content-frame {
+  background: var(--hm-surface-0);
+}
+
+body[data-active-engine="hermes"] #sidebar,
+body[data-active-engine="hermes"] .engine-dropdown,
+body[data-active-engine="hermes"] .lang-dropdown,
+[data-engine="hermes"] .hm-panel,
+[data-engine="hermes"] .card,
+[data-engine="hermes"] .ad-data-table {
+  background: var(--hm-surface-1);
+  border-color: var(--hm-border);
+  box-shadow: var(--hm-shadow-sm);
+}
+
+body[data-active-engine="hermes"] .sidebar-header,
+body[data-active-engine="hermes"] .engine-switcher,
+body[data-active-engine="hermes"] .sidebar-footer {
+  border-color: var(--hm-border-subtle);
+}
+
+body[data-active-engine="hermes"] .sidebar-title,
+body[data-active-engine="hermes"] .engine-current,
+body[data-active-engine="hermes"] .engine-option:hover,
+body[data-active-engine="hermes"] .nav-item:hover,
+body[data-active-engine="hermes"] .lang-trigger:hover,
+body[data-active-engine="hermes"] #btn-theme-toggle:hover {
+  color: var(--hm-text-primary);
+}
+
+body[data-active-engine="hermes"] .nav-item,
+body[data-active-engine="hermes"] .engine-option,
+body[data-active-engine="hermes"] .lang-option {
+  color: var(--hm-text-secondary);
+}
+
+body[data-active-engine="hermes"] .nav-section-title,
+body[data-active-engine="hermes"] .engine-switcher-label,
+body[data-active-engine="hermes"] .sidebar-meta,
+body[data-active-engine="hermes"] .sidebar-version,
+body[data-active-engine="hermes"] .sidebar-link,
+body[data-active-engine="hermes"] .lang-option-code {
+  color: var(--hm-text-muted);
+}
+
+[data-engine="hermes"] .hm-btn,
+[data-engine="hermes"] .btn {
+  border-radius: var(--radius-control, var(--hm-radius-md));
+}
+
+[data-engine="hermes"] .hm-table,
+[data-engine="hermes"] .ad-data-table {
+  border-radius: var(--radius-panel, var(--hm-radius-md));
+}
 [data-engine="hermes"] .hm-usage-empty-inline {
   padding: 12px 0 4px;
   color: var(--hm-text-tertiary);
@@ -6720,4 +6815,3 @@ body[data-active-engine="hermes"][data-theme="dark"] {
     grid-template-columns: 1fr !important;
   }
 }
-

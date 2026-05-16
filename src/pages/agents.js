@@ -14,7 +14,7 @@ import { termHelpHtml, attachTermTooltips } from '../lib/term-tooltip.js'
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell agents-page'
 
   page.innerHTML = `
     <div class="page-header">

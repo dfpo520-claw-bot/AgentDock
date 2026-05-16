@@ -40,7 +40,7 @@ function groupByCategory(features) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell hermes-lazy-deps-page'
   page.dataset.engine = 'hermes'
   page.innerHTML = `
     <div class="page-header">

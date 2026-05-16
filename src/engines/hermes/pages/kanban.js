@@ -2,7 +2,7 @@
  * Hermes Kanban 看板（Batch 3 §M）
  *
  * Hermes 已内置 kanban 系统（plugins/kanban/dashboard/plugin_api.py），
- * ClawPanel 直接调 Dashboard 9119 的 plugin API：
+ * AgentDock 直接调 Dashboard 9119 的 plugin API：
  *   - GET    /api/plugins/kanban/board       - 拿当前 board 全部 columns + tasks
  *   - GET    /api/plugins/kanban/boards      - 列所有 board
  *   - POST   /api/plugins/kanban/boards      - 创建 board
@@ -43,7 +43,7 @@ function renderInlineError(err) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-kanban-page'
   el.dataset.engine = 'hermes'
 
   let board = null  // { columns: [{name, tasks: []}], ... }

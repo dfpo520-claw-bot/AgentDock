@@ -80,7 +80,7 @@ function triggerDownload(content, filename) {
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'hermes-logs-page'
+  el.className = 'hermes-logs-page page-shell'
   el.dataset.engine = 'hermes'
 
   // --- State ---

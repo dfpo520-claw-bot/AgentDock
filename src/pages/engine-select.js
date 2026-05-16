@@ -47,7 +47,7 @@ let _animTimers = []  // 跟踪动画 setTimeout，cleanup 时清
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page engine-select-page es-monolith'
+  page.className = 'page page-shell engine-select-page es-monolith'
   page.innerHTML = `
     <div class="es-stage">
       <div class="es-panel es-panel-openclaw" data-engine="openclaw">

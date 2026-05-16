@@ -8,7 +8,7 @@ import { humanizeError } from '../../../lib/humanize-error.js'
 
 export function render() {
   const el = document.createElement('div')
-  el.className = 'page'
+  el.className = 'page page-shell hermes-config-page'
   el.dataset.engine = 'hermes'
   let yaml = ''
   let loading = true

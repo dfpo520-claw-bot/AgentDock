@@ -121,7 +121,7 @@ let _workspaceLoadSeq = 0, _workspaceOpenSeq = 0
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page chat-page'
+  page.className = 'page page-shell chat-page'
   _pageActive = true
   _page = page
 

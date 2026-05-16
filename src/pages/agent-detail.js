@@ -28,7 +28,7 @@ export async function render() {
   const agentId = params.get('id') || 'main'
 
   const page = document.createElement('div')
-  page.className = 'page agent-detail-page'
+  page.className = 'page page-shell agent-detail-page'
 
   page.innerHTML = `
     <div class="page-header">

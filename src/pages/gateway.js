@@ -24,7 +24,7 @@ function _isSecretRef(token) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell gateway-page'
 
   page.innerHTML = `
     <div class="page-header">
