@@ -4684,7 +4684,7 @@ export async function render() {
   }
 
   const page = document.createElement('div')
-  page.className = 'page ast-page'
+  page.className = 'ast-page page-shell assistant-page'
   _page = page
 
   page.innerHTML = `

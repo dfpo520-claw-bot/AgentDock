@@ -98,6 +98,36 @@
   margin-bottom: var(--space-xl);
 }
 
+.dashboard-page .quick-actions {
+  margin-bottom: var(--space-lg);
+}
+
+.about-hero {
+  align-items: center;
+}
+
+.about-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.about-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.services-page .service-card,
+.settings-page .config-section,
+.logs-page .config-section,
+.about-page .config-section {
+  background: var(--surface-elevated);
+  border-color: var(--border-primary);
+  box-shadow: var(--shadow-sm);
+}
+
 .dashboard-overview {
   margin-bottom: var(--space-xl);
 }

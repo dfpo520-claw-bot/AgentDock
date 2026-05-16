@@ -24,7 +24,7 @@ function escapeHtml(str) {
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell services-page'
 
   page.innerHTML = `
     <div class="page-header">
@@ -41,7 +41,7 @@ export async function render() {
     <div class="config-section" id="config-editor-section" style="display:none">
       <div class="config-section-title">${t('services.configEditor')}</div>
       <div class="form-hint" style="margin-bottom:var(--space-sm)">${t('services.configEditorHint')}</div>
-      <div style="display:flex;gap:8px;margin-bottom:var(--space-sm)">
+      <div class="page-toolbar">
         <button class="btn btn-primary btn-sm" data-action="save-config" disabled>${t('services.saveAndRestart')}</button>
         <button class="btn btn-secondary btn-sm" data-action="save-config-only" disabled>${t('services.saveOnly')}</button>
         <button class="btn btn-secondary btn-sm" data-action="reload-config">${t('services.reloadConfig')}</button>
@@ -52,7 +52,7 @@ export async function render() {
     <div class="config-section" id="config-calibration-section">
       <div class="config-section-title">${t('services.configCalibration')}</div>
       <div class="form-hint" style="margin-bottom:var(--space-sm)">${t('services.configCalibrationHint')}</div>
-      <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;margin-bottom:var(--space-sm)">
+      <div class="page-toolbar">
         <button class="btn btn-primary btn-sm" data-action="calibrate-config-inherit">${t('services.calibrateInherit')}</button>
         <button class="btn btn-secondary btn-sm" data-action="calibrate-config-reset">${t('services.calibrateReset')}</button>
       </div>
@@ -65,7 +65,7 @@ export async function render() {
     <div class="config-section" id="backup-section">
       <div class="config-section-title">${t('services.configBackup')}</div>
       <div class="form-hint" style="margin-bottom:var(--space-sm)">${t('services.configBackupHint')}</div>
-      <div id="backup-actions" style="margin-bottom:var(--space-md)">
+      <div class="page-toolbar" id="backup-actions">
         <button class="btn btn-primary btn-sm" data-action="create-backup">${t('services.createBackup')}</button>
       </div>
       <div id="backup-list"><div class="stat-card loading-placeholder" style="height:48px"></div></div>

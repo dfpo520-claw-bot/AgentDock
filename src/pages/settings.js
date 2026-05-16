@@ -63,7 +63,7 @@ const REGISTRIES = [
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell settings-page page-form-shell'
 
   const isHermes = getActiveEngineId() === 'hermes'
 

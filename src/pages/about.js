@@ -17,14 +17,20 @@ const SUPPORT_LABEL = 'Support'
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell about-page'
 
   page.innerHTML = `
-    <div class="page-header" style="display:flex;align-items:center;gap:16px">
-      <img src="/images/logo-brand.png" alt="${PRODUCT_IDENTITY.name}" title="${PRODUCT_IDENTITY.name}" style="height:48px;width:auto">
-      <div>
-        <h1 class="page-title" style="margin:0">${PRODUCT_IDENTITY.name}</h1>
-        <p class="page-desc" style="margin:0">${PRODUCT_IDENTITY.tagline} - <a href="${PRODUCT_IDENTITY.homepage}" target="_blank" rel="noopener" style="color:var(--primary)">${PRODUCT_IDENTITY.homepageHost}</a></p>
+    <div class="page-header about-hero">
+      <div class="page-header-main about-identity">
+        <img src="/images/logo-brand.png" alt="${PRODUCT_IDENTITY.name}" title="${PRODUCT_IDENTITY.name}" class="about-logo">
+        <div>
+          <h1 class="page-title">${PRODUCT_IDENTITY.name}</h1>
+          <p class="page-desc">${PRODUCT_IDENTITY.tagline} - <a href="${PRODUCT_IDENTITY.homepage}" target="_blank" rel="noopener">${PRODUCT_IDENTITY.homepageHost}</a></p>
+        </div>
+      </div>
+      <div class="page-header-actions">
+        <a class="btn btn-secondary" href="${PRODUCT_IDENTITY.releaseUrl}" target="_blank" rel="noopener">${RELEASES_LABEL}</a>
+        <a class="btn btn-secondary" href="${PRODUCT_IDENTITY.supportUrl}" target="_blank" rel="noopener">${SUPPORT_LABEL}</a>
       </div>
     </div>
     <div class="stat-cards" id="version-cards">

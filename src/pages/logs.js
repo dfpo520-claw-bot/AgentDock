@@ -18,7 +18,7 @@ let _searchTimer = null
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell logs-page'
 
   page.innerHTML = `
     <div class="page-header">

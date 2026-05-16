@@ -18,12 +18,18 @@ let _detachCliConflict = null
 
 export async function render() {
   const page = document.createElement('div')
-  page.className = 'page'
+  page.className = 'page page-shell dashboard-page'
 
   page.innerHTML = `
     <div class="page-header">
-      <h1 class="page-title">${t('dashboard.title')}</h1>
-      <p class="page-desc">${t('dashboard.desc')}</p>
+      <div class="page-header-main">
+        <h1 class="page-title">${t('dashboard.title')}</h1>
+        <p class="page-desc">${t('dashboard.desc')}</p>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-secondary" id="btn-check-update">${t('dashboard.checkUpdate')}</button>
+        <button class="btn btn-secondary" id="btn-create-backup">${t('dashboard.createBackup')}</button>
+      </div>
     </div>
     <div id="cli-conflict-mount"></div>
     <div id="onboarding-mount"></div>
@@ -38,8 +44,6 @@ export async function render() {
     <div id="dashboard-overview-container"></div>
     <div class="quick-actions">
       <button class="btn btn-secondary" id="btn-restart-gw">${t('dashboard.restartGw')}</button>
-      <button class="btn btn-secondary" id="btn-check-update">${t('dashboard.checkUpdate')}</button>
-      <button class="btn btn-secondary" id="btn-create-backup">${t('dashboard.createBackup')}</button>
       <button class="btn btn-ghost" id="btn-open-glossary">📖 ${t('glossary.title')}</button>
     </div>
     <div class="config-section">
