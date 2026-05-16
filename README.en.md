@@ -1,5 +1,7 @@
 # AgentDock
 
+![AgentDock](docs/agentdock-logo-brand.png)
+
 AgentDock is a production desktop console for multi-engine AI agent operations, built with Tauri v2, Vite, and a Rust command layer.
 
 ## Current Phase

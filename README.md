@@ -1,5 +1,7 @@
 # AgentDock
 
+![AgentDock](docs/agentdock-logo-brand.png)
+
 AgentDock 是面向多引擎 AI Agent 运营的生产级桌面控制台，基于 Tauri v2、Vite 和 Rust 命令层构建。
 
 ## 当前阶段
