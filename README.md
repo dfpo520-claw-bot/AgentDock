@@ -41,15 +41,6 @@ The project is currently in a production fork hardening phase. The goal is to ke
 - **Release hardening**: artifact manifest generation, Windows signing checks, desktop smoke notes, and manual QA checklists.
 - **Product-owned configuration**: AgentDock-owned paths, update URLs, storage keys, and release metadata are separated from runtime configs.
 
-## Screenshots
-
-<p align="center">
-  <img src="docs/00.png" width="49%" alt="AgentDock dashboard">
-  <img src="docs/h00.png" width="49%" alt="Hermes engine dashboard">
-</p>
-
-More UI captures and smoke records are available in `docs/release/`.
-
 ## Tech Stack
 
 | Layer | Technology |
