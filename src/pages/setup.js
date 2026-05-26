@@ -87,10 +87,10 @@ export async function render() {
             <h1 class="setup-hero-title">${t('setup.headerTitle')}</h1>
             <p class="setup-hero-desc">${t('setup.headerDesc')}</p>
             <div class="setup-hero-site-row">
-              <a class="setup-hero-site-link" href="https://github.com/agentdock/agentdock" target="_blank" rel="noopener noreferrer" title="https://github.com/agentdock/agentdock">
+              <a class="setup-hero-site-link" href="https://github.com/dfpo520-claw-bot/AgentDock" target="_blank" rel="noopener noreferrer" title="https://github.com/dfpo520-claw-bot/AgentDock">
                 ${icon('link', 14)}
                 <span class="setup-hero-site-label">${t('setup.officialWebsite')}</span>
-                <span class="setup-hero-site-value">github.com/agentdock/agentdock</span>
+                <span class="setup-hero-site-value">github.com/dfpo520-claw-bot/AgentDock</span>
               </a>
             </div>
           </div>
@@ -496,7 +496,7 @@ function renderInstallSection() {
           <input type="radio" name="install-source" value="chinese" checked style="margin-right:6px">
           <div>
             <div style="font-weight:600;font-size:var(--font-size-sm)">${t('setup.sourceChineseLabel')}</div>
-            <div style="font-size:var(--font-size-xs);color:var(--text-tertiary)">@qingchencloud/openclaw-zh</div>
+            <div style="font-size:var(--font-size-xs);color:var(--text-tertiary)">@DeepAi助手/openclaw-zh</div>
           </div>
         </label>
         <label class="setup-source-option" style="flex:1;cursor:pointer">
@@ -569,7 +569,7 @@ function renderEnvironmentHint() {
           <div class="setup-help-block">
             <div class="setup-help-label">${t('setup.dockerHint')}</div>
             <div class="setup-help-copy">${t('setup.dockerDesc')}</div>
-            <code class="setup-help-code">npm i -g @qingchencloud/openclaw-zh</code>
+            <code class="setup-help-code">npm i -g @DeepAi助手/openclaw-zh</code>
             <div class="setup-help-copy">${t('setup.agentdockDeployPending')}</div>
           </div>
           <div class="setup-help-block">

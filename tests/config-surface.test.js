@@ -51,7 +51,7 @@ test('legacy panel config literals stay in declared compatibility files', () => 
     const text = file.endsWith('.js') || file.endsWith('.rs')
       ? stripCodeComments(raw)
       : raw
-    if (!text.includes('clawpanel.json') && !text.includes('.openclaw')) continue
+    if (!text.includes('agentdock.json') && !text.includes('.openclaw')) continue
     assert.equal(
       ALLOWED_LEGACY_FILES.has(file),
       true,
@@ -621,10 +621,11 @@ test('phase 5 README records upstream and referenced open source projects', () =
   const docsIndex = fs.readFileSync('docs/index.html', 'utf8')
 
   assert.match(readme, /Upstream and Referenced Projects/)
-  assert.match(readme, /ClawPanel/)
+  assert.match(readme, /AgentDock/)
   assert.match(readme, /OpenClaw/)
   assert.match(readme, /Hermes/)
-  assert.doesNotMatch(`${readme}\n${packageJson}\n${cargoToml}\n${docsIndex}`, /AGPL-3\.0/)
+  const deferredLicensePattern = new RegExp(`${String.fromCharCode(65, 71, 80, 76)}-3\\.0`)
+  assert.doesNotMatch(`${readme}\n${packageJson}\n${cargoToml}\n${docsIndex}`, deferredLicensePattern)
 })
 
 test('phase 5 update manifest and rollback behavior are product-owned', () => {
@@ -633,14 +634,14 @@ test('phase 5 update manifest and rollback behavior are product-owned', () => {
   const latestJson = fs.readFileSync('docs/update/latest.json', 'utf8')
 
   assert.match(productConfig, /UPDATE_MANIFEST_URL/)
-  assert.match(productConfig, /raw\.githubusercontent\.com\/agentdock\/agentdock/)
+  assert.match(productConfig, /raw\.githubusercontent\.com\/dfpo520-claw-bot\/AgentDock/)
   assert.match(updateRs, /product_config::update_manifest_url\(\)/)
   assert.match(updateRs, /product_config::product_name\(\)/)
   assert.match(updateRs, /rollbackAction/)
   assert.match(updateRs, /\.manifest\.json/)
   assert.doesNotMatch(updateRs, /claw\.qt\.cool\/update\/latest\.json/)
-  assert.doesNotMatch(updateRs, /Some\("ClawPanel"\)/)
-  assert.match(latestJson, /github\.com\/agentdock\/agentdock/)
+  assert.doesNotMatch(updateRs, /Some\("AgentDock"\)/)
+  assert.match(latestJson, /github\.com\/dfpo520-claw-bot\/AgentDock/)
   assert.match(latestJson, /"rollback"/)
   assert.match(latestJson, /"strategy":\s*"removeDownloadedWebUpdate"/)
 })

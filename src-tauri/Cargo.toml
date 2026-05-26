@@ -4,8 +4,8 @@ version = "0.15.3"
 edition = "2021"
 description = "AgentDock - production desktop console for multi-engine AI agent operations"
 authors = ["AgentDock Team"]
-repository = "https://github.com/agentdock/agentdock"
-homepage = "https://github.com/agentdock/agentdock"
+repository = "https://github.com/dfpo520-claw-bot/AgentDock"
+homepage = "https://github.com/dfpo520-claw-bot/AgentDock"
 
 [lib]
 name = "agentdock_lib"

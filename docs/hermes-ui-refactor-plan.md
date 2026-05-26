@@ -1,7 +1,7 @@
 # Hermes UI 全面重构规划
 
 > 参考：`.tmp/hermes-web-ui`（官方 Vue + Koa 实现）
-> 目标：ClawPanel Hermes 引擎视觉 + 功能与官方看齐，保留 editorial luxury 主题。
+> 目标：AgentDock Hermes 引擎视觉 + 功能与官方看齐，保留 editorial luxury 主题。
 > 作者：Cascade（AI 助手）｜日期：2026-04-24
 
 ---
@@ -10,14 +10,14 @@
 
 1. **功能完备度**对齐官方 `hermes-web-ui`，不再是"初级 UI"。
 2. **视觉风格**继续用已做好的 editorial luxury（暖黑 + 金色 + Serif 标题）。
-3. **架构**：前端 Vanilla JS + CSS scope，后端走 ClawPanel Rust 命令（部分已有，部分需新增）。
+3. **架构**：前端 Vanilla JS + CSS scope，后端走 AgentDock Rust 命令（部分已有，部分需新增）。
 4. **分阶段交付**，每阶段独立 PR，可回滚。
 
 ---
 
-## 📊 官方 vs ClawPanel 现状对比
+## 📊 官方 vs AgentDock 现状对比
 
-| 页面 | 官方功能 | ClawPanel 现状 | Gap |
+| 页面 | 官方功能 | AgentDock 现状 | Gap |
 |---|---|---|---|
 | **Logs** | 文件列表、级别过滤、行数、搜索、**logger 列**、**access log 彩色（method/path/status）** | 文件列表、级别、行数、搜索 | 缺 logger 列 + access log 解析 + tail + 下载 |
 | **Chat** | SSE 流式、工具可视化、**持久化 Session（SQLite）**、**会话搜索**、多 profile、token 用量、context length | localStorage 会话、流式、工具卡片 | **架构性差距**：无 DB session、无搜索、无 usage、无 profile |
@@ -202,5 +202,5 @@ AI 辅助开发可能压缩到 5-6 个工作日。
 - 官方 Vue UI：`.tmp/hermes-web-ui/packages/client/src/views/hermes/*.vue`
 - 官方 Server：`.tmp/hermes-web-ui/packages/server/src/services/hermes/*.ts`
 - 官方 DB 层：`.tmp/hermes-web-ui/packages/server/src/db/hermes/*.ts`
-- ClawPanel 现有：`src/engines/hermes/pages/*.js`、`src-tauri/src/commands/hermes.rs`
-- 设计系统：`design-system/clawpanel/MASTER.md`、`src/engines/hermes/style/hermes.css`
+- AgentDock 现有：`src/engines/hermes/pages/*.js`、`src-tauri/src/commands/hermes.rs`
+- 设计系统：`design-system/agentdock/MASTER.md`、`src/engines/hermes/style/hermes.css`

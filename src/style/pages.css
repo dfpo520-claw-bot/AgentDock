@@ -3048,6 +3048,59 @@
 }
 
 /* —— 巨字标题 —— */
+.es-install-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1;
+  opacity: 0.78;
+}
+.es-content-hermes .es-install-status {
+  flex-direction: row-reverse;
+}
+.es-install-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.es-install-status.is-loading {
+  opacity: 0.5;
+}
+.es-install-status.is-loading .es-install-dot {
+  animation: es-status-pulse 1s ease-in-out infinite;
+}
+.es-install-status.is-installed {
+  color: #52d58a;
+}
+.es-content-hermes .es-install-status.is-installed {
+  color: #15803d;
+}
+.es-install-status.is-missing {
+  color: rgba(255, 255, 255, 0.66);
+}
+.es-content-hermes .es-install-status.is-missing {
+  color: rgba(24, 23, 26, 0.58);
+}
+.es-install-status.is-error {
+  color: #f87171;
+}
+.es-content-hermes .es-install-status.is-error {
+  color: #b91c1c;
+}
+@keyframes es-status-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
 .es-title {
   font-size: clamp(80px, 13vw, 200px);
   font-weight: 200;

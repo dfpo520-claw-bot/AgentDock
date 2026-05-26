@@ -7,7 +7,7 @@ import { wsClient } from './ws-client.js'
 
 const SW_URL = '/push-sw.js'
 const SW_SCOPE = '/'
-const STATE_KEY = 'clawpanel.push.subscribed'
+const STATE_KEY = 'agentdock.push.subscribed'
 
 export function isPushSupported() {
   return (

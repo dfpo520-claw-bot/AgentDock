@@ -1,5 +1,5 @@
 #!/bin/bash
-# ClawPanel 开发模式启动脚本
+# AgentDock 开发模式启动脚本
 # 用法: ./scripts/dev.sh [web|tauri]
 #   web   - 仅启动 Vite 前端（浏览器调试，mock 数据）
 #   tauri - 启动完整 Tauri 桌面应用（默认）
@@ -12,8 +12,8 @@ MODE="${1:-tauri}"
 # 清理旧进程
 cleanup() {
   echo "🧹 清理旧进程..."
-  pkill -f "vite.*clawpanel" 2>/dev/null || true
-  pkill -f "target/debug/clawpanel" 2>/dev/null || true
+  pkill -f "vite.*agentdock" 2>/dev/null || true
+  pkill -f "target/debug/agentdock" 2>/dev/null || true
   lsof -ti:1420 | xargs kill -9 2>/dev/null || true
   sleep 0.5
 }

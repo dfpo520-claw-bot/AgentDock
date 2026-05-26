@@ -32,7 +32,7 @@ async fn reload_gateway_via_http() -> Result<String, String> {
     for ctrl_port in control_ports {
         let url = format!("http://127.0.0.1:{}/__api/reload", ctrl_port);
         let client =
-            super::build_http_client(std::time::Duration::from_secs(5), Some("ClawPanel"))?;
+            super::build_http_client(std::time::Duration::from_secs(5), Some("AgentDock"))?;
 
         let mut req = client.post(&url);
         if !token.is_empty() {
@@ -201,7 +201,7 @@ pub async fn install_gateway() -> Result<String, String> {
         Ok(o) if o.status.success() => {}
         _ => {
             return Err("openclaw CLI 未检测到，请先安装：\n\n\
-                 npm install -g @qingchencloud/openclaw-zh\n\n\
+                 npm install -g @DeepAi助手/openclaw-zh\n\n\
                  安装完成后再继续安装 Gateway"
                 .into());
         }

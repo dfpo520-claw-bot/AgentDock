@@ -223,7 +223,7 @@ export async function runUiSmoke({
         const done = () => resolve(true)
         const overlay = document.querySelector('#login-overlay')
         if (!overlay) {
-          sessionStorage.setItem('clawpanel_authed', '1')
+          sessionStorage.setItem('agentdock_authed', '1')
           done()
           return
         }

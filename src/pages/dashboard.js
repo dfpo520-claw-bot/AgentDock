@@ -40,6 +40,7 @@ export async function render() {
       <div class="stat-card loading-placeholder"></div>
       <div class="stat-card loading-placeholder"></div>
       <div class="stat-card loading-placeholder"></div>
+      <div class="stat-card loading-placeholder"></div>
     </div>
     <div id="dashboard-overview-container"></div>
     <div class="quick-actions">
@@ -153,13 +154,15 @@ async function _loadDashboardDataInner(page, fullRefresh) {
     invalidate('get_version_info')
   }
   // 每个请求独立超时：避免单个慢请求拖垮整体渲染
-  const coreP = Promise.allSettled([
+  const criticalP = Promise.allSettled([
     withTimeout(api.getServicesStatus(), 12000),
     withTimeout(api.readOpenclawConfig(), 5000),
-    // 版本信息：首次加载或手动刷新时才查询（避免 ARM 设备上频繁查 npm registry）
-    shouldFetchVersion ? withTimeout(api.getVersionInfo(), 8000) : Promise.resolve(_dashboardVersionCache),
     withTimeout(api.readPanelConfig(), 5000),
+    withTimeout(api.checkInstallation(), 5000),
   ])
+  // Version probing can be slow, so it must not block first status render.
+  const versionP = (shouldFetchVersion ? withTimeout(api.getVersionInfo(), 8000) : Promise.resolve(_dashboardVersionCache))
+    .then(value => ({ status: 'fulfilled', value }), reason => ({ status: 'rejected', reason }))
   const secondaryP = Promise.allSettled([
     withTimeout(api.listAgents(), 10000),
     withTimeout(api.readMcpConfig(), 10000),
@@ -169,20 +172,19 @@ async function _loadDashboardDataInner(page, fullRefresh) {
   const logsP = api.readLogTail('gateway', 20).catch(() => '')
 
   // 第一波：服务状态 + 配置 + 版本 → 立即渲染统计卡片
-  const [servicesRes, configRes, versionRes, panelConfigRes] = await coreP
+  const [servicesRes, configRes, panelConfigRes, installationRes] = await criticalP
   const services = servicesRes.status === 'fulfilled' ? servicesRes.value : []
-  const version = (versionRes.status === 'fulfilled' && versionRes.value)
-    ? (_dashboardVersionCache = versionRes.value)
-    : (_dashboardVersionCache || {})
+  let version = _dashboardVersionCache || {}
   const config = configRes.status === 'fulfilled' ? configRes.value : null
   const panelConfig = panelConfigRes.status === 'fulfilled' ? panelConfigRes.value : null
+  const installation = installationRes.status === 'fulfilled' ? installationRes.value : null
+  page.__openclawInstallation = installation
   const gw = services.find(s => s.label === 'ai.openclaw.gateway')
   const shouldLoadStatusSummary = gw?.running === true
   if (!shouldLoadStatusSummary) {
     _dashboardStatusSummaryCache = null
   }
   if (servicesRes.status === 'rejected') toast(t('dashboard.servicesLoadFail'), 'error')
-  if (versionRes.status === 'rejected') toast(t('dashboard.versionLoadFail'), 'error')
 
   // 自愈：补全关键默认值（先重新读取最新配置再 patch，避免用缓存覆盖其他页面的写入）
   if (config) {
@@ -218,6 +220,14 @@ async function _loadDashboardDataInner(page, fullRefresh) {
   }
 
   // 第二波：Agent、MCP、备份 → 更新卡片 + 渲染总览
+  const versionRes = await versionP
+  if (versionRes.status === 'fulfilled' && versionRes.value) {
+    version = _dashboardVersionCache = versionRes.value
+    renderStatCards(page, services, version, [], config, panelConfig)
+  } else if (versionRes.status === 'rejected') {
+    console.debug('[dashboard] optional version probe failed:', versionRes.reason)
+  }
+
   const [agentsRes, mcpRes, backupsRes, channelsRes] = await secondaryP
   const agents = agentsRes.status === 'fulfilled' ? agentsRes.value : []
   const mcpConfig = mcpRes.status === 'fulfilled' ? mcpRes.value : null
@@ -257,11 +267,24 @@ async function openGatewayConflict(page, error = null, reason = null) {
   })
 }
 
-function renderStatCards(page, services, version, agents, config, panelConfig) {
+function renderStatCards(page, services, version, agents, config, panelConfig, installation = null) {
+  installation = installation || page.__openclawInstallation || null
   const cardsEl = page.querySelector('#stat-cards')
   const gw = services.find(s => s.label === 'ai.openclaw.gateway')
   const foreignGateway = isForeignGatewayService(gw)
   const runningCount = services.filter(s => s.running).length
+  const installKnown = installation && typeof installation.installed === 'boolean'
+  const installPath = String(installation?.path || '').trim()
+  const installValue = installation?.installed
+    ? t('common.enabled')
+    : installKnown
+      ? t('services.cleanupNoInstalls')
+      : t('common.unknown')
+  const installMeta = installation?.installed
+    ? (installPath || t('dashboard.cliPath'))
+    : installKnown
+      ? t('setup.recheckAfterInstall')
+      : t('common.loading')
   const versionMeta = version.recommended
     ? `${version.ahead_of_recommended ? t('dashboard.versionAhead', { version: version.recommended }) : version.is_recommended ? t('dashboard.versionStable', { version: version.recommended }) : t('dashboard.versionRecommend', { version: version.recommended })}${version.latest_update_available && version.latest ? ' · ' + t('dashboard.versionLatest', { version: version.latest }) : ''}`
     : (version.latest_update_available && version.latest ? t('dashboard.versionLatest', { version: version.latest }) : t('dashboard.versionUnknown'))
@@ -290,6 +313,17 @@ function renderStatCards(page, services, version, agents, config, panelConfig) {
              <button class="btn btn-secondary btn-xs" data-action="resolve-foreign-gateway">${t('dashboard.viewGuidance')}</button>
              <button class="btn btn-primary btn-xs" data-action="open-settings">${t('dashboard.goSettings')}</button>
            </div>`
+        : ''}
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-header">
+        <span class="stat-card-label">OpenClaw</span>
+        <span class="status-dot ${installation?.installed ? 'running' : 'stopped'}"></span>
+      </div>
+      <div class="stat-card-value">${installValue}</div>
+      <div class="stat-card-meta" title="${escapeHtml(installMeta)}">${escapeHtml(installMeta)}</div>
+      ${installKnown && !installation?.installed
+        ? `<div style="margin-top:10px"><button class="btn btn-primary btn-xs" data-action="open-setup">${t('setup.installBtn')}</button></div>`
         : ''}
     </div>
     <div class="stat-card">
@@ -635,6 +669,11 @@ function bindActions(page) {
       return
     }
 
+    if (action === 'open-setup') {
+      navigate('/setup')
+      return
+    }
+
     if (action === 'open-cleanup') {
       await showInstallationCleanup({ onRefresh: () => loadDashboardData(page, true) })
       return
@@ -771,7 +810,7 @@ function bindActions(page) {
 // 4 步任务：启动 Gateway / 加模型 / 创建 Agent / 第一次聊天。
 // 全部完成或用户主动关闭后，localStorage 标记隐藏，dashboard 不再渲染。
 
-const ONBOARDING_HIDDEN_KEY = 'clawpanel_onboarding_hidden'
+const ONBOARDING_HIDDEN_KEY = 'agentdock_onboarding_hidden'
 
 function isOnboardingHidden() {
   try { return localStorage.getItem(ONBOARDING_HIDDEN_KEY) === '1' } catch { return false }
@@ -794,13 +833,13 @@ function getOnboardingSteps({ gw, config, agents, channels }) {
   // 实际上更好的判定是「点过聊天页 / 发过一条消息」，但目前没记录，先用 channels 数量作为可选完成判据
   // 改为：把第 4 步定义为「尝试聊天」—— 不强校验，CTA 触发跳转即可（用户点了就当完成）
   const hasChatTried = (() => {
-    try { return localStorage.getItem('clawpanel_onboarding_chat_clicked') === '1' } catch { return false }
+    try { return localStorage.getItem('agentdock_onboarding_chat_clicked') === '1' } catch { return false }
   })()
   return [
     { id: 'gateway', titleKey: 'onboardingStep1Title', descKey: 'onboardingStep1Desc', ctaKey: 'onboardingStep1Cta', route: '/services', done: gwRunning },
     { id: 'model', titleKey: 'onboardingStep2Title', descKey: 'onboardingStep2Desc', ctaKey: 'onboardingStep2Cta', route: '/models', done: hasModel },
     { id: 'agent', titleKey: 'onboardingStep3Title', descKey: 'onboardingStep3Desc', ctaKey: 'onboardingStep3Cta', route: '/agents', done: hasCustomAgent },
-    { id: 'chat', titleKey: 'onboardingStep4Title', descKey: 'onboardingStep4Desc', ctaKey: 'onboardingStep4Cta', route: '/chat', done: hasChatTried, markOnClick: 'clawpanel_onboarding_chat_clicked' },
+    { id: 'chat', titleKey: 'onboardingStep4Title', descKey: 'onboardingStep4Desc', ctaKey: 'onboardingStep4Cta', route: '/chat', done: hasChatTried, markOnClick: 'agentdock_onboarding_chat_clicked' },
   ]
 }
 

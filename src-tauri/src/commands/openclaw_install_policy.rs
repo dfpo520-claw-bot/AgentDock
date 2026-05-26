@@ -52,7 +52,7 @@ pub(crate) fn panel_version() -> &'static str {
 pub(crate) fn npm_package_name(source: &str) -> &'static str {
     match source {
         "official" => "openclaw",
-        _ => "@qingchencloud/openclaw-zh",
+        _ => "@DeepAi助手/openclaw-zh",
     }
 }
 

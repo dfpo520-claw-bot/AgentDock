@@ -152,7 +152,7 @@ async function webInvoke(cmd, args) {
   })
   if (resp.status === 401) {
     // Tauri 模式下不触发登录浮层（Tauri 有自己的认证流程）
-    if (!isTauriRuntime() && window.__clawpanel_show_login) window.__clawpanel_show_login()
+    if (!isTauriRuntime() && window.__agentdock_show_login) window.__agentdock_show_login()
     throw new Error(t('common.loginRequired'))
   }
   // 检测后端是否可用：如果返回的是 HTML（非 JSON），说明后端未运行
@@ -175,7 +175,7 @@ async function webStreamInvoke(cmd, args, onEvent, options = {}) {
     signal: options.signal,
   })
   if (resp.status === 401) {
-    if (!isTauriRuntime() && window.__clawpanel_show_login) window.__clawpanel_show_login()
+    if (!isTauriRuntime() && window.__agentdock_show_login) window.__agentdock_show_login()
     throw new Error(t('common.loginRequired'))
   }
   if (!resp.ok) {
@@ -357,7 +357,7 @@ export const api = {
   deleteAgentBinding: (agentId, channel, accountId, bindingConfig) => { invalidate('read_openclaw_config', 'list_configured_platforms'); return invoke('delete_agent_binding', { agentId, channel, accountId: accountId || null, bindingConfig: bindingConfig || null }) },
   deleteAgentAllBindings: (agentId) => { invalidate('read_openclaw_config', 'list_configured_platforms'); return invoke('delete_agent_all_bindings', { agentId }) },
 
-  // 面板配置 (clawpanel.json)
+  // 面板配置 (agentdock.json)
   getOpenclawDir: () => invoke('get_openclaw_dir'),
   // Tauri: 重启应用进程；Web: 没有应用进程概念，刷新浏览器即可拿到新状态
   relaunchApp: () => {

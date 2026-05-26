@@ -4,18 +4,17 @@
 import { navigate, getCurrentRoute, reloadCurrentRoute } from '../router.js'
 import { toggleTheme, getTheme } from '../lib/theme.js'
 import { isOpenclawReady } from '../lib/app-state.js'
-import { api } from '../lib/tauri-api.js'
 import { toast } from './toast.js'
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
 import { t, getLang, setLang, getAvailableLangs } from '../lib/i18n.js'
 import { isFeatureAvailable } from '../lib/feature-gates.js'
 import { getKernelSnapshot } from '../lib/kernel.js'
 import { triggerKernelUpgrade } from '../lib/kernel-upgrade.js'
-import { getActiveEngine, getActiveEngineId, listEngines, needsInitialEngineChoice, isEngineSetupDeferred, switchEngine, onEngineChange } from '../lib/engine-manager.js'
+import { getActiveEngine, getActiveEngineId, listEngines, needsInitialEngineChoice, isEngineSetupDeferred, switchEngine } from '../lib/engine-manager.js'
 import { PRODUCT_IDENTITY } from '../lib/product-identity.js'
 
 // 当用户点 "暂时不升级" 时，本地会话内不再显示升级提示
-const SS_DISMISSED_KERNEL_UPGRADE = 'clawpanel_kernel_upgrade_dismissed'
+const SS_DISMISSED_KERNEL_UPGRADE = 'agentdock_kernel_upgrade_dismissed'
 
 function NAV_ITEMS_FULL() { return [
   {
@@ -174,7 +173,7 @@ function _toggleEngineDropdown() {
   if (btn) btn.setAttribute('aria-expanded', 'true')
 }
 
-const LS_SIDEBAR_COLLAPSED = 'clawpanel_sidebar_collapsed'
+const LS_SIDEBAR_COLLAPSED = 'agentdock_sidebar_collapsed'
 
 function _isDesktopSidebarCollapsed() {
   try { return localStorage.getItem(LS_SIDEBAR_COLLAPSED) === '1' } catch { return false }

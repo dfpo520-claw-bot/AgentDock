@@ -11,7 +11,7 @@ const isTauri = !!window.__TAURI_INTERNALS__
 
 async function apiCall(cmd, args = {}) {
   if (isTauri) {
-    // 桌面端：通过 Tauri IPC 读写 clawpanel.json
+    // 桌面端：通过 Tauri IPC 读写 agentdock.json
     const cfg = await tauriApi.readPanelConfig()
 
     if (cmd === 'auth_status') {
@@ -29,7 +29,7 @@ async function apiCall(cmd, args = {}) {
       delete cfg.mustChangePassword
       delete cfg.ignoreRisk
       await tauriApi.writePanelConfig(cfg)
-      sessionStorage.setItem('clawpanel_authed', '1')
+      sessionStorage.setItem('agentdock_authed', '1')
       return { success: true }
     }
     if (cmd === 'auth_ignore_risk') {
@@ -37,7 +37,7 @@ async function apiCall(cmd, args = {}) {
         delete cfg.accessPassword
         delete cfg.mustChangePassword
         cfg.ignoreRisk = true
-        sessionStorage.removeItem('clawpanel_authed')
+        sessionStorage.removeItem('agentdock_authed')
       } else {
         delete cfg.ignoreRisk
       }
@@ -61,7 +61,7 @@ function checkPasswordStrengthLocal(pw) {
   if (!pw || pw.length < 6) return t('security.pwMin6')
   if (pw.length > 64) return t('security.pwMax64')
   if (/^\d+$/.test(pw)) return t('security.pwNoDigitOnly')
-  const weak = ['123456', '654321', 'password', 'admin', 'qwerty', 'abc123', '111111', '000000', 'letmein', 'welcome', 'clawpanel', 'openclaw']
+  const weak = ['123456', '654321', 'password', 'admin', 'qwerty', 'abc123', '111111', '000000', 'letmein', 'welcome', 'agentdock', 'openclaw']
   if (weak.includes(pw.toLowerCase())) return t('security.pwTooCommon')
   return null
 }
@@ -82,7 +82,7 @@ function strengthLevel(pw) {
 }
 
 function clearDefaultPasswordBanner() {
-  sessionStorage.removeItem('clawpanel_must_change_pw')
+  sessionStorage.removeItem('agentdock_must_change_pw')
   document.getElementById('pw-change-banner')?.remove()
   document.body.classList.remove('has-security-banner')
   document.documentElement.style.removeProperty('--security-banner-height')

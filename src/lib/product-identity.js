@@ -7,13 +7,13 @@ export const PRODUCT_IDENTITY = Object.freeze({
   tagline: 'Multi-engine AI agent operations console',
   description: 'AgentDock - production desktop console for multi-engine AI agent operations',
   tauriIdentifier: 'com.agentdock.desktop',
-  homepage: 'https://github.com/agentdock/agentdock',
-  homepageHost: 'github.com/agentdock/agentdock',
-  supportUrl: 'https://github.com/agentdock/agentdock/issues',
-  repositoryUrl: 'https://github.com/agentdock/agentdock',
-  releaseUrl: 'https://github.com/agentdock/agentdock/releases',
-  updateManifestUrl: 'https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json',
-  legacyProductName: 'ClawPanel',
+  homepage: 'https://github.com/dfpo520-claw-bot/AgentDock',
+  homepageHost: 'github.com/dfpo520-claw-bot/AgentDock',
+  supportUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/issues',
+  repositoryUrl: 'https://github.com/dfpo520-claw-bot/AgentDock',
+  releaseUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/releases',
+  updateManifestUrl: 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json',
+  legacyProductName: 'AgentDock',
 })
 
 export function productTitle(suffix = '') {

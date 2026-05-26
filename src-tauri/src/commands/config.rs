@@ -900,7 +900,7 @@ pub fn validate_openclaw_config() -> Result<Value, String> {
                     // 检查 agents 子字段（上游 schema 只定义 agents.list）
                     if agents_obj.contains_key("profiles") {
                         warnings.push(
-                            "发现 agents.profiles 字段，上游 schema 未定义此字段，ClawPanel 会自动清理"
+                            "发现 agents.profiles 字段，上游 schema 未定义此字段，AgentDock 会自动清理"
                                 .to_string(),
                         );
                     }
@@ -967,7 +967,7 @@ pub fn validate_openclaw_config() -> Result<Value, String> {
         "warnings": warnings,
         "suggestions": if !ui_fields_found.is_empty() || !unknown_fields.is_empty() {
             vec![
-                "UI 专属字段会被 ClawPanel 自动清理，不影响 OpenClaw 运行".to_string(),
+                "UI 专属字段会被 AgentDock 自动清理，不影响 OpenClaw 运行".to_string(),
                 "未知字段如果是用户手动添加的，请确保符合 OpenClaw schema".to_string(),
                 "如果遇到 'Unrecognized key' 错误，请检查配置文件是否包含 OpenClaw 不支持的字段".to_string(),
             ]
@@ -1163,7 +1163,7 @@ fn has_ui_fields(val: &Value) -> bool {
     false
 }
 
-/// 清理 ClawPanel 内部字段，避免污染 openclaw.json 导致 Gateway 启动失败
+/// 清理 AgentDock 内部字段，避免污染 openclaw.json 导致 Gateway 启动失败
 /// Issue #89: version info 字段被写入 openclaw.json → Unknown config keys
 /// Issue #127: 增强清理逻辑，保留 OpenClaw 合法的配置字段
 ///
@@ -1177,7 +1177,7 @@ fn has_ui_fields(val: &Value) -> bool {
 /// - models.providers 中每个 model 的测试状态：lastTestAt, latency, testStatus, testError
 fn strip_ui_fields(mut val: Value) -> Value {
     if let Some(obj) = val.as_object_mut() {
-        // 清理根层级 ClawPanel 内部字段（version info 等）
+        // 清理根层级 AgentDock 内部字段（version info 等）
         // 注意：保留 browser.* 和 agents.list，这些是 OpenClaw 合法的配置字段
         for key in &[
             "current",
@@ -2270,23 +2270,23 @@ pub fn patch_model_vision() -> Result<bool, String> {
     Ok(changed)
 }
 
-/// 检查 ClawPanel 自身是否有新版本（GitHub → Gitee 自动降级）
+/// 检查 AgentDock 自身是否有新版本（GitHub → Gitee 自动降级）
 #[tauri::command]
 pub async fn check_panel_update() -> Result<Value, String> {
     let client =
-        crate::commands::build_http_client(std::time::Duration::from_secs(8), Some("ClawPanel"))
+        crate::commands::build_http_client(std::time::Duration::from_secs(8), Some("AgentDock"))
             .map_err(|e| format!("创建 HTTP 客户端失败: {e}"))?;
 
     // 先尝试 GitHub，失败后降级 Gitee
     let sources = [
         (
-            "https://api.github.com/repos/qingchencloud/clawpanel/releases/latest",
-            "https://github.com/qingchencloud/clawpanel/releases",
+            "https://api.github.com/repos/dfpo520-claw-bot/AgentDock/releases/latest",
+            "https://github.com/dfpo520-claw-bot/AgentDock/releases",
             "github",
         ),
         (
-            "https://gitee.com/api/v5/repos/QtCodeCreators/clawpanel/releases/latest",
-            "https://gitee.com/QtCodeCreators/clawpanel/releases",
+            "https://api.github.com/repos/dfpo520-claw-bot/AgentDock/releases/latest",
+            "https://github.com/dfpo520-claw-bot/AgentDock/releases",
             "gitee",
         ),
     ];
@@ -2323,7 +2323,7 @@ pub async fn check_panel_update() -> Result<Value, String> {
                 result.insert("source".into(), Value::String(source.to_string()));
                 result.insert(
                     "downloadUrl".into(),
-                    Value::String("https://claw.qt.cool".into()),
+                    Value::String("https://github.com/dfpo520-claw-bot/AgentDock".into()),
                 );
                 return Ok(Value::Object(result));
             }
@@ -2339,7 +2339,7 @@ pub async fn check_panel_update() -> Result<Value, String> {
     Err(last_err)
 }
 
-// === 面板配置 (clawpanel.json) ===
+// === 面板配置 (agentdock.json) ===
 
 /// 获取当前生效的 OpenClaw 配置目录路径
 #[tauri::command]

@@ -3,7 +3,7 @@
  * 从 clawapp 移植，适配 AgentDock
  */
 
-const DB_NAME = 'clawpanel-messages'
+const DB_NAME = 'agentdock-messages'
 const DB_VERSION = 1
 const STORE_NAME = 'messages'
 const STORE_SESSIONS = 'sessions'

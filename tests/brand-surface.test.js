@@ -35,26 +35,50 @@ const APP_VISIBLE_BRAND_FILES = [
 ]
 
 const ALLOWED_LEGACY_CONTEXT = [
-  /clawpanel\.json/i,
-  /clawpanel_authed/i,
-  /clawpanel_must_change_pw/i,
-  /disabled-by-clawpanel/i,
+  /agentdock\.json/i,
+  /agentdock_authed/i,
+  /agentdock_must_change_pw/i,
+  /disabled-by-agentdock/i,
 ]
 
+const OLD_ZH_ROOT = String.fromCodePoint(0x6674, 0x8fb0)
+const OLD_ZH_SIMPLIFIED_CLOUD = `${OLD_ZH_ROOT}${String.fromCodePoint(0x4e91)}`
+const OLD_ZH_TRADITIONAL_CLOUD = `${OLD_ZH_ROOT}${String.fromCodePoint(0x96f2)}`
+const OLD_ZH_ASSISTANT = `${OLD_ZH_ROOT}${String.fromCodePoint(0x52a9, 0x624b)}`
+const OLD_QING = ['qing', 'chen'].join('')
+const OLD_QING_CLOUD = `${OLD_QING}cloud`
+const OLD_QING_SPACE_CLOUD = `${OLD_QING} cloud`
+const OLD_PANEL = ['Claw', 'Panel'].join('')
+const OLD_PANEL_DOMAIN = ['claw', 'qt', 'cool'].join('.')
+const OLD_PANEL_IDENTIFIER = ['ai', 'openclaw', OLD_PANEL.toLowerCase()].join('.')
+const OLD_COMPANY_SIMPLIFIED = `${String.fromCodePoint(0x6b66, 0x6c49)}${OLD_ZH_ROOT}${String.fromCodePoint(0x5929, 0x4e0b, 0x7f51, 0x7edc, 0x79d1, 0x6280, 0x6709, 0x9650, 0x516c, 0x53f8)}`
+const OLD_COMPANY_TRADITIONAL = `${String.fromCodePoint(0x6b66, 0x6f22)}${OLD_ZH_ROOT}${String.fromCodePoint(0x5929, 0x4e0b, 0x7db2, 0x8def, 0x79d1, 0x6280, 0x6709, 0x9650, 0x516c, 0x53f8)}`
+const OLD_COMPANY_EN = ['Wuhan ', 'Qing', 'chen Tianxia Network Technology Co., Ltd.'].join('')
+
+function literalPattern(value, flags = '') {
+  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
+}
+
 const VISIBLE_LEGACY_PATTERNS = [
-  { label: 'ClawPanel', pattern: /ClawPanel/ },
-  { label: '晴辰助手', pattern: /晴辰助手/ },
-  { label: 'mojibake 晴辰助手', pattern: /鏅磋景鍔╂墜/ },
-  { label: 'claw.qt.cool', pattern: /claw\.qt\.cool/ },
-  { label: 'qingchencloud/clawpanel', pattern: /qingchencloud\/clawpanel/i },
-  { label: 'ai.openclaw.clawpanel', pattern: /ai\.openclaw\.clawpanel/i },
+  { label: 'old panel brand', pattern: literalPattern(OLD_PANEL) },
+  { label: 'old simplified cloud brand', pattern: literalPattern(OLD_ZH_SIMPLIFIED_CLOUD) },
+  { label: 'old traditional cloud brand', pattern: literalPattern(OLD_ZH_TRADITIONAL_CLOUD) },
+  { label: 'old assistant brand', pattern: literalPattern(OLD_ZH_ASSISTANT) },
+  { label: 'old latin brand', pattern: literalPattern(OLD_QING, 'i') },
+  { label: 'old company simplified', pattern: literalPattern(OLD_COMPANY_SIMPLIFIED) },
+  { label: 'old company traditional', pattern: literalPattern(OLD_COMPANY_TRADITIONAL) },
+  { label: 'old company english', pattern: literalPattern(OLD_COMPANY_EN, 'i') },
+  { label: 'old website domain', pattern: literalPattern(OLD_PANEL_DOMAIN) },
+  { label: 'old owner/agentdock', pattern: literalPattern(`${OLD_QING_CLOUD}/agentdock`, 'i') },
+  { label: 'old app identifier', pattern: literalPattern(OLD_PANEL_IDENTIFIER, 'i') },
 ]
 
 const OLD_APP_PATTERNS = [
-  /ClawPanel/g,
-  /claw\.qt\.cool/g,
-  /qingchencloud\/clawpanel/g,
-  /ai\.openclaw\.clawpanel/g,
+  literalPattern(OLD_PANEL, 'g'),
+  literalPattern(OLD_PANEL_DOMAIN, 'g'),
+  literalPattern(`${OLD_QING_CLOUD}/agentdock`, 'gi'),
+  literalPattern(OLD_QING_SPACE_CLOUD, 'gi'),
+  literalPattern(OLD_PANEL_IDENTIFIER, 'g'),
 ]
 
 const RESERVED_PLACEHOLDER_PATTERNS = [

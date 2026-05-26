@@ -13,7 +13,7 @@ import { api } from './tauri-api.js'
 import { toast } from '../components/toast.js'
 import { t } from './i18n.js'
 
-const DISMISS_KEY_PREFIX = 'clawpanel_ciao_bug_dismissed_v'
+const DISMISS_KEY_PREFIX = 'agentdock_ciao_bug_dismissed_v'
 
 function dismissKey(version) {
   return `${DISMISS_KEY_PREFIX}${version || 'unknown'}`

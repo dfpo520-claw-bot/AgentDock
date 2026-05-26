@@ -161,6 +161,7 @@ body.has-security-banner .app-content-frame {
 }
 .engine-label {
   flex: 1;
+  min-width: 0;
   text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -176,11 +177,9 @@ body.has-security-banner .app-content-frame {
 }
 .engine-dropdown {
   display: none;
-  position: absolute;
-  left: var(--space-sm);
-  right: var(--space-sm);
-  top: 100%;
-  z-index: 110;
+  position: static;
+  width: 100%;
+  margin-top: var(--space-xs);
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
@@ -216,6 +215,7 @@ body.has-security-banner .app-content-frame {
 }
 .engine-opt-name {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

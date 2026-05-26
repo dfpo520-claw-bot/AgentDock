@@ -2,25 +2,25 @@
 set -e
 
 echo "=========================================="
-echo "  ClawPanel Web 版 一键部署脚本"
+echo "  AgentDock Web 版 一键部署脚本"
 echo "  在 Linux 上通过浏览器管理 OpenClaw"
 echo "=========================================="
 echo ""
 
 PANEL_PORT=1420
-REPO_URL="https://github.com/qingchencloud/clawpanel.git"
-REPO_URL_GITEE="https://gitee.com/QtCodeCreators/clawpanel.git"
+REPO_URL="https://github.com/dfpo520-claw-bot/AgentDock.git"
+REPO_URL_GITEE="https://github.com/dfpo520-claw-bot/AgentDock.git"
 NPM_REGISTRY="https://registry.npmmirror.com"
 
 # 检测权限模式
 if [ "$(id -u)" = "0" ]; then
     IS_ROOT=true
-    INSTALL_DIR="/opt/clawpanel"
+    INSTALL_DIR="/opt/agentdock"
     SYSTEMD_DIR="/etc/systemd/system"
     echo "🔑 以 root 身份运行，安装到 $INSTALL_DIR"
 else
     IS_ROOT=false
-    INSTALL_DIR="$HOME/.local/share/clawpanel"
+    INSTALL_DIR="$HOME/.local/share/agentdock"
     SYSTEMD_DIR="$HOME/.config/systemd/user"
     echo "👤 以普通用户身份运行，安装到 $INSTALL_DIR"
 fi
@@ -187,11 +187,11 @@ install_openclaw() {
     else
         echo "📦 安装 OpenClaw 汉化版..."
         if [ "$IS_ROOT" = true ]; then
-            npm install -g @qingchencloud/openclaw-zh --registry "$NPM_REGISTRY" || \
-            npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmjs.org
+            npm install -g @DeepAi助手/openclaw-zh --registry "$NPM_REGISTRY" || \
+            npm install -g @DeepAi助手/openclaw-zh --registry https://registry.npmjs.org
         else
-            sudo -E npm install -g @qingchencloud/openclaw-zh --registry "$NPM_REGISTRY" || \
-            sudo -E npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmjs.org
+            sudo -E npm install -g @DeepAi助手/openclaw-zh --registry "$NPM_REGISTRY" || \
+            sudo -E npm install -g @DeepAi助手/openclaw-zh --registry https://registry.npmjs.org
         fi
         echo "✅ OpenClaw 安装完成"
     fi
@@ -221,13 +221,13 @@ fix_npm_cache_permissions() {
     fi
 }
 
-# 克隆并安装 ClawPanel
-install_clawpanel() {
+# 克隆并安装 AgentDock
+install_agentdock() {
     # 预检 npm 缓存权限（#236: 全新系统部署时 npm cache 可能被 root 污染）
     fix_npm_cache_permissions
 
     if [ -d "$INSTALL_DIR" ] && [ -f "$INSTALL_DIR/package.json" ]; then
-        echo "📦 ClawPanel 已存在，更新中..."
+        echo "📦 AgentDock 已存在，更新中..."
         cd "$INSTALL_DIR"
         git pull origin main 2>/dev/null || true
         # 清理可能损坏的 node_modules（上次 npm install 失败残留）
@@ -241,7 +241,7 @@ install_clawpanel() {
             npm install --registry "$NPM_REGISTRY"
         }
     else
-        echo "📦 克隆 ClawPanel..."
+        echo "📦 克隆 AgentDock..."
         mkdir -p "$INSTALL_DIR"
         if ! git clone "$REPO_URL" "$INSTALL_DIR" 2>/dev/null; then
             echo "⚠️  GitHub 克隆失败，切换到 Gitee 国内镜像..."
@@ -258,7 +258,7 @@ install_clawpanel() {
     echo "📦 构建生产版本..."
     cd "$INSTALL_DIR"
     npx vite build
-    echo "✅ ClawPanel 安装完成: $INSTALL_DIR"
+    echo "✅ AgentDock 安装完成: $INSTALL_DIR"
     echo "✅ 启动命令: npm run serve"
 }
 
@@ -274,9 +274,9 @@ setup_systemd() {
     mkdir -p "$SYSTEMD_DIR"
 
     if [ "$IS_ROOT" = true ]; then
-        cat > "$SYSTEMD_DIR/clawpanel.service" << EOF
+        cat > "$SYSTEMD_DIR/agentdock.service" << EOF
 [Unit]
-Description=ClawPanel Web - OpenClaw Management Panel
+Description=AgentDock Web - OpenClaw Management Panel
 After=network.target
 
 [Service]
@@ -294,12 +294,12 @@ Environment=PATH=$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.volta/bin:$(dirna
 WantedBy=multi-user.target
 EOF
         systemctl daemon-reload
-        systemctl enable clawpanel
-        systemctl start clawpanel
+        systemctl enable agentdock
+        systemctl start agentdock
     else
-        cat > "$SYSTEMD_DIR/clawpanel.service" << EOF
+        cat > "$SYSTEMD_DIR/agentdock.service" << EOF
 [Unit]
-Description=ClawPanel Web - OpenClaw Management Panel
+Description=AgentDock Web - OpenClaw Management Panel
 After=network.target
 
 [Service]
@@ -316,8 +316,8 @@ Environment=PATH=$HOME/.npm-global/bin:$HOME/.local/bin:$HOME/.volta/bin:$(dirna
 WantedBy=default.target
 EOF
         systemctl --user daemon-reload
-        systemctl --user enable clawpanel
-        systemctl --user start clawpanel
+        systemctl --user enable agentdock
+        systemctl --user start agentdock
         # 允许用户服务在未登录时继续运行
         loginctl enable-linger "$(whoami)" 2>/dev/null || true
     fi
@@ -334,7 +334,7 @@ get_local_ip() {
 # 生成默认访问密码
 setup_default_password() {
     local config_dir="$HOME/.openclaw"
-    local config_file="$config_dir/clawpanel.json"
+    local config_file="$config_dir/agentdock.json"
     mkdir -p "$config_dir"
 
     # 已存在配置且有密码则跳过
@@ -364,7 +364,7 @@ main() {
     install_git
     install_node
     install_openclaw
-    install_clawpanel
+    install_agentdock
     setup_default_password
     setup_systemd
 
@@ -378,7 +378,7 @@ main() {
 
     echo ""
     echo "=========================================="
-    echo "  ✅ ClawPanel Web 版部署完成！"
+    echo "  ✅ AgentDock Web 版部署完成！"
     echo "=========================================="
     echo ""
     echo "  🌐 访问地址: http://${ip}:${PANEL_PORT}"
@@ -391,12 +391,12 @@ main() {
     fi
     echo ""
     echo "  常用命令："
-    echo "    $ctl_cmd status clawpanel    # 查看状态"
-    echo "    $ctl_cmd restart clawpanel   # 重启面板"
+    echo "    $ctl_cmd status agentdock    # 查看状态"
+    echo "    $ctl_cmd restart agentdock   # 重启面板"
     if [ "$IS_ROOT" = true ]; then
-        echo "    journalctl -u clawpanel -f    # 查看日志"
+        echo "    journalctl -u agentdock -f    # 查看日志"
     else
-        echo "    journalctl --user -u clawpanel -f    # 查看日志"
+        echo "    journalctl --user -u agentdock -f    # 查看日志"
     fi
     echo ""
     echo "  用浏览器打开上面的地址，即可管理 OpenClaw。"

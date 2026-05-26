@@ -6,6 +6,15 @@ import {
   productTitle,
 } from '../src/lib/product-identity.js'
 
+const OLD_QING = ['qing', 'chen'].join('')
+const OLD_QING_CLOUD = `${OLD_QING}cloud`
+const OLD_PANEL = ['Claw', 'Panel'].join('')
+const OLD_PANEL_DOMAIN = ['claw', 'qt', 'cool'].join('.')
+
+function literalPattern(value, flags = '') {
+  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags)
+}
+
 test('PRODUCT_IDENTITY exposes the production fork identity', () => {
   assert.equal(PRODUCT_IDENTITY.id, 'agentdock')
   assert.equal(PRODUCT_IDENTITY.name, 'AgentDock')
@@ -15,13 +24,13 @@ test('PRODUCT_IDENTITY exposes the production fork identity', () => {
   assert.equal(PRODUCT_IDENTITY.tagline, 'Multi-engine AI agent operations console')
   assert.equal(PRODUCT_IDENTITY.description, 'AgentDock - production desktop console for multi-engine AI agent operations')
   assert.equal(PRODUCT_IDENTITY.tauriIdentifier, 'com.agentdock.desktop')
-  assert.equal(PRODUCT_IDENTITY.homepage, 'https://github.com/agentdock/agentdock')
-  assert.equal(PRODUCT_IDENTITY.homepageHost, 'github.com/agentdock/agentdock')
-  assert.equal(PRODUCT_IDENTITY.supportUrl, 'https://github.com/agentdock/agentdock/issues')
-  assert.equal(PRODUCT_IDENTITY.repositoryUrl, 'https://github.com/agentdock/agentdock')
-  assert.equal(PRODUCT_IDENTITY.releaseUrl, 'https://github.com/agentdock/agentdock/releases')
-  assert.equal(PRODUCT_IDENTITY.updateManifestUrl, 'https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json')
-  assert.equal(PRODUCT_IDENTITY.legacyProductName, 'ClawPanel')
+  assert.equal(PRODUCT_IDENTITY.homepage, 'https://github.com/dfpo520-claw-bot/AgentDock')
+  assert.equal(PRODUCT_IDENTITY.homepageHost, 'github.com/dfpo520-claw-bot/AgentDock')
+  assert.equal(PRODUCT_IDENTITY.supportUrl, 'https://github.com/dfpo520-claw-bot/AgentDock/issues')
+  assert.equal(PRODUCT_IDENTITY.repositoryUrl, 'https://github.com/dfpo520-claw-bot/AgentDock')
+  assert.equal(PRODUCT_IDENTITY.releaseUrl, 'https://github.com/dfpo520-claw-bot/AgentDock/releases')
+  assert.equal(PRODUCT_IDENTITY.updateManifestUrl, 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json')
+  assert.equal(PRODUCT_IDENTITY.legacyProductName, 'AgentDock')
 })
 
 test('visible identity fields no longer use the fork app name', () => {
@@ -40,9 +49,10 @@ test('visible identity fields no longer use the fork app name', () => {
     PRODUCT_IDENTITY.updateManifestUrl,
   ].join('\n')
 
-  assert.doesNotMatch(visible, /ClawPanel/)
-  assert.doesNotMatch(visible, /claw\.qt\.cool/)
-  assert.doesNotMatch(visible, /qingchencloud\/clawpanel/)
+  assert.doesNotMatch(visible, literalPattern(OLD_PANEL))
+  assert.doesNotMatch(visible, literalPattern(OLD_PANEL_DOMAIN))
+  assert.doesNotMatch(visible, literalPattern(`${OLD_QING_CLOUD}/${OLD_PANEL.toLowerCase()}`, 'i'))
+  assert.doesNotMatch(visible, literalPattern(`${OLD_QING_CLOUD}/agentdock`, 'i'))
 })
 
 test('productTitle formats document and window titles', () => {

@@ -15,7 +15,7 @@
 请通过以下方式私下报告：
 
 1. 发送邮件至项目维护者（在 GitHub 个人主页查看联系方式）
-2. 或使用 [GitHub Security Advisories](https://github.com/qingchencloud/clawpanel/security/advisories/new) 私下报告
+2. 或使用 [GitHub Security Advisories](https://github.com/dfpo520-claw-bot/AgentDock/security/advisories/new) 私下报告
 
 ### 报告内容应包含
 
@@ -33,7 +33,7 @@
 
 ## 安全最佳实践
 
-使用 ClawPanel 时，建议注意以下安全事项：
+使用 AgentDock 时，建议注意以下安全事项：
 
 - **Gateway Token**：如果开启局域网共享，务必设置访问密钥
 - **网络访问**：默认仅监听本机（loopback），如无必要不要开启局域网模式

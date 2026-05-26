@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/images/logo-brand.png" width="360" alt="ClawPanel">
+  <img src="public/images/logo-brand.png" width="360" alt="AgentDock">
 </p>
 
 <p align="center">
@@ -11,33 +11,30 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/qingchencloud/clawpanel/releases/latest">
-    <img src="https://img.shields.io/github/v/release/qingchencloud/clawpanel?style=flat-square&color=6366f1" alt="Release">
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/releases/latest">
+    <img src="https://img.shields.io/github/v/release/dfpo520-claw-bot/AgentDock?style=flat-square&color=6366f1" alt="Release">
   </a>
-  <a href="https://github.com/qingchencloud/clawpanel/releases/latest">
-    <img src="https://img.shields.io/github/downloads/qingchencloud/clawpanel/total?style=flat-square&color=8b5cf6" alt="Downloads">
-  </a>
-  <a href="https://github.com/qingchencloud/clawpanel/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg?style=flat-square" alt="License">
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/releases/latest">
+    <img src="https://img.shields.io/github/downloads/dfpo520-claw-bot/AgentDock/total?style=flat-square&color=8b5cf6" alt="Downloads">
   </a>
 </p>
 
 ---
 
 <p align="center">
-  <img src="docs/feature-showcase.gif" width="800" alt="ClawPanel 機能ショーケース">
+  <img src="docs/feature-showcase.gif" width="800" alt="AgentDock 機能ショーケース">
 </p>
 
-ClawPanel は複数の AI Agent フレームワークをサポートするビジュアル管理パネルで、現在 [OpenClaw](https://github.com/1186258278/OpenClawChineseTranslation) と [Hermes Agent](https://github.com/nousresearch/hermes-agent) のデュアルエンジンをサポートしています。**インテリジェント AI アシスタントを内蔵**し、ワンクリックインストール、設定の自動診断、問題の特定と修復をサポートします。8 つのツール + 4 つのモード + インタラクティブ Q&A で、初心者からエキスパートまで簡単に管理できます。
+AgentDock は複数の AI Agent フレームワークをサポートするビジュアル管理パネルで、現在 [OpenClaw](https://github.com/1186258278/OpenClawChineseTranslation) と [Hermes Agent](https://github.com/nousresearch/hermes-agent) のデュアルエンジンをサポートしています。**インテリジェント AI アシスタントを内蔵**し、ワンクリックインストール、設定の自動診断、問題の特定と修復をサポートします。8 つのツール + 4 つのモード + インタラクティブ Q&A で、初心者からエキスパートまで簡単に管理できます。
 
-> 🌐 **ウェブサイト**: [claw.qt.cool](https://claw.qt.cool/) | 📦 **ダウンロード**: [GitHub Releases](https://github.com/qingchencloud/clawpanel/releases/latest)
+> 🌐 **ウェブサイト**: [github.com/dfpo520-claw-bot/AgentDock](https://github.com/dfpo520-claw-bot/AgentDock/) | 📦 **ダウンロード**: [GitHub Releases](https://github.com/dfpo520-claw-bot/AgentDock/releases/latest)
 
-### 🎁 晴辰クラウド AI API
+### 🎁 DeepAi助手クラウド AI API
 
 > 内部技術テストプラットフォーム、一部のユーザーに開放。毎日サインインでクレジット獲得。
 
 <p align="center">
-  <a href="https://gpt.qt.cool"><img src="https://img.shields.io/badge/🔑 QingchenCloud AI-gpt.qt.cool-6366f1?style=for-the-badge" alt="QingchenCloud AI"></a>
+  <a href="https://gpt.qt.cool"><img src="https://img.shields.io/badge/🔑 DeepAi助手 AI-gpt.qt.cool-6366f1?style=for-the-badge" alt="DeepAi助手 AI"></a>
 </p>
 
 - **毎日サインインクレジット** — サインイン + 友達招待でテストクレジット獲得
@@ -50,7 +47,7 @@ ClawPanel は複数の AI Agent フレームワークをサポートするビジ
 ### 🔥 開発ボード / 組み込みデバイスサポート
 
 - **Orange Pi / Raspberry Pi / RK3588** — `npm run serve` で実行
-- **Docker ARM64** — `docker run ghcr.io/qingchencloud/openclaw:latest`
+- **Docker ARM64** — `docker run ghcr.io/DeepAi助手/openclaw:latest`
 - **Armbian / Debian / Ubuntu Server** — アーキテクチャ自動検出
 - Rust / Tauri / GUI 不要 — **Node.js 18+ のみで動作**
 
@@ -61,9 +58,9 @@ AI Agent に情熱を持つ開発者とユーザーのコミュニティ — ぜ
 <p align="center">
   <a href="https://discord.gg/U9AttmsNHh"><strong>Discord</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/qingchencloud/clawpanel/discussions"><strong>Discussions</strong></a>
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/discussions"><strong>Discussions</strong></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/qingchencloud/clawpanel/issues/new"><strong>Issue を報告</strong></a>
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/issues/new"><strong>Issue を報告</strong></a>
 </p>
 
 ## 機能
@@ -84,13 +81,13 @@ AI Agent に情熱を持つ開発者とユーザーのコミュニティ — ぜ
 - **定時タスク** — Cron ベースのスケジュール実行、マルチチャンネル配信
 - **ログビューア** — マルチソースリアルタイムログとキーワード検索
 - **メモリ管理** — メモリファイルの表示/編集、ZIP エクスポート、Agent 切替
-- **晴辰クラウド AI API** — 内部テストプラットフォーム、OpenAI 互換
+- **DeepAi助手クラウド AI API** — 内部テストプラットフォーム、OpenAI 互換
 - **拡張ツール** — cftunnel トンネル管理、ClawApp ステータス監視
 - **バージョン情報** — バージョン、コミュニティリンク、関連プロジェクト
 
 ## ダウンロードとインストール
 
-[Releases](https://github.com/qingchencloud/clawpanel/releases/latest) から最新版をダウンロード：
+[Releases](https://github.com/dfpo520-claw-bot/AgentDock/releases/latest) から最新版をダウンロード：
 
 | プラットフォーム | インストーラー |
 |-----------------|---------------|
@@ -102,18 +99,18 @@ AI Agent に情熱を持つ開発者とユーザーのコミュニティ — ぜ
 ### Linux サーバー（Web 版）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawpanel/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
 ```
 
 ### Docker
 
 ```bash
-docker run -d --name clawpanel --restart unless-stopped \
-  -p 1420:1420 -v clawpanel-data:/root/.openclaw \
+docker run -d --name agentdock --restart unless-stopped \
+  -p 1420:1420 -v agentdock-data:/root/.openclaw \
   node:22-slim \
   sh -c "apt-get update && apt-get install -y git && \
-    npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmmirror.com && \
-    git clone https://github.com/qingchencloud/clawpanel.git /app && \
+    npm install -g @DeepAi助手/openclaw-zh --registry https://registry.npmmirror.com && \
+    git clone https://github.com/dfpo520-claw-bot/AgentDock.git /app && \
     cd /app && npm install && npm run build && npm run serve"
 ```
 
@@ -161,8 +158,8 @@ docker run -d --name clawpanel --restart unless-stopped \
 ## ソースからビルド
 
 ```bash
-git clone https://github.com/qingchencloud/clawpanel.git
-cd clawpanel && npm install
+git clone https://github.com/dfpo520-claw-bot/AgentDock.git
+cd agentdock && npm install
 
 # デスクトップ（Rust + Tauri v2 必要）
 npm run tauri dev        # 開発
@@ -178,8 +175,8 @@ npm run build && npm run serve  # プロダクション
 | プロジェクト | 説明 |
 |-------------|------|
 | [OpenClaw](https://github.com/1186258278/OpenClawChineseTranslation) | AI Agent フレームワーク |
-| [ClawApp](https://github.com/qingchencloud/clawapp) | クロスプラットフォームモバイルチャット |
-| [cftunnel](https://github.com/qingchencloud/cftunnel) | Cloudflare Tunnel ツール |
+| [ClawApp](https://github.com/DeepAi助手/clawapp) | クロスプラットフォームモバイルチャット |
+| [cftunnel](https://github.com/DeepAi助手/cftunnel) | Cloudflare Tunnel ツール |
 
 ## 貢献
 
@@ -198,12 +195,7 @@ If you find this project useful, consider supporting us via USDT (BNB Smart Chai
 
 ## Contact
 
-- **Email**: [support@qctx.net](mailto:support@qctx.net)
-- **Website**: [qingchencloud.com](https://qingchencloud.com)
-- **Product**: [claw.qt.cool](https://claw.qt.cool)
-
-## ライセンス
-
-[AGPL-3.0](LICENSE) ライセンス。商用利用については商用ライセンスをお問い合わせください。
-
-© 2026 QingchenCloud | [claw.qt.cool](https://claw.qt.cool)
+- **Support**: [GitHub Issues](https://github.com/dfpo520-claw-bot/AgentDock/issues)
+- **Website**: [github.com/dfpo520-claw-bot/AgentDock](https://github.com/dfpo520-claw-bot/AgentDock)
+- **Product**: [github.com/dfpo520-claw-bot/AgentDock](https://github.com/dfpo520-claw-bot/AgentDock)
+© 2026 DeepAi助手 | [github.com/dfpo520-claw-bot/AgentDock](https://github.com/dfpo520-claw-bot/AgentDock)

@@ -43,8 +43,8 @@ export default {
   ),
   quarantineOneOk: _('已隔离', 'Quarantined', '已隔離'),
   footnote: _(
-    '隔离 = 重命名为 .disabled-by-clawpanel-<时间>.bak（不会删除）。如需恢复，到原目录把 .bak 文件改回原名即可。',
-    'Quarantine = rename to .disabled-by-clawpanel-<timestamp>.bak (not deleted). To restore, rename the .bak back to its original name in the same directory.',
-    '隔離 = 重新命名為 .disabled-by-clawpanel-<時間>.bak（不會刪除）。如需恢復，到原目錄把 .bak 檔案改回原名即可。',
+    '隔离 = 重命名为 .disabled-by-agentdock-<时间>.bak（不会删除）。如需恢复，到原目录把 .bak 文件改回原名即可。',
+    'Quarantine = rename to .disabled-by-agentdock-<timestamp>.bak (not deleted). To restore, rename the .bak back to its original name in the same directory.',
+    '隔離 = 重新命名為 .disabled-by-agentdock-<時間>.bak（不會刪除）。如需恢復，到原目錄把 .bak 檔案改回原名即可。',
   ),
 }

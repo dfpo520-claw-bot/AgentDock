@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# ClawPanel Docker 部署脚本
+# AgentDock Docker 部署脚本
 # =============================================================================
 # 功能:
 #   1. 检查 Docker 环境
@@ -25,8 +25,8 @@ NC='\033[0m' # No Color
 # -----------------------------------------------------------------------------
 # 配置
 # -----------------------------------------------------------------------------
-CONTAINER_NAME="clawpanel"
-IMAGE_NAME="clawpanel"
+CONTAINER_NAME="agentdock"
+IMAGE_NAME="agentdock"
 IMAGE_TAG="latest"
 DEFAULT_PORT=1420
 CONFIG_DIR="$HOME/.openclaw"
@@ -441,7 +441,7 @@ compose_down() {
 # -----------------------------------------------------------------------------
 show_help() {
     echo ""
-    echo "ClawPanel Docker 部署脚本"
+    echo "AgentDock Docker 部署脚本"
     echo ""
     echo "用法: $0 [命令]"
     echo ""

@@ -3,14 +3,14 @@
  * 国内用户自动使用 Gitee 镜像，解决 GitHub 访问慢/不可达的问题
  */
 
-const GITHUB_ORG = 'https://github.com/qingchencloud'
+const GITHUB_ORG = 'https://github.com/DeepAi助手'
 const GITEE_ORG = 'https://gitee.com/QtCodeCreators'
-const GITHUB_RAW = 'https://raw.githubusercontent.com/qingchencloud'
+const GITHUB_RAW = 'https://raw.githubusercontent.com/DeepAi助手'
 const GITEE_RAW = 'https://gitee.com/QtCodeCreators'
 
 // 仓库名映射（GitHub → Gitee，名称不同时需映射）
 const REPO_MAP = {
-  clawpanel: 'clawpanel',
+  agentdock: 'agentdock',
   clawapp: 'clawapp',
   cftunnel: 'cftunnel',
   'openclaw-zh': 'openclaw-zh',
@@ -42,7 +42,7 @@ async function isGithubReachable() {
 
 /**
  * 获取仓库 URL（优先 GitHub，不可达时用 Gitee）
- * @param {string} repo - 仓库名，如 'clawpanel'
+ * @param {string} repo - 仓库名，如 'agentdock'
  * @param {string} [path] - 可选路径，如 '/releases'、'/issues/new'
  */
 export async function repoUrl(repo, path = '') {
@@ -87,8 +87,8 @@ export async function rawFileUrl(repo, branch, filePath) {
  */
 export function deployCommand() {
   return {
-    github: `curl -fsSL ${GITHUB_RAW}/clawpanel/main/deploy.sh | bash`,
-    gitee: `curl -fsSL ${GITEE_RAW}/clawpanel/raw/main/deploy.sh | bash`,
+    github: `curl -fsSL ${GITHUB_RAW}/agentdock/main/deploy.sh | bash`,
+    gitee: `curl -fsSL ${GITEE_RAW}/agentdock/raw/main/deploy.sh | bash`,
   }
 }
 

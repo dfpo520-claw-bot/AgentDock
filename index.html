@@ -7,7 +7,7 @@
   <link rel="icon" href="/favicon.ico">
   <!-- 样式由 main.js 通过 Vite 统一加载 -->
   <style>
-    /* Splash · Boot Manifest · 零依赖、内联渲染、双语支持（zh-CN / en，与应用 localStorage('clawpanel_lang') 共享） */
+    /* Splash · Boot Manifest · 零依赖、内联渲染、双语支持（zh-CN / en，与应用 localStorage('agentdock_lang') 共享） */
     #splash {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
@@ -283,7 +283,7 @@
       <div class="sp-actions" hidden></div>
       <div class="sp-footer">
         <span data-i18n="footer.left">启动 · 多引擎</span>
-        <a href="https://github.com/agentdock/agentdock" target="_blank" rel="noopener">github.com/agentdock/agentdock</a>
+        <a href="https://github.com/dfpo520-claw-bot/AgentDock" target="_blank" rel="noopener">github.com/dfpo520-claw-bot/AgentDock</a>
       </div>
     </div>
     <div id="sp-lang" role="group" aria-label="language">
@@ -293,7 +293,7 @@
   </div>
   <script>
   (function () {
-    // ─── i18n strings (splash 自带迷你 i18n，与应用 localStorage('clawpanel_lang') 共享) ───
+    // ─── i18n strings (splash 自带迷你 i18n，与应用 localStorage('agentdock_lang') 共享) ───
     var STRINGS = {
       'zh-CN': {
         'version': '多引擎',
@@ -341,7 +341,7 @@
 
     function pickLang() {
       try {
-        var saved = localStorage.getItem('clawpanel_lang');
+        var saved = localStorage.getItem('agentdock_lang');
         if (saved && STRINGS[saved]) return saved;
         var nav = (navigator.language || '').toLowerCase();
         if (nav.indexOf('en') === 0) return 'en';
@@ -372,10 +372,10 @@
     function setLang(newLang) {
       if (!STRINGS[newLang]) return;
       lang = newLang;
-      try { localStorage.setItem('clawpanel_lang', newLang); } catch (_) {}
+      try { localStorage.setItem('agentdock_lang', newLang); } catch (_) {}
       applyI18n();
       // 通知应用 i18n 模块（若已加载）同步切换语言
-      try { window.dispatchEvent(new CustomEvent('clawpanel-lang-change', { detail: newLang })); } catch (_) {}
+      try { window.dispatchEvent(new CustomEvent('agentdock-lang-change', { detail: newLang })); } catch (_) {}
     }
 
     // ─── boot state machine ───
@@ -404,7 +404,7 @@
         actions.innerHTML = showActions
           ? '<button class="sp-btn sp-btn-primary" onclick="location.reload()">' + t('btn.reload') + '</button>'
             + '<a class="sp-btn" href="https://go.microsoft.com/fwlink/p/?LinkId=2124703" target="_blank" rel="noopener">' + t('btn.webview2') + '</a>'
-            + '<a class="sp-btn" href="https://github.com/agentdock/agentdock" target="_blank" rel="noopener">' + t('btn.site') + '</a>'
+            + '<a class="sp-btn" href="https://github.com/dfpo520-claw-bot/AgentDock" target="_blank" rel="noopener">' + t('btn.site') + '</a>'
           : '';
       }
     };

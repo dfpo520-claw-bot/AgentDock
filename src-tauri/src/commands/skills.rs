@@ -524,7 +524,7 @@ fn custom_skill_roots_for_agent(
     }
     #[cfg(target_os = "windows")]
     if let Some(prefix) = super::windows_npm_global_prefix() {
-        for pkg in ["openclaw", "@qingchencloud/openclaw-zh"] {
+        for pkg in ["openclaw", "@DeepAi助手/openclaw-zh"] {
             let bundled = std::path::PathBuf::from(&prefix)
                 .join("node_modules")
                 .join(pkg)

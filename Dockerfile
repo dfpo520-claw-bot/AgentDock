@@ -1,11 +1,11 @@
 # =============================================================================
-# ClawPanel Dockerfile - 多阶段构建
+# AgentDock Dockerfile - 多阶段构建
 # 支持 Docker BuildKit，提供优化的生产镜像
 # =============================================================================
 #
 # 构建命令:
-#   docker build -t clawpanel .
-#   docker build -t clawpanel --build-arg NPM_REGISTRY=https://registry.npmmirror.com .
+#   docker build -t agentdock .
+#   docker build -t agentdock --build-arg NPM_REGISTRY=https://registry.npmmirror.com .
 #
 # 或使用 Docker Compose:
 #   docker compose up -d
@@ -69,8 +69,8 @@ COPY --from=builder --chown=appuser:appgroup /build/node_modules ./node_modules
 
 # 安装 OpenClaw CLI（用于读写配置）
 # 使用国内镜像源加速
-RUN npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmmirror.com || \
-    npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmjs.org
+RUN npm install -g @DeepAi助手/openclaw-zh --registry https://registry.npmmirror.com || \
+    npm install -g @DeepAi助手/openclaw-zh --registry https://registry.npmjs.org
 
 # 创建数据目录
 RUN mkdir -p /app/data && \

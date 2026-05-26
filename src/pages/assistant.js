@@ -10,7 +10,7 @@ import { showConfirm } from '../components/modal.js'
 import { api } from '../lib/tauri-api.js'
 import { OPENCLAW_KB } from '../lib/openclaw-kb.js'
 import { icon, statusIcon } from '../lib/icons.js'
-import { QTCOOL, PROVIDER_PRESETS, API_TYPES as SHARED_API_TYPES, fetchQtcoolModels } from '../lib/model-presets.js'
+import { PROVIDER_PRESETS, API_TYPES as SHARED_API_TYPES } from '../lib/model-presets.js'
 import { t } from '../lib/i18n.js'
 import { getActiveEngineId } from '../lib/engine-manager.js'
 import { enhanceModelCallError } from '../lib/model-error-diagnosis.js'
@@ -20,12 +20,12 @@ import {
 } from '../lib/assistant-tool-policy.js'
 
 // ── 常量 ──
-const STORAGE_KEY = 'clawpanel-assistant'
-const SESSIONS_KEY = 'clawpanel-assistant-sessions'
+const STORAGE_KEY = 'agentdock-assistant'
+const SESSIONS_KEY = 'agentdock-assistant-sessions'
 const MAX_SESSIONS = 50
 const MAX_CONTEXT_TOKENS = 30 // 最近 N 条消息作为上下文
 
-// ── 图片文件存储（通过 Tauri 后端持久化到 ~/.openclaw/clawpanel/images/）──
+// ── 图片文件存储（通过 Tauri 后端持久化到 ~/.openclaw/agentdock/images/）──
 async function saveImageToFile(id, dataUrl) {
   try { await api.saveImage(id, dataUrl) } catch (e) { console.warn('图片保存失败:', e) }
 }
@@ -55,6 +55,8 @@ const DEFAULT_MODE = 'execute'
 
 // ── API 类型（从共享模块导入）──
 const API_TYPES = SHARED_API_TYPES
+const DEEPAI_DEFAULT_BASE_URL = 'https://api.deepai.wang/v1'
+const DEEPAI_PORTAL_URL = 'https://api.deepai.wang/'
 
 function normalizeApiType(raw) {
   const type = (raw || '').trim()
@@ -101,8 +103,24 @@ function apiKeyPlaceholder(apiType) {
 const DEFAULT_NAME = t('assistant.defaultName')
 const DEFAULT_PERSONALITY = t('assistant.defaultPersonality')
 
+const LEGACY_ASSISTANT_BRAND_ROOT = String.fromCodePoint(0x6674, 0x8fb0)
+const LEGACY_ASSISTANT_BRAND_NAMES = [
+  `${LEGACY_ASSISTANT_BRAND_ROOT}${String.fromCodePoint(0x52a9, 0x624b)}`,
+  `${LEGACY_ASSISTANT_BRAND_ROOT}${String.fromCodePoint(0x4e91)}`,
+  `${LEGACY_ASSISTANT_BRAND_ROOT}${String.fromCodePoint(0x96f2)}`,
+]
+
+function normalizeAssistantName(name) {
+  const clean = String(name || '').trim()
+  if (!clean) return DEFAULT_NAME
+  const lower = clean.toLowerCase()
+  if (LEGACY_ASSISTANT_BRAND_NAMES.some((legacy) => clean.includes(legacy))) return DEFAULT_NAME
+  if (lower.includes(['qing', 'chen'].join(''))) return DEFAULT_NAME
+  return clean
+}
+
 function getSystemPromptBase() {
-  const name = _config?.assistantName || DEFAULT_NAME
+  const name = normalizeAssistantName(_config?.assistantName)
   const personality = _config?.assistantPersonality || DEFAULT_PERSONALITY
   return `你是「${name}」，AgentDock 内置的 DeepAi助手。
 
@@ -116,21 +134,21 @@ ${personality}
 - 你善于分析日志、诊断错误、提供解决方案
 
 ## 相关资源
-- **AgentDock 项目主页**: https://github.com/agentdock/agentdock
+- **AgentDock 项目主页**: https://github.com/dfpo520-claw-bot/AgentDock
 - **开源项目**:
   - **AgentDock** — OpenClaw 可视化管理面板（Tauri v2）
-  - **OpenClaw 汉化版** — AI Agent 平台中文版，npm install -g @qingchencloud/openclaw-zh
+  - **OpenClaw 汉化版** — AI Agent 平台中文版，npm install -g @DeepAi助手/openclaw-zh
 
 ## AgentDock 是什么
 - OpenClaw 的可视化管理面板，基于 Tauri v2 的跨平台桌面应用（Windows/macOS/Linux）
 - 支持仪表盘监控、模型配置、Agent 管理、实时聊天、记忆文件管理、AI 助手工具调用等
-- 官网: https://github.com/agentdock/agentdock | GitHub: https://github.com/agentdock/agentdock
+- 官网: https://github.com/dfpo520-claw-bot/AgentDock | GitHub: https://github.com/dfpo520-claw-bot/AgentDock
 
 ## OpenClaw 是什么
 - 开源的 AI Agent 平台，支持多模型、多 Agent、MCP 工具调用
 - 核心组件: Gateway（API 网关）、Agent（AI 代理）、Tools（工具系统）
 - 配置文件: ~/.openclaw/openclaw.json（全局配置）
-- 安装方式: npm install -g @qingchencloud/openclaw-zh（汉化版，推荐）或 npm install -g openclaw（官方英文版）
+- 安装方式: npm install -g @DeepAi助手/openclaw-zh（汉化版，推荐）或 npm install -g openclaw（官方英文版）
 
 ## OpenClaw CLI 命令速查
 ### 基础命令
@@ -171,7 +189,7 @@ ${personality}
 ## 关键配置结构
 - openclaw.json: 全局配置（models.providers、gateway、tools）
 - models.json: Agent 运行时模型注册表（~/.openclaw/agents/<id>/agent/models.json）
-- clawpanel.json: AgentDock 自身配置（~/.openclaw/clawpanel.json）
+- agentdock.json: AgentDock 自身配置（~/.openclaw/agentdock.json）
 - gateway.mode: "local"（必须在 gateway 对象内，不能在顶层）
 - gateway.port: 默认 18789
 - gateway.auth.mode: "none" | "token" | "password"
@@ -187,17 +205,17 @@ ${personality}
 
 ## 生态项目安装指引
 当用户问到如何安装其他产品时，推荐以下安装方式：
-- **OpenClaw 汉化版**: npm install -g @qingchencloud/openclaw-zh（推荐国内用户）
+- **OpenClaw 汉化版**: npm install -g @DeepAi助手/openclaw-zh（推荐国内用户）
 - **OpenClaw 官方版**: npm install -g openclaw
-- **AgentDock**: 从 https://github.com/agentdock/agentdock/releases 下载
+- **AgentDock**: 从 https://github.com/dfpo520-claw-bot/AgentDock/releases 下载
 
 ## 社区贡献指引
 当用户发现 Bug 或有改进建议时，你应该主动引导用户参与开源贡献：
 
 ### 提交 Issue
 引导用户到对应仓库提交 Issue，帮用户整理好格式：
-- **AgentDock**: https://github.com/agentdock/agentdock/issues/new
-- **OpenClaw 汉化版**: https://github.com/qingchencloud/openclaw-zh/issues/new
+- **AgentDock**: https://github.com/dfpo520-claw-bot/AgentDock/issues/new
+- **OpenClaw 汉化版**: https://github.com/DeepAi助手/openclaw-zh/issues/new
 
 Issue 模板（帮用户填好）：
 \`\`\`
@@ -592,7 +610,7 @@ const BUILTIN_SKILLS = [
 4. 对于 main Agent，列出 ~/.openclaw/agents/main/agent/ 子目录
 5. 简要说明每个目录/文件的作用：
    - openclaw.json: 全局配置（模型、Gateway、工具）
-   - clawpanel.json: AgentDock 面板配置
+   - agentdock.json: AgentDock 面板配置
    - mcp.json: MCP 工具配置
    - agents/: Agent 工作目录
    - logs/: 日志文件
@@ -668,8 +686,8 @@ const BUILTIN_SKILLS = [
    - **环境信息**（自动填充）
    - **相关日志**（如有）
 6. 用代码块展示完整 Issue 内容，给出对应仓库的 Issue 链接：
-   - AgentDock: https://github.com/agentdock/agentdock/issues/new
-   - OpenClaw: https://github.com/qingchencloud/openclaw-zh/issues/new
+   - AgentDock: https://github.com/dfpo520-claw-bot/AgentDock/issues/new
+   - OpenClaw: https://github.com/DeepAi助手/openclaw-zh/issues/new
 `,
   },
   {
@@ -858,7 +876,7 @@ const HERMES_SKILLS = [
    - **环境信息**（自动填充）
    - **相关日志**（如有）
 6. 给出对应仓库的 Issue 链接：
-   - AgentDock: https://github.com/agentdock/agentdock/issues/new
+   - AgentDock: https://github.com/dfpo520-claw-bot/AgentDock/issues/new
 `,
   },
 ]
@@ -1591,7 +1609,9 @@ function loadConfig() {
   if (!_config) {
     _config = { baseUrl: '', apiKey: '', model: '', temperature: 0.7, tools: { terminal: false, fileOps: false, webSearch: false }, assistantName: DEFAULT_NAME, assistantPersonality: DEFAULT_PERSONALITY }
   }
-  if (!_config.assistantName) _config.assistantName = DEFAULT_NAME
+  const normalizedAssistantName = normalizeAssistantName(_config.assistantName)
+  const assistantNameChanged = _config.assistantName !== normalizedAssistantName
+  _config.assistantName = normalizedAssistantName
   if (!_config.assistantPersonality) _config.assistantPersonality = DEFAULT_PERSONALITY
   if (!_config.tools) _config.tools = { terminal: false, fileOps: false, webSearch: false }
   if (!_config.mode) _config.mode = DEFAULT_MODE
@@ -1600,6 +1620,9 @@ function loadConfig() {
   if (!Array.isArray(_config.knowledgeFiles)) _config.knowledgeFiles = []
   // #Compat-3 备用模型组：主模型失败时自动切换
   if (!Array.isArray(_config.fallbackModels)) _config.fallbackModels = []
+  if (assistantNameChanged) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(_config)) } catch {}
+  }
   return _config
 }
 
@@ -3049,6 +3072,7 @@ function buildTestResult({ success, elapsed, usedApi, reqUrl, reqBody, respStatu
 function showSettings() {
   const c = _config
   const isHermes = getActiveEngineId() === 'hermes'
+  const resolvedBaseUrl = (c.baseUrl || '').trim() || DEEPAI_DEFAULT_BASE_URL
   const overlay = document.createElement('div')
   overlay.className = 'modal-overlay'
   overlay.innerHTML = `
@@ -3063,17 +3087,23 @@ function showSettings() {
       <div class="modal-body">
       <div class="ast-settings-form">
         <div class="ast-tab-panel active" data-panel="api">
-          <div class="form-group" style="margin-bottom:8px">
+          <div class="form-group" style="margin-bottom:12px">
             <label class="form-label">${t('assistant.quickSelect')}</label>
-            <div id="ast-provider-presets" style="display:flex;flex-wrap:wrap;gap:6px">
-              ${PROVIDER_PRESETS.filter(p => !p.hidden).map(p => `<button class="btn btn-sm btn-secondary ast-preset-btn" data-key="${p.key}" data-url="${escHtml(p.baseUrl)}" data-api="${p.api}" style="font-size:12px;padding:3px 10px">${p.label}${p.badge ? ' <span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 4px;border-radius:6px;margin-left:3px">' + p.badge + '</span>' : ''}</button>`).join('')}
+            <div id="ast-deepai-provider" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border:1px solid var(--border-primary);border-radius:var(--radius-md);background:var(--bg-secondary)">
+              <div style="min-width:0">
+                <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${t('assistant.qtcoolName')}</div>
+                <div class="form-hint" style="margin-top:4px">${DEEPAI_PORTAL_URL}</div>
+              </div>
+              <span class="badge" style="flex-shrink:0">${t('assistant.qtcoolRecommend')}</span>
             </div>
-            <div id="ast-preset-detail" style="display:none;margin-top:6px;padding:8px 12px;background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:12px"></div>
           </div>
           <div style="display:flex;gap:10px">
             <div class="form-group" style="flex:1">
-              <label class="form-label">API Base URL</label>
-              <input class="form-input" id="ast-baseurl" value="${escHtml(c.baseUrl)}" placeholder="${escHtml(apiBasePlaceholder(c.apiType))}">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+                <label class="form-label" for="ast-baseurl" style="margin-bottom:0">API Base URL</label>
+                <a href="${DEEPAI_PORTAL_URL}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap">获取 API Key</a>
+              </div>
+              <input class="form-input" id="ast-baseurl" value="${escHtml(resolvedBaseUrl)}" placeholder="${escHtml(DEEPAI_DEFAULT_BASE_URL)}">
             </div>
             <div class="form-group" style="width:170px">
               <label class="form-label">${t('assistant.apiType')}</label>
@@ -3108,45 +3138,6 @@ function showSettings() {
             </div>
           </div>
           <div class="form-hint" id="ast-api-hint" style="margin-top:-4px">${apiHintText(c.apiType)}</div>
-
-          <div id="ast-qtcool-promo" style="margin-top:14px;border-radius:var(--radius-lg);border:1px solid var(--border-primary);border-left:3px solid var(--primary);background:var(--bg-secondary);overflow:hidden">
-            <div style="padding:14px 16px 12px">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">
-                <div>
-                  <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-                    <span style="font-weight:700;font-size:var(--font-size-sm)">${icon('zap', 14)} ${t('assistant.qtcoolName')}</span>
-                    <span style="font-size:10px;background:var(--primary);color:#fff;padding:1px 7px;border-radius:8px">${t('assistant.qtcoolRecommend')}</span>
-                  </div>
-                  <div style="font-size:11px;color:var(--text-tertiary);line-height:1.4">
-                    ${t('assistant.qtcoolDesc')}
-                  </div>
-                </div>
-                <a href="${QTCOOL.checkinUrl}" target="_blank" class="btn btn-primary btn-xs" style="flex-shrink:0">${icon('gift', 11)} ${t('assistant.qtcoolCheckin')}</a>
-              </div>
-              <div style="font-size:var(--font-size-xs);color:var(--text-secondary);margin-bottom:8px">
-                ${t('assistant.qtcoolInstructions')}
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-                <input class="form-input" id="ast-qtcool-key" placeholder="${t('assistant.qtcoolKeyPlaceholder')}" style="font-size:12px;padding:5px 10px;flex:1;min-width:120px">
-                <input type="checkbox" id="ast-qtcool-customkey" style="display:none">
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <select id="ast-qtcool-model" class="form-input" style="font-size:12px;padding:5px 10px;min-width:130px;flex:1">
-                  <option value="" disabled selected>${t('assistant.qtcoolLoadingModels')}</option>
-                </select>
-                <button class="btn btn-sm btn-secondary" id="ast-qtcool-test">${icon('search', 12)} ${t('assistant.testBtn')}</button>
-                <button class="btn btn-sm btn-primary" id="ast-qtcool-apply">${icon('zap', 12)} ${t('assistant.qtcoolApply')}</button>
-              </div>
-              <div id="ast-qtcool-status" style="margin-top:8px;font-size:11px;min-height:16px;line-height:1.5"></div>
-            </div>
-            <div style="border-top:1px solid var(--border-primary);padding:6px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;background:var(--bg-tertiary)">
-              ${!isHermes ? `<div style="display:flex;gap:8px;align-items:center">
-                <button class="btn btn-xs btn-secondary" id="ast-qtcool-sync-to" title="${t('assistant.qtcoolSyncToTitle')}">${icon('upload', 11)} ${t('assistant.qtcoolSyncTo')}</button>
-                <button class="btn btn-xs btn-secondary" id="ast-qtcool-sync-from" title="${t('assistant.qtcoolSyncFromTitle')}">${icon('download', 11)} ${t('assistant.qtcoolSyncFrom')}</button>
-              </div>` : '<div></div>'}
-              <a href="${QTCOOL.site}" target="_blank" style="color:var(--primary);text-decoration:none;font-size:11px">${icon('external-link', 11)} ${t('assistant.qtcoolLearnMore')}</a>
-            </div>
-          </div>
 
           <!-- #Compat-3: 备用模型组（重设计：极简一行 + 厂商预设快捷添加） -->
           <details class="ast-fallback-section" id="ast-fallback-section" ${(c.fallbackModels || []).length ? 'open' : ''} style="margin-top:14px">
@@ -3738,6 +3729,7 @@ function showSettings() {
   })
 
   // ── gpt.qt.cool 一键配置 ──
+  if (false) {
   const qtcoolModelSelect = overlay.querySelector('#ast-qtcool-model')
   const qtcoolCustomKeyCheckbox = overlay.querySelector('#ast-qtcool-customkey')
   const qtcoolKeyInput = overlay.querySelector('#ast-qtcool-key')
@@ -3925,6 +3917,8 @@ function showSettings() {
       toast(humanizeError(e, t('assistant.qtcoolReadFail')), 'error')
     }
   })
+
+  }
 
   const resultEl = overlay.querySelector('#ast-test-result')
   const modelInput = overlay.querySelector('#ast-model')
@@ -4157,7 +4151,7 @@ function showSettings() {
 
   overlay.querySelector('[data-action="cancel"]').onclick = () => overlay.remove()
   overlay.querySelector('[data-action="confirm"]').onclick = () => {
-    _config.assistantName = overlay.querySelector('#ast-name').value.trim() || DEFAULT_NAME
+    _config.assistantName = normalizeAssistantName(overlay.querySelector('#ast-name').value)
     _config.assistantPersonality = overlay.querySelector('#ast-personality').value.trim() || DEFAULT_PERSONALITY
     _config.baseUrl = overlay.querySelector('#ast-baseurl').value.trim()
     _config.apiKey = overlay.querySelector('#ast-apikey').value.trim()
@@ -4639,7 +4633,7 @@ function showDebugModal(title, content) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove() })
 }
 
-const AST_GUIDE_KEY = 'clawpanel-guide-assistant-dismissed'
+const AST_GUIDE_KEY = 'agentdock-guide-assistant-dismissed'
 
 function getAssistantGuideHtml() {
   if (localStorage.getItem(AST_GUIDE_KEY)) return ''
@@ -4675,7 +4669,7 @@ export async function render() {
   loadConfig()
   loadSessions()
 
-  // 确保数据目录存在（~/.openclaw/clawpanel/images/ 等）
+  // 确保数据目录存在（~/.openclaw/agentdock/images/ 等）
   api.ensureDataDir().catch(e => console.warn('数据目录初始化失败:', e))
 
   // 如果没有会话，不自动创建（显示欢迎页）

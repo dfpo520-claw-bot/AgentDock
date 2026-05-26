@@ -99,7 +99,7 @@ fn current_gateway_owner_signature() -> (u16, String, Option<String>) {
 }
 
 fn matches_current_gateway_owner_signature(owner: &GatewayOwnerRecord) -> bool {
-    if owner.started_by != "clawpanel" {
+    if owner.started_by != "agentdock" {
         return false;
     }
     let (port, openclaw_dir, cli_path) = current_gateway_owner_signature();
@@ -139,7 +139,7 @@ fn write_gateway_owner(pid: Option<u32>) -> Result<(), String> {
         cli_path,
         openclaw_dir,
         started_at: chrono::Local::now().to_rfc3339(),
-        started_by: "clawpanel".into(),
+        started_by: "agentdock".into(),
     };
     let content = serde_json::to_string_pretty(&record)
         .map_err(|e| format!("序列化 Gateway owner 失败: {e}"))?;
@@ -962,7 +962,7 @@ mod platform {
             .stderr(stderr_log);
         cmd.spawn().map_err(|e| {
             if e.kind() == std::io::ErrorKind::NotFound {
-                "OpenClaw CLI 未找到，请确认已安装并重启 ClawPanel。".to_string()
+                "OpenClaw CLI 未找到，请确认已安装并重启 AgentDock。".to_string()
             } else {
                 format!("启动 Gateway 失败: {e}")
             }
@@ -1453,7 +1453,7 @@ mod platform {
                     .join("Programs")
                     .join("nodejs")
                     .join("node_modules")
-                    .join("@qingchencloud")
+                    .join("@DeepAi助手")
                     .join("openclaw-zh")
                     .join("bin")
                     .join("openclaw.js"),
@@ -1470,7 +1470,7 @@ mod platform {
             candidates.push(base.join("openclaw"));
             candidates.push(
                 base.join("node_modules")
-                    .join("@qingchencloud")
+                    .join("@DeepAi助手")
                     .join("openclaw-zh")
                     .join("bin")
                     .join("openclaw.js"),
@@ -1586,7 +1586,7 @@ mod platform {
 
         let _ = writeln!(
             stdout_log,
-            "\n[{}] [ClawPanel] Hidden-start Gateway on Windows",
+            "\n[{}] [AgentDock] Hidden-start Gateway on Windows",
             chrono::Local::now().to_rfc3339()
         );
 
@@ -1599,7 +1599,7 @@ mod platform {
     pub async fn start_service_impl(_label: &str) -> Result<(), String> {
         if !is_cli_installed() {
             return Err(
-                "openclaw CLI 未安装，请先通过 npm install -g @qingchencloud/openclaw-zh 安装"
+                "openclaw CLI 未安装，请先通过 npm install -g @DeepAi助手/openclaw-zh 安装"
                     .into(),
             );
         }
@@ -1877,7 +1877,7 @@ mod platform {
     async fn gateway_command(action: &str) -> Result<(), String> {
         if !is_cli_installed() {
             return Err(
-                "openclaw CLI 未安装，请先通过 npm install -g @qingchencloud/openclaw-zh 安装"
+                "openclaw CLI 未安装，请先通过 npm install -g @DeepAi助手/openclaw-zh 安装"
                     .into(),
             );
         }
@@ -1941,7 +1941,7 @@ mod platform {
     pub async fn start_service_impl(_label: &str) -> Result<(), String> {
         if !is_cli_installed() {
             return Err(
-                "openclaw CLI 未安装，请先通过 npm install -g @qingchencloud/openclaw-zh 安装"
+                "openclaw CLI 未安装，请先通过 npm install -g @DeepAi助手/openclaw-zh 安装"
                     .into(),
             );
         }

@@ -1095,7 +1095,7 @@ function bindTopActions(page, state) {
   page.querySelector('#btn-add-provider').onclick = () => addProvider(page, state)
   page.querySelector('#btn-undo').onclick = () => undo(page, state)
 
-  // 晴辰云:获取模型列表 → 弹窗让用户选择要添加的模型
+  // DeepAi助手:获取模型列表 → 弹窗让用户选择要添加的模型
   page.querySelector('#btn-qtcool-oneclick').onclick = async () => {
     if (!state.config) { toast(t('models.configNotReady'), 'warning'); return }
 

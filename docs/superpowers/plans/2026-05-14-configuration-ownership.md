@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move AgentDock to product-owned panel configuration while preserving compatibility aliases for existing ClawPanel/OpenClaw data.
+**Goal:** Move AgentDock to product-owned panel configuration while preserving compatibility aliases for existing AgentDock/OpenClaw data.
 
 **Architecture:** Rust owns real filesystem decisions through a new `product_config` module and exposes migration commands through the existing Tauri command layer. The frontend owns display constants and the first-run Import/Ignore prompt, while existing OpenClaw engine data remains in the OpenClaw layout for this phase.
 
@@ -18,7 +18,7 @@ Phase 2 changes only panel configuration ownership and migration decision flow:
 
 - Product-owned panel config file: `agentdock.json`
 - Product-owned app data directory: `.agentdock`
-- Legacy panel config file: `clawpanel.json`
+- Legacy panel config file: `agentdock.json`
 - Legacy engine data directory: `.openclaw`
 - First-run legacy data strategy: prompt user to Import or Ignore
 - Compatibility: keep OpenClaw engine config and data readable
@@ -65,14 +65,14 @@ Verification:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel branch --show-current
-git -c safe.directory=D:/workSpace/ohter/clawpanel status --short
+git -c safe.directory=D:/workSpace/ohter/agentdock branch --show-current
+git -c safe.directory=D:/workSpace/ohter/agentdock status --short
 ```
 
 Expected:
 
 ```text
-codex/clawpanel-new
+codex/agentdock-new
 ```
 
 If unrelated files appear, do not revert them. Record them in the task notes and avoid editing them.
@@ -133,15 +133,15 @@ test('PRODUCT_CONFIG exposes product-owned config defaults', () => {
   assert.equal(PRODUCT_CONFIG.productId, 'agentdock')
   assert.equal(PRODUCT_CONFIG.panelConfigFile, 'agentdock.json')
   assert.equal(PRODUCT_CONFIG.productDataDirName, '.agentdock')
-  assert.equal(PRODUCT_CONFIG.legacyPanelConfigFile, 'clawpanel.json')
+  assert.equal(PRODUCT_CONFIG.legacyPanelConfigFile, 'agentdock.json')
   assert.equal(PRODUCT_CONFIG.legacyDataDirName, '.openclaw')
   assert.equal(PRODUCT_CONFIG.releaseChannel, 'stable')
 })
 
 test('config filename helpers distinguish product and legacy files', () => {
   assert.equal(isProductPanelConfigFile('agentdock.json'), true)
-  assert.equal(isProductPanelConfigFile('clawpanel.json'), false)
-  assert.equal(isKnownLegacyPanelConfigFile('clawpanel.json'), true)
+  assert.equal(isProductPanelConfigFile('agentdock.json'), false)
+  assert.equal(isKnownLegacyPanelConfigFile('agentdock.json'), true)
   assert.equal(isKnownLegacyPanelConfigFile('agentdock.json'), false)
 })
 ```
@@ -172,7 +172,7 @@ export const PRODUCT_CONFIG = Object.freeze({
   productId: 'agentdock',
   panelConfigFile: 'agentdock.json',
   productDataDirName: '.agentdock',
-  legacyPanelConfigFile: 'clawpanel.json',
+  legacyPanelConfigFile: 'agentdock.json',
   legacyDataDirName: '.openclaw',
   releaseChannel: 'stable',
 })
@@ -213,14 +213,14 @@ Expected:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src/lib/product-config.js tests/product-config.test.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: add product config constants"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src/lib/product-config.js tests/product-config.test.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: add product config constants"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: add product config constants
+[codex/agentdock-new <hash>] feat: add product config constants
 ```
 
 ## Task 3: Add Rust Product Config Ownership Module
@@ -243,9 +243,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub const PRODUCT_ID: &str = "agentdock";
 pub const PRODUCT_CONFIG_FILENAME: &str = "agentdock.json";
 pub const PRODUCT_DATA_DIR_NAME: &str = ".agentdock";
-pub const LEGACY_PANEL_CONFIG_FILENAME: &str = "clawpanel.json";
+pub const LEGACY_PANEL_CONFIG_FILENAME: &str = "agentdock.json";
 pub const LEGACY_DATA_DIR_NAME: &str = ".openclaw";
-pub const LEGACY_PRODUCT_NAME: &str = "ClawPanel";
+pub const LEGACY_PRODUCT_NAME: &str = "AgentDock";
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -676,14 +676,14 @@ test result: ok
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src-tauri/src/product_config.rs src-tauri/src/lib.rs
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: add product config ownership module"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src-tauri/src/product_config.rs src-tauri/src/lib.rs
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: add product config ownership module"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: add product config ownership module
+[codex/agentdock-new <hash>] feat: add product config ownership module
 ```
 
 ## Task 4: Delegate Existing Panel Config Helpers
@@ -745,14 +745,14 @@ test result: ok
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src-tauri/src/commands/mod.rs
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "refactor: route panel config paths through product ownership"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src-tauri/src/commands/mod.rs
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "refactor: route panel config paths through product ownership"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] refactor: route panel config paths through product ownership
+[codex/agentdock-new <hash>] refactor: route panel config paths through product ownership
 ```
 
 ## Task 5: Add Migration Tauri Commands
@@ -841,14 +841,14 @@ Expected:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src-tauri/src/commands/config.rs src-tauri/src/lib.rs src/lib/tauri-api.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: expose legacy config migration commands"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src-tauri/src/commands/config.rs src-tauri/src/lib.rs src/lib/tauri-api.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: expose legacy config migration commands"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: expose legacy config migration commands
+[codex/agentdock-new <hash>] feat: expose legacy config migration commands
 ```
 
 ## Task 6: Add First-Run Migration Prompt
@@ -909,7 +909,7 @@ async function checkLegacyConfigMigrationOnStartup() {
     width: 520,
     content: `
       <div style="display:grid;gap:12px;line-height:1.6">
-        <p style="margin:0;color:var(--text-secondary)">AgentDock found an existing ClawPanel/OpenClaw configuration. You can copy compatible panel settings into AgentDock or ignore them and start fresh.</p>
+        <p style="margin:0;color:var(--text-secondary)">AgentDock found an existing AgentDock/OpenClaw configuration. You can copy compatible panel settings into AgentDock or ignore them and start fresh.</p>
         <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-secondary);word-break:break-all">
           ${summary.legacyPath || 'Legacy configuration detected'}
         </div>
@@ -971,14 +971,14 @@ built
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src/main.js src/lib/product-config.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: prompt for legacy config migration"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src/main.js src/lib/product-config.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: prompt for legacy config migration"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: prompt for legacy config migration
+[codex/agentdock-new <hash>] feat: prompt for legacy config migration
 ```
 
 ## Task 7: Add Config Surface Guardrails
@@ -1034,7 +1034,7 @@ test('product config surfaces declare AgentDock-owned config names', () => {
 test('legacy panel config literals stay in declared compatibility files', () => {
   for (const file of SCANNED_FILES) {
     const text = fs.readFileSync(file, 'utf8')
-    if (!text.includes('clawpanel.json') && !text.includes('.openclaw')) continue
+    if (!text.includes('agentdock.json') && !text.includes('.openclaw')) continue
     assert.equal(
       ALLOWED_LEGACY_FILES.has(file),
       true,
@@ -1077,14 +1077,14 @@ Expected:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add tests/config-surface.test.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "test: guard configuration ownership surfaces"
+git -c safe.directory=D:/workSpace/ohter/agentdock add tests/config-surface.test.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "test: guard configuration ownership surfaces"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] test: guard configuration ownership surfaces
+[codex/agentdock-new <hash>] test: guard configuration ownership surfaces
 ```
 
 ## Task 8: Final Verification And Notes
@@ -1170,7 +1170,7 @@ App
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel status --short
+git -c safe.directory=D:/workSpace/ohter/agentdock status --short
 ```
 
 Expected:
@@ -1198,8 +1198,8 @@ If `.\node_modules\.bin\tauri.cmd build --debug` is attempted and fails because 
 Then commit the note:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add docs/superpowers/plans/2026-05-14-configuration-ownership.md
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "docs: record configuration ownership verification"
+git -c safe.directory=D:/workSpace/ohter/agentdock add docs/superpowers/plans/2026-05-14-configuration-ownership.md
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "docs: record configuration ownership verification"
 ```
 
 - [ ] **Step 8: Prepare final handoff**
@@ -1207,7 +1207,7 @@ git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "docs: record confi
 Final handoff must mention:
 
 - Product panel config now defaults to `agentdock.json`.
-- Legacy `clawpanel.json` and `.openclaw` are compatibility-only.
+- Legacy `agentdock.json` and `.openclaw` are compatibility-only.
 - First-run user choice is Import or Ignore.
 - OpenClaw `openclaw.json` was intentionally not renamed.
 - Verification commands and outcomes.

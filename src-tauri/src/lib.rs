@@ -16,7 +16,7 @@ use commands::{
 
 pub fn run() {
     let hot_update_dir = commands::openclaw_dir()
-        .join("clawpanel")
+        .join("agentdock")
         .join("web-update");
 
     // issue #261: 装新版 app 时，如果旧的热更新目录里装的是更旧版本的前端
@@ -315,7 +315,7 @@ pub fn run() {
             }
         })
         .build(tauri::generate_context!())
-        .expect("启动 ClawPanel 失败")
+        .expect("启动 AgentDock 失败")
         .run(|_app, _event| {});
 }
 
@@ -324,7 +324,7 @@ pub fn run() {
 /// 规则：
 /// - 目录不存在：noop
 /// - 目录存在，`.version` 文件不存在：视为"版本未知"，保守清理
-///   （老版 ClawPanel 没写 .version，不清理就会永远卡在旧前端）
+///   （老版 AgentDock 没写 .version，不清理就会永远卡在旧前端）
 /// - 目录存在，`.version >= app 版本`：保留（正常热更新场景）
 /// - 目录存在，`.version < app 版本`：清理（用户装了新 app，旧热更新残留）
 fn cleanup_stale_hot_update(dir: &std::path::Path) {
@@ -344,7 +344,7 @@ fn cleanup_stale_hot_update(dir: &std::path::Path) {
 
     // 落后或无标记：清理，让 protocol handler 回退到 asset_resolver
     eprintln!(
-        "[clawpanel] clearing stale web-update dir (app={}, web={})",
+        "[agentdock] clearing stale web-update dir (app={}, web={})",
         app_version,
         if web_version.is_empty() {
             "<missing>"

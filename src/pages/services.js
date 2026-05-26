@@ -105,7 +105,7 @@ async function loadVersion(page) {
     const sourceTag = isChinese ? t('services.chineseEdition') : t('services.officialEdition')
     const switchLabel = isChinese ? t('services.switchToOfficial') : t('services.switchToChinese')
     const switchTarget = isChinese ? 'official' : 'chinese'
-    const dockerImage = (panelConfig?.dockerDefaultImage || '').trim() || 'ghcr.io/qingchencloud/openclaw'
+    const dockerImage = (panelConfig?.dockerDefaultImage || '').trim() || 'ghcr.io/DeepAi助手/openclaw'
     const policyNote = aheadOfRecommended
       ? t('services.policyAhead', { ver, recommended: info.recommended })
       : t('services.policyDefault')
@@ -156,7 +156,7 @@ async function loadVersion(page) {
 }
 
 function configuredDockerImage(panelConfig) {
-  return (panelConfig?.dockerDefaultImage || '').trim() || 'ghcr.io/qingchencloud/openclaw'
+  return (panelConfig?.dockerDefaultImage || '').trim() || 'ghcr.io/DeepAi助手/openclaw'
 }
 
 function formatDockerBytes(bytes) {
@@ -475,7 +475,7 @@ function renderServices(container, services) {
         ${cliMissing
           ? `<div style="display:flex;flex-direction:column;gap:var(--space-xs);align-items:flex-end">
                <div style="color:var(--text-tertiary);font-size:var(--font-size-xs)">${t('services.installCliHint')}</div>
-               <code style="font-size:var(--font-size-xs);background:var(--bg-tertiary);padding:2px 8px;border-radius:4px;user-select:all">npm install -g @qingchencloud/openclaw-zh</code>
+               <code style="font-size:var(--font-size-xs);background:var(--bg-tertiary);padding:2px 8px;border-radius:4px;user-select:all">npm install -g @DeepAi助手/openclaw-zh</code>
                <button class="btn btn-secondary btn-sm" data-action="refresh-services" style="margin-top:4px">${t('services.refreshStatus')}</button>
              </div>`
           : foreignGateway

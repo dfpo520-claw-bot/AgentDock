@@ -1,7 +1,7 @@
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
-/// 读取 clawpanel.json 中用户绑定的 CLI 路径
+/// 读取 agentdock.json 中用户绑定的 CLI 路径
 fn bound_cli_path() -> Option<std::path::PathBuf> {
     let config = crate::commands::read_panel_config_value()?;
     let raw = config.get("openclawCliPath")?.as_str()?;
@@ -140,7 +140,7 @@ pub fn classify_cli_source(cli_path: &str) -> String {
         return "standalone".into();
     }
     // npm 汉化版
-    if lower.contains("openclaw-zh") || lower.contains("@qingchencloud") {
+    if lower.contains("openclaw-zh") || lower.contains("@DeepAi助手") {
         return "npm-zh".into();
     }
     // npm 全局（大概率官方版）

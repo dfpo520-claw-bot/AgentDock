@@ -29,7 +29,7 @@
 ### 改进 (Improvements)
 
 - **Hermes Agent 流式对话兼容层** — 优先使用新的流式响应通道，失败时自动回退，并保持现有前端事件格式不变
-- **Hermes Dashboard 生命周期管理** — 状态检测和停止操作优先使用 Hermes Agent 原生能力，失败后再回退到 ClawPanel 记录的进程信息，降低误报和误杀风险
+- **Hermes Dashboard 生命周期管理** — 状态检测和停止操作优先使用 Hermes Agent 原生能力，失败后再回退到 AgentDock 记录的进程信息，降低误报和误杀风险
 - **Hermes Agent 安装体验** — 安装、升级和依赖补齐流程增加日志清理，避免用户界面暴露底层安装细节
 - **多引擎初始化体验** — 引擎选择状态会持久化，切换引擎时清理旧请求缓存，减少跨引擎页面状态串扰
 - **推荐内核版本策略** — 推荐版本更新到 `2026.5.7` 与 `2026.5.7-zh.1`
@@ -38,7 +38,7 @@
 
 - **Hermes Dashboard 依赖提示** — 缺少 Web 依赖时改为引导使用内置安装按钮，减少手动命令操作
 - **Hermes Agent 页面信息边界** — 清理 Dashboard、Setup、Chat、Skills、Memory、Logs、Cron、Extensions 等页面中的非必要实现细节展示
-- **助手内置技能提示** — Hermes Agent 安装与升级建议改为使用 ClawPanel 内置向导，避免暴露底层安装命令
+- **助手内置技能提示** — Hermes Agent 安装与升级建议改为使用 AgentDock 内置向导，避免暴露底层安装命令
 
 ### 测试与验证 (Testing)
 
@@ -82,12 +82,12 @@
 
 - **心甜Claw 引擎入口** — 新增第三个引擎模式「心甜Claw」，提供产品介绍页、官网/下载入口、专属视觉样式与多语言文案，logo 图标资源同步更新
 - **Hermes 服务商注册表** — 新增 22 个 Hermes Provider 注册信息（17 个 api_key、3 个 OAuth、1 个外部进程、1 个聚合占位），支持 API Key、OAuth、外部进程与聚合服务商，安装向导和仪表盘可动态加载服务商与模型配置
-- **Hermes .env 高级编辑** — 新增非托管环境变量编辑页 `/h/env`，三个新 Tauri 命令（`hermes_env_read_unmanaged` / `hermes_env_set` / `hermes_env_delete`）严格拒绝触碰 ClawPanel 托管的 Provider 密钥，敏感值在 UI 中自动遮罩
+- **Hermes .env 高级编辑** — 新增非托管环境变量编辑页 `/h/env`，三个新 Tauri 命令（`hermes_env_read_unmanaged` / `hermes_env_set` / `hermes_env_delete`）严格拒绝触碰 AgentDock 托管的 Provider 密钥，敏感值在 UI 中自动遮罩
 - **Hermes 会话与用量分析增强** — 新增轻量会话摘要、按 Profile 浏览历史会话、Usage Analytics 后端统计与扩展主题页数据入口
 - **Hermes Dashboard 自动拉起** — 仪表盘"打开 Hermes 面板"和扩展页相关链接点击时自动探活 9119 端口，未运行则后台 spawn 进程并轮询启动结果，附带依赖未装与 Windows 不兼容（POSIX-only 模块）的专属错误模态
 - **Hermes Skills 工具集面板** — Skills 页顶部新增 Toolsets 区，解析 `hermes tools list` 输出，按平台显示 enabled/disabled 状态与刷新按钮，可视化 20 个内置工具集的启用情况
 - **Hermes Agent 黑金特色区（官网）** — `docs/index.html` 新增 Hermes Agent 编辑风专题展示（4 张高清截图 h00-h03 + 4 个能力点矩阵），新增「Hermes Agent 图文指南」文档卡片与 `docs/hermes-agent.md` 视觉指南
-- **Boot Manifest 启动页改版** — `index.html` 启动页升级为 IDE/Linear/Vercel 风格 manifest 列表，4 步骤错峰淡入动画，支持 zh/en 双语切换并通过 `clawpanel-lang-change` 与应用 i18n 同步
+- **Boot Manifest 启动页改版** — `index.html` 启动页升级为 IDE/Linear/Vercel 风格 manifest 列表，4 步骤错峰淡入动画，支持 zh/en 双语切换并通过 `agentdock-lang-change` 与应用 i18n 同步
 - **官网 Markdown 阅读器图片放大** — 文档读阅模态中的图片支持点击全屏 lightbox 浏览
 - **Hermes Memory 概览卡** — Memory 页头部新增编辑风 overview 卡（kicker + 大标题 + 描述 + 4 块统计：记忆文件数 / 已填写 / 总词数 / 最近更新）
 
@@ -96,7 +96,7 @@
 - **Hermes 仪表盘本地化** — 将 Gateway、Provider、连接目标、快捷操作、CLI 表头、保存/探测提示等硬编码文案接入语言包
 - **Hermes 扩展与主题本地化** — 扩展页标题、说明、按钮、插件扫描与主题保存提示统一接入多语言文案
 - **Hermes 记忆编辑体验** — 记忆文件编辑改为大尺寸模态框，避免长内容被卡片区域限制
-- **日志下载反馈** — 桌面端日志下载保存到系统 `Downloads/ClawPanel` 并显示真实路径；Web 端继续浏览器下载并明确提示查看默认下载目录
+- **日志下载反馈** — 桌面端日志下载保存到系统 `Downloads/AgentDock` 并显示真实路径；Web 端继续浏览器下载并明确提示查看默认下载目录
 - **侧边栏导航补全** — 补齐 Hermes 会话浏览、扩展与主题等导航项图标与文案
 - **模型备选管理 UI** — 合并 PR #232，将主/备模型面板改为可折叠瀑布流编辑器，支持候选池分组、拖拽排序和备选提升为主模型
 - **模型加载失败 UX 重做** — `src/pages/models.js` 配置加载失败不再是一行红字；改为带图标的错误卡 + 友好提示 + 可折叠技术详情（含 stack）+ 重试按钮，错误信息全 HTML 转义
@@ -165,7 +165,7 @@
 
 - **定时任务显示 [object Object]** — 正确解析 Gateway 返回的 schedule 对象（`{kind,expr,display}`），提取 cron 表达式显示
 - **定时任务保存 'str' has no attribute 'get'** — 保存时发送 `{kind:'cron', expr:...}` 对象格式，匹配 Gateway 期望的结构
-- **ClawPanel 误杀外部 Gateway** — `cleanup_zombie_gateway_processes` 不再杀死外部启动的健康 Gateway 进程，改为采纳其 PID
+- **AgentDock 误杀外部 Gateway** — `cleanup_zombie_gateway_processes` 不再杀死外部启动的健康 Gateway 进程，改为采纳其 PID
 - **croniter 依赖缺失** — `uv tool install` 添加 `--with croniter`，确保定时任务功能开箱即用
 - **API 代理错误提取** — 修复嵌套错误对象（`{error:{message:...}}`）的提取逻辑
 
@@ -233,7 +233,7 @@
 ### 新功能 (Features)
 
 - **Skills 多 Agent 支持** — Skills 页面新增 Agent 选择器，不同 Agent 可独立管理各自的 Skills 目录；后端 Rust/Node.js 双端均支持 agent_id 参数路由
-- **助手工具模式流式输出** — 晴辰助手工具调用模式从非流式改为流式，AI 文字逐 token 打字机显示，tool_calls 分块累积后再执行
+- **助手工具模式流式输出** — DeepAi助手工具调用模式从非流式改为流式，AI 文字逐 token 打字机显示，tool_calls 分块累积后再执行
 
 ### 改进 (Improvements)
 
@@ -254,7 +254,7 @@
 ### 改进 (Improvements)
 
 - **Skills 命令层精简** — 移除 6 个旧 CLI 依赖命令，新增 3 个 SkillHub SDK 命令（search / index / install），本地扫描命令改为纯文件系统操作
-- **AI 助手工具迁移** — 晴辰助手的 Skill 搜索/安装工具从 ClawHub CLI 调用迁移到 SkillHub SDK，工具定义、系统提示、handler、显示标签全部更新
+- **AI 助手工具迁移** — DeepAi助手的 Skill 搜索/安装工具从 ClawHub CLI 调用迁移到 SkillHub SDK，工具定义、系统提示、handler、显示标签全部更新
 - **前端 CSS 清理** — 移除 13 条不再使用的旧 Skills 页面样式（hero 展示区、tips 区域）
 
 ### 修复 (Fixes)
@@ -266,7 +266,7 @@
 
 ### 新功能 (Features)
 
-- **聊天气泡一键复制** — 实时聊天和晴辰助手的消息气泡新增复制按钮，悬停显示，点击后有 ✓ 反馈
+- **聊天气泡一键复制** — 实时聊天和DeepAi助手的消息气泡新增复制按钮，悬停显示，点击后有 ✓ 反馈
 - **Git 路径扫描** — 设置页 Git 路径配置新增"扫描"按钮，自动检测常见安装位置（Program Files、Scoop、Chocolatey、GitHub Desktop、VS Code、MSYS2、Homebrew、Xcode CLT 等），可一键选用
 
 ### 修复 (Fixes)
@@ -322,7 +322,7 @@
 - **Gateway 死循环** — `_autoPairAndReconnect` 配对成功后不再调用 `reconnect()` 重置计数器，防止 origin not allowed 修复触发无限循环阻塞服务器 (fixes #160)
 - **readConfig 未定义** — Web 模式替换为内联 `fs.readFileSync/writeFileSync` (fixes #165)
 - **systemd PATH 缺失** — `findOpenclawBin` 添加 npm 全局路径，systemd 服务注入 PATH 环境变量 (fixes #156)
-- **Docker 双容器冲突** — 新增 `DISABLE_GATEWAY_SPAWN` 环境变量，禁止 ClawPanel 容器启动本地 Gateway (fixes #159)
+- **Docker 双容器冲突** — 新增 `DISABLE_GATEWAY_SPAWN` 环境变量，禁止 AgentDock 容器启动本地 Gateway (fixes #159)
 - **Gateway 检测冲突** — `linuxCheckGateway` 验证进程名，拒绝操作非 OpenClaw 进程 (fixes #151)
 - **版本源检测重构** — standalone 目录集中化、Windows .cmd shim 解析、Linux 检测补全，修复跨源切换后显示旧源的问题 (#161)
 - **汉化版检测兜底** — 版本号含 `-zh` 时强制判定为汉化版，不再依赖文件系统路径检测
@@ -348,7 +348,7 @@
 - **微信插件兼容检测** — 检测已安装微信插件与 OpenClaw 版本的兼容性，不兼容时显示红色警告 + 升级引导 + 手动安装命令
 - **微信扫码二维码渲染** — 安装/登录流程中自动检测微信 QR URL 并渲染为可扫描的二维码图片
 - **赞助项目区域** — 关于页面新增赞助区域（BNB QR 码 + 点击预览大图，仅非中文语言显示）
-- **联系邮箱** — 关于页面商务合作改为 support@qctx.net 可点击邮箱链接
+- **联系邮箱** — 关于页面商务合作改为 GitHub Issues 可点击邮箱链接
 
 ### 修复 (Fixes)
 
@@ -367,7 +367,7 @@
 
 - **插件安装体验** — 网络慢时显示「正在下载，请稍候」提示，避免空白等待
 - **i18n 国际化** — 新增 Guardian 修复弹窗 15 个 key + 渠道兼容 2 个 key + 赞助 2 个 key（11 种语言）
-- **10 个非中文 README** — 新增 Sponsor + Contact 区域（BNB QR + support@qctx.net）
+- **10 个非中文 README** — 新增 Sponsor + Contact 区域（BNB QR + GitHub Issues）
 
 ## [0.9.9] - 2026-03-24
 
@@ -382,15 +382,15 @@
 - **Cron 投递参数格式** — delivery mode 从错误的 `push` 修正为 `announce`，移除无效的 `to` 字段 (fixes #141)
 - **Cron 单渠道用户** — 允许单渠道用户选择投递渠道（之前 ≤1 个渠道会隐藏选择器）
 - **Cron 编辑保留投递** — 任务编辑时正确保留 delivery 字段
-- **Ollama 配置覆盖** — ClawPanel 不再将用户手动配置的 `api: "ollama"` 覆盖为 `openai-completions` (fixes #140)
+- **Ollama 配置覆盖** — AgentDock 不再将用户手动配置的 `api: "ollama"` 覆盖为 `openai-completions` (fixes #140)
 - **版本检测错误** — Windows 下优先通过 CLI 路径判断安装来源，默认返回 `official` 而非 `chinese` (fixes #139)
 - **版本号读取** — npm 全局目录按活跃 CLI 来源决定检查顺序，避免读到非活跃包的旧版本号
 - **助手 API 类型一致性** — `normalizeApiType` 统一 `google-generative-ai` 键名，修复 `requiresApiKey` 判断
 
 ### 改进 (Improvements)
 
-- **官网品牌更新** — 公益 AI 接口 → 晴辰云 AI 接口，新增合规声明
-- **官网 SEO 优化** — meta 标签新增晴辰云、晴辰助手、Discord、多语言等关键词
+- **官网品牌更新** — 公益 AI 接口 → DeepAi助手 AI 接口，新增合规声明
+- **官网 SEO 优化** — meta 标签新增DeepAi助手、DeepAi助手、Discord、多语言等关键词
 - **官网 Footer** — 新增 11 语言 README 链接行
 - **元宝派链接更新** — 全站更新为新链接
 - **移除独立安装包推广** — 下载区移除过时的 OpenClaw 独立安装包推广块
@@ -454,7 +454,7 @@
 - **AI 助手功能扩展** — 五大模块：① Docker/WSL 管理（容器操作、镜像管理）② Web 搜索（搜索引擎集成、结果注入上下文）③ SSH 远程管理（连接/命令/文件传输）④ 知识库/灵魂迁移（导入导出 Agent 灵魂与知识）⑤ 模型配置自动导入（从服务商 API 自动发现模型）。详见原 `docs/assistant-features-plan.md`
 - **Docker 多实例管理** — API 代理 + 实例切换架构，支持一台机器部署多个 OpenClaw Docker 实例并在面板内统一调度。涉及 dev-api.js 代理层、前端实例选择器、数据隔离。详见原 `docs/docker-multi-instance-plan.md`
 - **国际化 (i18n)** — 基于 i18n.js 核心模块实现中英双语，语言包 JSON 结构，按页面逐步迁移硬编码中文字符串。包含语言检测、降级策略、参数插值。详见原 `docs/i18n-plan.md`
-- **命令执行权限管理** — AI 助手执行终端命令时支持白名单/黑名单规则，四种模式（确认/白名单/黑名单/无限），glob 通配符匹配，存储于 `clawpanel.json`。详见原 `docs/ROADMAP-v0.9.md`
+- **命令执行权限管理** — AI 助手执行终端命令时支持白名单/黑名单规则，四种模式（确认/白名单/黑名单/无限），glob 通配符匹配，存储于 `agentdock.json`。详见原 `docs/ROADMAP-v0.9.md`
 - **安装体验优化** — 默认安装原版包、保存自定义 Node.js 路径后实时生效验证、Linux Web 版后台一键更新机制
 - **其他** — 渠道级消息统计、更多国内模型服务商预设、Rust 原生 Docker API（bollard）、前端热更新增量包
 
@@ -564,7 +564,7 @@
 - **Agent 模型显示 [object Object]** — 正确解析 model 对象的 primary 字段，兼容字符串和对象两种格式
 - **定时任务触发/编辑/删除失败** — cron.run/update/remove RPC 参数从 id 修正为 jobId，匹配 Gateway schema
 - **聊天会话列表消失** — 恢复 chat header 中的 sidebar toggle 按钮（PR#88 将按钮移入 sidebar 内导致折叠后无法展开）
-- **Gateway 启动失败 Unknown config keys** — stripUiFields 现在清理根层级的 ClawPanel 内部字段（version info），防止污染 openclaw.json
+- **Gateway 启动失败 Unknown config keys** — stripUiFields 现在清理根层级的 AgentDock 内部字段（version info），防止污染 openclaw.json
 - **Docker 安装超时** — npm 镜像源不再 fallback 到海外 registry.npmjs.org，优先使用国内 npmmirror
 - **SkillHub CLI 检测误报"请先安装"** — 检测参数从 --version 修正为 --cli-version
 - **消息渠道配置被仪表盘覆盖** — 仪表盘自愈逻辑用缓存 config 覆盖文件导致 channels 丢失，现在先读取最新配置再 patch
@@ -668,14 +668,14 @@
 
 ### 新功能 (Features)
 
-- **关于页面公司信息** — 新增「关于我们」板块：武汉晴辰天下网络科技有限公司
+- **关于页面公司信息** — 新增「关于我们」板块：
 - **模型预设共享模块** — 提取 `src/lib/model-presets.js`，消除 models.js 和 assistant.js 重复维护
 - **飞书双插件支持** — 内置插件（聊天入口）或飞书官方插件（操作文档/日历/任务）可选
-- **晴辰助手快捷选择** — 设置弹窗新增 OpenAI / DeepSeek / Ollama 等服务商一键填充按钮
+- **DeepAi助手快捷选择** — 设置弹窗新增 OpenAI / DeepSeek / Ollama 等服务商一键填充按钮
 
 ### 改进 (Improvements)
 
-- **官网下载链接动态化** — 从 `latest.json` 自动获取最新版本号，走 `claw.qt.cool/proxy/dl/` 国内代理
+- **官网下载链接动态化** — 从 `latest.json` 自动获取最新版本号，走 `github.com/dfpo520-claw-bot/AgentDock/proxy/dl/` 国内代理
 - **Linux 部署文档完善** — 升级指南增加 Gitee 镜像、sudo 权限说明、淘宝源降级说明
 - **linux-deploy.sh** — Gitee clone fallback + sudo npm + 淘宝源 registry + 官方源降级
 
@@ -686,7 +686,7 @@
 - **Ollama 本地模型兼容** — 自动规范化 Ollama baseUrl（追加 `/v1`），打开模型配置页时自动修复存量配置，解决 HTTP 404 问题
 - **Git 自动检测与安装** — 初始化引导新增 Git 检测步骤，支持一键安装（Windows winget / macOS xcode-select / Linux apt/yum/dnf/pacman），安装失败提供分平台手动安装指引
 - **Git SSH→HTTPS 自动配置** — 检测到 Git 已安装后自动配置 HTTPS 替代 SSH（3 条 insteadOf 规则），彻底解决国内用户 SSH 不通导致依赖安装失败的问题
-- **Gitee 国内镜像** — 部署脚本、项目链接、贡献页面全面接入 Gitee 镜像（gitee.com/QtCodeCreators/clawpanel），国内用户无需翻墙
+- **Gitee 国内镜像** — 部署脚本、项目链接、贡献页面全面接入 Gitee 镜像（gitee.com/dfpo520-claw-bot/AgentDock），国内用户无需翻墙
 - **实时聊天会话重命名** — 双击会话名称可内联编辑，本地缓存不影响 Gateway 数据，顶部标题同步更新
 - **刷新模型按钮** — 聊天页面模型选择器旁新增刷新按钮，手动刷新模型列表
 - **本地图片渲染** — AI 发送的本地文件路径图片（如截图）在 Tauri 环境下通过 asset protocol 正确加载
@@ -705,9 +705,9 @@
 - **当前会话高亮** — 活跃会话改为 accent 色边框 + 加粗文字，辨识度大幅提升
 - **聊天顶部栏防溢出** — 长标题自动截断显示省略号，操作区不被挤压
 - **术语统一** — "智能体" 统一为 "Agent"（聊天/Agent 管理页面）
-- **侧边栏重命名** — "AI 助手" 改为 "晴辰助手"
+- **侧边栏重命名** — "AI 助手" 改为 "DeepAi助手"
 - **baseUrl 自动规范化** — 保存模型配置时自动清理尾部端点路径、追加 /v1，兼容用户粘贴完整 URL
-- **官网下载引导** — 版本更新提示统一引导到 claw.qt.cool 官网
+- **官网下载引导** — 版本更新提示统一引导到 github.com/dfpo520-claw-bot/AgentDock 官网
 - **消息渠道 Agent 绑定** — 每个消息渠道配置弹窗新增 Agent 绑定选择器，通过 openclaw.json `bindings` 配置路由消息到指定 Agent
 - **仪表盘概览重设计** — 从双列列表改为 3×2 卡片网格，含主模型/MCP/备份/Agent/配置，点击可跳转对应页面
 - **仪表盘 Control UI 卡片** — 新增 OpenClaw 原生面板入口，点击在浏览器中打开 Gateway Web 界面
@@ -820,9 +820,9 @@
 
 ### 修复 (Bug Fixes)
 
-- **Linux Gateway 服务管理不可用 (#7, #10)** — 新增 `linuxCheckGateway()`（ss → lsof → /proc/net/tcp 三级 fallback）、`linuxStartGateway()`（detached 子进程）、`linuxStopGateway()`（SIGTERM），所有 handler 分支加入 Linux 支持；修复 `reload_gateway` / `restart_gateway` 错误执行 `systemctl restart clawpanel`（重启面板而非 Gateway）的问题
+- **Linux Gateway 服务管理不可用 (#7, #10)** — 新增 `linuxCheckGateway()`（ss → lsof → /proc/net/tcp 三级 fallback）、`linuxStartGateway()`（detached 子进程）、`linuxStopGateway()`（SIGTERM），所有 handler 分支加入 Linux 支持；修复 `reload_gateway` / `restart_gateway` 错误执行 `systemctl restart agentdock`（重启面板而非 Gateway）的问题
 - **systemd 环境下 OpenClaw CLI 检测失败 (#8)** — 新增 `findOpenclawBin()` 路径扫描，覆盖 nvm / volta / nodenv / fnm / `/usr/local/lib/nodejs` 等所有常见路径，替代仅依赖 `which` 的方式
-- **非 root 用户无法部署 ClawPanel (#9)** — `linux-deploy.sh` 支持非 root 安装：普通用户安装到 `$HOME/.local/share/clawpanel`，使用 user-level systemd 服务 + `loginctl enable-linger`；系统包安装通过 `run_pkg_cmd()` 按需 sudo
+- **非 root 用户无法部署 AgentDock (#9)** — `linux-deploy.sh` 支持非 root 安装：普通用户安装到 `$HOME/.local/share/agentdock`，使用 user-level systemd 服务 + `loginctl enable-linger`；系统包安装通过 `run_pkg_cmd()` 按需 sudo
 
 ## [0.4.8] - 2026-03-06
 
@@ -851,13 +851,13 @@
 - **nvm 用户 Node.js/CLI 检测失败** — `enhanced_path()` 新增扫描 `~/.nvm/versions/node/*/bin`（macOS/Linux）和 `%APPDATA%\nvm\*`（Windows），从 Finder/桌面启动也能找到 nvm 安装的 Node.js
 - **Tauri v2 参数名不匹配** — `check_node_at_path`、`save_custom_node_path` 及所有 memory 函数的 snake_case 参数改为 camelCase，修复手动指定 Node.js 路径报 `missing required key` 的问题
 - **Windows OpenClaw CLI 检测遗漏** — `is_cli_installed()` 仅检查 `%APPDATA%\npm\openclaw.cmd`，新增通过 PATH 运行 `openclaw --version` 兜底，兼容 nvm、自定义 prefix 等安装方式
-- **Agent 管理/记忆文件页面晦涩错误** — `No such file or directory (os error 2)` 替换为中文提示「OpenClaw CLI 未找到，请确认已安装并重启 ClawPanel」
+- **Agent 管理/记忆文件页面晦涩错误** — `No such file or directory (os error 2)` 替换为中文提示「OpenClaw CLI 未找到，请确认已安装并重启 AgentDock」
 
 ### 新增 (Features)
 
 - **初始设置自动创建配置文件** — 检测到 CLI 已装但 `openclaw.json` 不存在时，自动创建含合理默认值的配置文件（mode:local, tools:full 等），无需手动执行 `openclaw configure`
 - **一键初始化配置按钮** — 自动创建失败时，设置页第三步显示「一键初始化配置」按钮作为手动备选
-- **ClawPanel Web 版部署文档** — 新增 Linux 一键部署脚本和 Docker 部署指南，官网增加文档中心
+- **AgentDock Web 版部署文档** — 新增 Linux 一键部署脚本和 Docker 部署指南，官网增加文档中心
 
 ## [0.4.4] - 2026-03-06
 
@@ -882,8 +882,8 @@
 ### 优化 (Improvements)
 
 - **Node.js 路径扫描** — 检测不到 Node.js 时提供「自动扫描」按钮，扫描 C/D/E/F/G 盘常见安装路径（含 AI 工具目录），找到后一键选用
-- **手动指定 Node.js 路径** — 用户可手动输入 Node.js 安装目录，检测通过后自动保存到 `~/.openclaw/clawpanel.json`，后续所有命令自动使用
-- **跨平台检测引导** — 安装引导页 Node.js 检测失败时，macOS 提示从终端启动，Windows 提示重启 ClawPanel 或检查 PATH
+- **手动指定 Node.js 路径** — 用户可手动输入 Node.js 安装目录，检测通过后自动保存到 `~/.openclaw/agentdock.json`，后续所有命令自动使用
+- **跨平台检测引导** — 安装引导页 Node.js 检测失败时，macOS 提示从终端启动，Windows 提示重启 AgentDock 或检查 PATH
 - **错误诊断模块** — 新增 `error-diagnosis.js` 共享模块，安装引导页和服务管理页共用错误诊断逻辑
 - **README 常见问题** — 新增 7 个常见安装问题的排查指南
 
@@ -968,7 +968,7 @@
 
 ### 新增 (Features)
 
-- **ClawPanel 自动更新检测** — 关于页面自动检查 ClawPanel 最新版本，显示更新链接
+- **AgentDock 自动更新检测** — 关于页面自动检查 AgentDock 最新版本，显示更新链接
 - **系统诊断页面** — 全面检测系统状态（服务、WebSocket、Node.js、设备密钥），一键修复配对
 - **聊天连接引导遮罩** — WebSocket 连接失败时显示友好引导界面，提供「修复并重连」按钮，替代原始错误消息
 - **图片上传与粘贴** — 聊天页面支持附件上传和 Ctrl+V 粘贴图片，支持多模态对话

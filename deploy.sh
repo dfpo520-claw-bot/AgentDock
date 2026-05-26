@@ -1,16 +1,16 @@
 #!/bin/bash
-# ClawPanel Web 版一键部署脚本
+# AgentDock Web 版一键部署脚本
 # 适用于 WSL / Docker / 远程服务器
-# 用法: curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawpanel/main/deploy.sh | bash
+# 用法: curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/deploy.sh | bash
 
 set -e
 
-REPO="qingchencloud/clawpanel"
-INSTALL_DIR="$HOME/.clawpanel-web"
-PORT="${CLAWPANEL_PORT:-9099}"
+REPO="dfpo520-claw-bot/AgentDock"
+INSTALL_DIR="$HOME/.agentdock-web"
+PORT="${AGENTDOCK_PORT:-9099}"
 
 echo ""
-echo "  ClawPanel Web 版 一键部署脚本"
+echo "  AgentDock Web 版 一键部署脚本"
 echo "  =============================="
 echo ""
 
@@ -52,7 +52,7 @@ fi
 
 # ── 下载并解压 ──
 echo "[3/5] 下载源码..."
-TMP_FILE=$(mktemp /tmp/clawpanel-XXXXXX.tar.gz)
+TMP_FILE=$(mktemp /tmp/agentdock-XXXXXX.tar.gz)
 trap "rm -f $TMP_FILE" EXIT
 download "$DOWNLOAD_URL" "$TMP_FILE"
 if [ ! -s "$TMP_FILE" ]; then
@@ -72,7 +72,7 @@ npx vite build --mode development 2>&1 | tail -2
 
 echo ""
 echo "  ==============================="
-echo "  ClawPanel Web 版部署完成！"
+echo "  AgentDock Web 版部署完成！"
 echo "  ==============================="
 echo ""
 echo "  启动:  cd $INSTALL_DIR && npx serve dist -l $PORT"
@@ -80,6 +80,6 @@ IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 echo "  访问:  http://$IP:$PORT"
 echo ""
 echo "  提示: 需要本地 OpenClaw Gateway 运行中（默认端口 3456）"
-echo "        安装: npm i -g @qingchencloud/openclaw-zh"
+echo "        安装: npm i -g @DeepAi助手/openclaw-zh"
 echo "        启动: openclaw start"
 echo ""

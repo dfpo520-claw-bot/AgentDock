@@ -2,7 +2,7 @@
 
 ## Goal
 
-Build a real production desktop application by first forking the current ClawPanel codebase, keeping the existing Tauri v2 + Vite + Rust command architecture, and then gradually replacing branding, configuration ownership, module boundaries, and backend command implementations with our own product architecture.
+Build a real production desktop application by first forking the current AgentDock codebase, keeping the existing Tauri v2 + Vite + Rust command architecture, and then gradually replacing branding, configuration ownership, module boundaries, and backend command implementations with our own product architecture.
 
 This is not a learning clone. The first milestone must produce a runnable and packageable production baseline. Refactoring happens after the baseline is stable.
 
@@ -166,7 +166,7 @@ Success criteria:
 - Some current comments and docs have encoding noise. Do not rely on comments as source of truth without checking behavior.
 - Hermes and OpenClaw integrations depend on external CLIs and version-specific behavior.
 - AI assistant tools can execute commands and write files, so production mode needs stricter permission handling.
-- AGPL compliance affects distribution strategy.
+- Open-source license compliance affects distribution strategy.
 
 ## Non-Goals For Initial Baseline
 

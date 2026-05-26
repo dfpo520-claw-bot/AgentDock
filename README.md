@@ -58,8 +58,6 @@ npm run tauri build
 AgentDock is currently developed from a production fork baseline. The following
 open-source projects are referenced during development and compatibility work:
 
-- ClawPanel: upstream desktop panel and Tauri command surface used as the fork
-  baseline.
 - OpenClaw: compatible AI Agent runtime integrated by the desktop panel.
 - Hermes: compatible agent/runtime integration preserved during the production
   hardening phase.

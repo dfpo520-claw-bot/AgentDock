@@ -27,7 +27,7 @@ AgentDock should not migrate to React or directly import those component librari
 - No change to Tauri command names or IPC payloads.
 - No migration from vanilla JavaScript to React, Vue, Svelte, or another framework.
 - No full rewrite of OpenClaw or Hermes pages in one step.
-- No forced rename of compatibility paths such as `clawpanel.json` when they are required for migration or legacy aliases.
+- No forced rename of compatibility paths such as `agentdock.json` when they are required for migration or legacy aliases.
 - No license or upstream fork strategy changes in this phase.
 
 ## Current Frontend State
@@ -44,7 +44,7 @@ The current frontend is a Vite app with:
 - Product constants in `src/lib/product-identity.js` and `src/lib/product-config.js`.
 - i18n dictionaries under `src/locales/modules` and generated locale JSON files.
 
-The current UI already contains most product functionality. The main problem is inconsistent visual hierarchy, inherited brand copy, mixed component styles, and scattered ClawPanel/Qingchen strings.
+The current UI already contains most product functionality. The main problem is inconsistent visual hierarchy, inherited brand copy, mixed component styles, and scattered AgentDock/DeepAi助手 strings.
 
 ## Product Identity
 
@@ -64,7 +64,7 @@ Visible product copy should use AgentDock language:
 - "DeepAi Assistant" for English UI.
 - "OpenClaw" and "Hermes" remain engine/runtime names.
 
-The legacy product name `ClawPanel` remains only when explaining compatibility, migration, or upstream reference context.
+The legacy product name `AgentDock` remains only when explaining compatibility, migration, or upstream reference context.
 
 ## Brand Asset System
 
@@ -191,18 +191,18 @@ Interaction quality expectations:
 
 Replace visible product copy:
 
-- `ClawPanel` -> `AgentDock`
-- `clawpanel` -> `agentdock` when it is visible product copy, release link text, public docs for new users, service worker notification tags, or generated asset names.
-- `晴辰助手` -> `DeepAi助手`
+- `AgentDock` -> `AgentDock`
+- `agentdock` -> `agentdock` when it is visible product copy, release link text, public docs for new users, service worker notification tags, or generated asset names.
+- `DeepAiepAi助手` -> `DeepAi助手`
 - English assistant labels should use `DeepAi Assistant`.
 
 Do not blindly replace compatibility strings:
 
-- `clawpanel.json` remains as a legacy config filename where migration support depends on it.
-- `clawpanel_authed`, `clawpanel_must_change_pw`, and similar storage keys may remain until a deliberate storage migration task is planned.
-- `.disabled-by-clawpanel-...` quarantine markers remain unless a backend migration strategy is created.
+- `agentdock.json` remains as a legacy config filename where migration support depends on it.
+- `agentdock_authed`, `agentdock_must_change_pw`, and similar storage keys may remain until a deliberate storage migration task is planned.
+- `.disabled-by-agentdock-...` quarantine markers remain unless a backend migration strategy is created.
 - Existing comments may be cleaned when touched, but comments alone are not release blockers.
-- Upstream reference docs may mention ClawPanel when explicitly describing the fork baseline or referenced project.
+- Upstream reference docs may mention AgentDock when explicitly describing the fork baseline or referenced project.
 
 Replacement priority:
 
@@ -217,10 +217,10 @@ Replacement priority:
 
 All user-facing release and support links should point to AgentDock-owned destinations:
 
-- Repository: `https://github.com/agentdock/agentdock`
-- Releases: `https://github.com/agentdock/agentdock/releases`
-- Issues/support: `https://github.com/agentdock/agentdock/issues`
-- Update manifest: `https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json`
+- Repository: `https://github.com/dfpo520-claw-bot/AgentDock`
+- Releases: `https://github.com/dfpo520-claw-bot/AgentDock/releases`
+- Issues/support: `https://github.com/dfpo520-claw-bot/AgentDock/issues`
+- Update manifest: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json`
 
 The About page should show AgentDock-owned release status and still disclose referenced open-source projects in a separate attribution section.
 
@@ -315,8 +315,8 @@ Screenshot verification should include:
 
 - The selected A Modern Ops Console direction is visible across the app shell and core routes.
 - All existing core functionality remains reachable.
-- No visible `ClawPanel` remains in production app UI except explicit legacy/upstream references.
-- No visible `晴辰助手` remains; the assistant is shown as `DeepAi助手`.
+- No visible `AgentDock` remains in production app UI except explicit legacy/upstream references.
+- No visible `DeepAiepAi助手` remains; the assistant is shown as `DeepAi助手`.
 - Product-owned assets and release links point to AgentDock.
 - Build and test commands pass.
 - UI smoke routes pass.

@@ -158,7 +158,7 @@ pub fn openclaw_search_paths() -> Vec<PathBuf> {
 }
 
 /// 获取 OpenClaw 配置目录
-/// 优先使用 clawpanel.json 中的 openclawDir 自定义路径，不存在则回退默认 ~/.openclaw
+/// 优先使用 agentdock.json 中的 openclawDir 自定义路径，不存在则回退默认 ~/.openclaw
 pub fn openclaw_dir() -> PathBuf {
     if let Some(custom) = read_panel_config_value()
         .and_then(|v| v.get("openclawDir")?.as_str().map(String::from))
@@ -171,7 +171,7 @@ pub fn openclaw_dir() -> PathBuf {
 
 /// Gateway 监听端口：读取 `openclaw.json` 的 `gateway.port`，缺省 **18789**。
 /// 与面板「Gateway 配置」、服务状态检测（netstat / TCP / launchctl 兜底）共用同一来源，
-/// 并尊重 `clawpanel.json` 中的 `openclawDir` 自定义配置目录。
+/// 并尊重 `agentdock.json` 中的 `openclawDir` 自定义配置目录。
 pub fn gateway_listen_port() -> u16 {
     // 5秒内返回缓存值，避免服务状态检测时频繁读文件
     if let Ok(cache) = GATEWAY_PORT_CACHE.lock() {

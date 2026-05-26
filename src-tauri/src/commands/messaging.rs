@@ -2752,7 +2752,7 @@ fn qqbot_plugin_dir() -> PathBuf {
 fn legacy_plugin_backup_dir(plugin_id: &str) -> PathBuf {
     super::openclaw_dir()
         .join("extensions")
-        .join(format!("{plugin_id}.__clawpanel_backup"))
+        .join(format!("{plugin_id}.__agentdock_backup"))
 }
 
 fn cleanup_legacy_plugin_backup_dir(plugin_id: &str) -> Result<bool, String> {
@@ -2831,28 +2831,28 @@ fn is_plugin_builtin(plugin_id: &str) -> bool {
         #[cfg(target_os = "windows")]
         if let Some(appdata) = std::env::var_os("APPDATA") {
             let base = PathBuf::from(appdata).join("npm").join("node_modules");
-            dirs.push(base.join("@qingchencloud").join("openclaw-zh"));
+            dirs.push(base.join("@DeepAi助手").join("openclaw-zh"));
             dirs.push(base.join("openclaw"));
         }
         #[cfg(target_os = "macos")]
         {
             dirs.push(PathBuf::from(
-                "/opt/homebrew/lib/node_modules/@qingchencloud/openclaw-zh",
+                "/opt/homebrew/lib/node_modules/@DeepAi助手/openclaw-zh",
             ));
             dirs.push(PathBuf::from("/opt/homebrew/lib/node_modules/openclaw"));
             dirs.push(PathBuf::from(
-                "/usr/local/lib/node_modules/@qingchencloud/openclaw-zh",
+                "/usr/local/lib/node_modules/@DeepAi助手/openclaw-zh",
             ));
             dirs.push(PathBuf::from("/usr/local/lib/node_modules/openclaw"));
         }
         #[cfg(target_os = "linux")]
         {
             dirs.push(PathBuf::from(
-                "/usr/local/lib/node_modules/@qingchencloud/openclaw-zh",
+                "/usr/local/lib/node_modules/@DeepAi助手/openclaw-zh",
             ));
             dirs.push(PathBuf::from("/usr/local/lib/node_modules/openclaw"));
             dirs.push(PathBuf::from(
-                "/usr/lib/node_modules/@qingchencloud/openclaw-zh",
+                "/usr/lib/node_modules/@DeepAi助手/openclaw-zh",
             ));
             dirs.push(PathBuf::from("/usr/lib/node_modules/openclaw"));
         }
@@ -2874,7 +2874,7 @@ fn generic_plugin_dir(plugin_id: &str) -> PathBuf {
 }
 
 fn generic_plugin_backup_dir(plugin_id: &str) -> PathBuf {
-    plugin_backup_root().join(format!("{plugin_id}.__clawpanel_backup"))
+    plugin_backup_root().join(format!("{plugin_id}.__agentdock_backup"))
 }
 
 fn generic_plugin_config_backup_path(plugin_id: &str) -> PathBuf {
@@ -3027,7 +3027,7 @@ pub async fn install_channel_plugin(
                 "plugin-log",
                 "  前往「服务管理」页面点击升级，或在终端执行：",
             );
-            let _ = app.emit("plugin-log", "  npm i -g @qingchencloud/openclaw-zh@latest --registry https://registry.npmmirror.com");
+            let _ = app.emit("plugin-log", "  npm i -g @DeepAi助手/openclaw-zh@latest --registry https://registry.npmmirror.com");
         }
         let rollback_err =
             cleanup_failed_plugin_install(plugin_id, had_existing_plugin, had_existing_config)
@@ -3208,7 +3208,7 @@ pub async fn install_qqbot_plugin(
             "这是 OpenClaw 的上游依赖问题，非 QQBot 插件本身的问题。",
         );
         let _ = app.emit("plugin-log", "请在终端手动执行以下命令重装 OpenClaw：");
-        let _ = app.emit("plugin-log", "  npm i -g @qingchencloud/openclaw-zh@latest --registry https://registry.npmmirror.com");
+        let _ = app.emit("plugin-log", "  npm i -g @DeepAi助手/openclaw-zh@latest --registry https://registry.npmmirror.com");
         let _ = app.emit("plugin-log", "重装完成后再回来安装 QQBot 插件。");
         let _ = cleanup_failed_extension_install(
             &plugin_dir,
@@ -3237,7 +3237,7 @@ pub async fn install_qqbot_plugin(
                 "plugin-log",
                 "  前往「服务管理」页面点击升级，或在终端执行：",
             );
-            let _ = app.emit("plugin-log", "  npm i -g @qingchencloud/openclaw-zh@latest --registry https://registry.npmmirror.com");
+            let _ = app.emit("plugin-log", "  npm i -g @DeepAi助手/openclaw-zh@latest --registry https://registry.npmmirror.com");
         } else {
             let _ = app.emit(
                 "plugin-log",

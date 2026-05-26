@@ -7,7 +7,7 @@
  */
 import { isTauriRuntime } from './tauri-api.js'
 
-const THEME_KEY = 'clawpanel-theme'
+const THEME_KEY = 'agentdock-theme'
 
 // 延迟加载 Tauri window 模块，Web 构建不会真正拉取
 let _tauriWindowModule = null

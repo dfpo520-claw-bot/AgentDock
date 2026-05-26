@@ -43,9 +43,9 @@ Core files for this plan:
 
 Files intentionally not renamed in this plan:
 
-- `clawpanel.json` compatibility references.
-- `clawpanel_authed`, `clawpanel_must_change_pw`, and existing local/session storage keys.
-- `.disabled-by-clawpanel-*` quarantine marker behavior.
+- `agentdock.json` compatibility references.
+- `agentdock_authed`, `agentdock_must_change_pw`, and existing local/session storage keys.
+- `.disabled-by-agentdock-*` quarantine marker behavior.
 - Backend command names and Tauri IPC payloads.
 
 ---
@@ -88,10 +88,10 @@ const ALLOWED_LEGACY_CONTEXT = [
   /compatibility/i,
   /upstream/i,
   /referenced/i,
-  /clawpanel\.json/i,
-  /clawpanel_authed/i,
-  /clawpanel_must_change_pw/i,
-  /disabled-by-clawpanel/i,
+  /agentdock\.json/i,
+  /agentdock_authed/i,
+  /agentdock_must_change_pw/i,
+  /disabled-by-agentdock/i,
 ]
 ```
 
@@ -102,7 +102,7 @@ function visibleLinesWithOldBrand(text) {
   return text
     .split(/\r?\n/)
     .map((line, index) => ({ line, index: index + 1 }))
-    .filter(({ line }) => /ClawPanel|晴辰助手/.test(line))
+    .filter(({ line }) => /AgentDock|DeepAiepAi助手/.test(line))
     .filter(({ line }) => !ALLOWED_LEGACY_CONTEXT.some((pattern) => pattern.test(line)))
 }
 ```
@@ -138,7 +138,7 @@ Expected before implementation:
 not ok ... app-visible copy uses AgentDock and DeepAi assistant naming
 ```
 
-The failure should list visible `ClawPanel` and `晴辰助手` references.
+The failure should list visible `AgentDock` and `DeepAiepAi助手` references.
 
 - [ ] **Step 3: Add static UI modernization contract tests**
 
@@ -237,7 +237,7 @@ git commit -m "test: add ui brand refactor guardrails"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] test: add ui brand refactor guardrails
+[codex/agentdock-new <hash>] test: add ui brand refactor guardrails
 ```
 
 ---
@@ -282,13 +282,13 @@ export const PRODUCT_IDENTITY = Object.freeze({
   tagline: 'Multi-engine AI agent operations console',
   description: 'AgentDock - production desktop console for multi-engine AI agent operations',
   tauriIdentifier: 'com.agentdock.desktop',
-  homepage: 'https://github.com/agentdock/agentdock',
-  homepageHost: 'github.com/agentdock/agentdock',
-  supportUrl: 'https://github.com/agentdock/agentdock/issues',
-  repositoryUrl: 'https://github.com/agentdock/agentdock',
-  releaseUrl: 'https://github.com/agentdock/agentdock/releases',
-  updateManifestUrl: 'https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json',
-  legacyProductName: 'ClawPanel',
+  homepage: 'https://github.com/dfpo520-claw-bot/AgentDock',
+  homepageHost: 'github.com/dfpo520-claw-bot/AgentDock',
+  supportUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/issues',
+  repositoryUrl: 'https://github.com/dfpo520-claw-bot/AgentDock',
+  releaseUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/releases',
+  updateManifestUrl: 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json',
+  legacyProductName: 'AgentDock',
 })
 ```
 
@@ -318,7 +318,7 @@ const title = payload.title || 'AgentDock'
 tag: payload.tag || 'agentdock',
 ```
 
-- Update visible comments from "ClawPanel" to "AgentDock".
+- Update visible comments from "AgentDock" to "AgentDock".
 
 In `src/lib/push-web.js`, change fallback title:
 
@@ -340,9 +340,9 @@ In `src/locales/modules/setup.js`:
 
 - `headerTitle`: use `欢迎使用 AgentDock`, `Welcome to AgentDock`.
 - `aiAssistant`: use `DeepAi助手`, `DeepAi Assistant`.
-- Replace visible `ClawPanel` product mentions with `AgentDock`.
-- Keep `clawpanel.json` mentions unchanged if they refer to compatibility config filename.
-- Replace `ClawPanel Web 版` with `AgentDock Web mode` or Chinese `AgentDock Web 版`.
+- Replace visible `AgentDock` product mentions with `AgentDock`.
+- Keep `agentdock.json` mentions unchanged if they refer to compatibility config filename.
+- Replace `AgentDock Web 版` with `AgentDock Web mode` or Chinese `AgentDock Web 版`.
 
 - [ ] **Step 4: Replace assistant module visible labels**
 
@@ -350,10 +350,10 @@ In `src/locales/modules/assistant.js`:
 
 - `defaultName`: use `DeepAi助手` and `DeepAi Assistant`.
 - `guideTitle`: use `这是 AgentDock 内置的 DeepAi助手` and `This is AgentDock's built-in DeepAi Assistant`.
-- Replace visible `ClawPanel` product mentions with `AgentDock`.
-- Replace `晴辰助手` with `DeepAi助手`.
+- Replace visible `AgentDock` product mentions with `AgentDock`.
+- Replace `DeepAiepAi助手` with `DeepAi助手`.
 
-- [ ] **Step 5: Replace page and locale visible ClawPanel copy**
+- [ ] **Step 5: Replace page and locale visible AgentDock copy**
 
 For these locale modules:
 
@@ -370,31 +370,31 @@ For these locale modules:
 Apply these replacements only to visible product copy:
 
 ```text
-ClawPanel -> AgentDock
-ClawPanel's -> AgentDock's
-ClawPanel desktop -> AgentDock desktop
-ClawPanel Web -> AgentDock Web
-晴辰助手 -> DeepAi助手
+AgentDock -> AgentDock
+AgentDock's -> AgentDock's
+AgentDock desktop -> AgentDock desktop
+AgentDock Web -> AgentDock Web
+DeepAiepAi助手 -> DeepAi助手
 ```
 
 Do not change:
 
 ```text
-clawpanel.json
-disabled-by-clawpanel
-@qingchencloud/openclaw-zh
-qingchencloud/openclaw
+agentdock.json
+disabled-by-agentdock
+@DeepAi助手/openclaw-zh
+DeepAi助手/openclaw
 ```
 
 - [ ] **Step 6: Replace visible assistant prompt identity**
 
 In `src/pages/assistant.js`, update the system prompt copy:
 
-- Replace "你是 ClawPanel 内置的智能助手" with "你是 AgentDock 内置的 DeepAi助手".
-- Replace "ClawPanel 官网" with "AgentDock 项目主页".
-- Replace old GitHub links with `https://github.com/agentdock/agentdock` or `https://github.com/agentdock/agentdock/issues/new`.
-- Keep technical references to `clawpanel.json` as compatibility config filename.
-- Replace "ClawPanel 工具能力" with "AgentDock 工具能力".
+- Replace "你是 AgentDock 内置的智能助手" with "你是 AgentDock 内置的 DeepAi助手".
+- Replace "AgentDock 官网" with "AgentDock 项目主页".
+- Replace old GitHub links with `https://github.com/dfpo520-claw-bot/AgentDock` or `https://github.com/dfpo520-claw-bot/AgentDock/issues/new`.
+- Keep technical references to `agentdock.json` as compatibility config filename.
+- Replace "AgentDock 工具能力" with "AgentDock 工具能力".
 
 Also import `PRODUCT_IDENTITY` if it helps keep links centralized, but do not change tool execution logic.
 
@@ -402,8 +402,8 @@ Also import `PRODUCT_IDENTITY` if it helps keep links centralized, but do not ch
 
 In `src/pages/setup.js`:
 
-- Change logo alt text from `ClawPanel` to `AgentDock`.
-- Change visible app launch command from `/Applications/ClawPanel.app` to `/Applications/AgentDock.app`.
+- Change logo alt text from `AgentDock` to `AgentDock`.
+- Change visible app launch command from `/Applications/AgentDock.app` to `/Applications/AgentDock.app`.
 - Do not change runtime command names.
 
 - [ ] **Step 8: Replace visible helper copy in supporting modules**
@@ -435,13 +435,13 @@ pass
 Run:
 
 ```powershell
-rg "ClawPanel|晴辰助手" src public tests -n
+rg "AgentDock|DeepAiepAi助手" src public tests -n
 ```
 
 Expected:
 
-- Remaining matches are compatibility comments, `legacyProductName`, `clawpanel.json`, local storage keys, quarantine markers, or upstream attribution.
-- No remaining visible app UI copy says `ClawPanel` or `晴辰助手`.
+- Remaining matches are compatibility comments, `legacyProductName`, `agentdock.json`, local storage keys, quarantine markers, or upstream attribution.
+- No remaining visible app UI copy says `AgentDock` or `DeepAiepAi助手`.
 
 - [ ] **Step 11: Commit brand copy replacement**
 
@@ -455,7 +455,7 @@ git commit -m "feat: replace visible app brand copy"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: replace visible app brand copy
+[codex/agentdock-new <hash>] feat: replace visible app brand copy
 ```
 
 ---
@@ -631,7 +631,7 @@ git commit -m "style: add modern ops design tokens"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] style: add modern ops design tokens
+[codex/agentdock-new <hash>] style: add modern ops design tokens
 ```
 
 ---
@@ -858,7 +858,7 @@ git commit -m "style: add modern shared ui primitives"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] style: add modern shared ui primitives
+[codex/agentdock-new <hash>] style: add modern shared ui primitives
 ```
 
 ---
@@ -1066,7 +1066,7 @@ git commit -m "style: modernize app shell and sidebar"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] style: modernize app shell and sidebar
+[codex/agentdock-new <hash>] style: modernize app shell and sidebar
 ```
 
 ---
@@ -1285,7 +1285,7 @@ git commit -m "style: modernize core route layouts"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] style: modernize core route layouts
+[codex/agentdock-new <hash>] style: modernize core route layouts
 ```
 
 ---
@@ -1376,7 +1376,7 @@ git commit -m "feat: replace final agentdock brand assets"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: replace final agentdock brand assets
+[codex/agentdock-new <hash>] feat: replace final agentdock brand assets
 ```
 
 If `scripts/generate-brand-assets.ps1` was not changed, omit it from `git add`.
@@ -1396,7 +1396,7 @@ If `scripts/generate-brand-assets.ps1` was not changed, omit it from `git add`.
 Run:
 
 ```powershell
-rg "ClawPanel|晴辰助手" src public -n
+rg "AgentDock|DeepAiepAi助手" src public -n
 ```
 
 Classify each result:
@@ -1444,14 +1444,14 @@ In `src/engines/hermes/style/hermes.css`:
 - Avoid adding new purple/blue gradient dominance.
 - Keep existing Hermes-specific layout and route behavior.
 
-In Hermes page files, only replace visible ClawPanel copy with AgentDock where it is not an upstream/compatibility reference.
+In Hermes page files, only replace visible AgentDock copy with AgentDock where it is not an upstream/compatibility reference.
 
 - [ ] **Step 5: Run search and build**
 
 Run:
 
 ```powershell
-rg "ClawPanel|晴辰助手" src public -n
+rg "AgentDock|DeepAiepAi助手" src public -n
 node node_modules\vite\bin\vite.js build
 ```
 
@@ -1472,7 +1472,7 @@ git commit -m "style: align secondary routes with modern shell"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] style: align secondary routes with modern shell
+[codex/agentdock-new <hash>] style: align secondary routes with modern shell
 ```
 
 ---
@@ -1516,7 +1516,7 @@ node scripts\serve.js --host 127.0.0.1 --port 1421
 In another PowerShell:
 
 ```powershell
-$env:AGENTDOCK_SMOKE_PASSWORD = (Get-Content "$HOME\.openclaw\clawpanel.json" -Raw | ConvertFrom-Json).accessPassword
+$env:AGENTDOCK_SMOKE_PASSWORD = (Get-Content "$HOME\.openclaw\agentdock.json" -Raw | ConvertFrom-Json).accessPassword
 node scripts\smoke-ui-routes.mjs --base-url http://127.0.0.1:1421 --password $env:AGENTDOCK_SMOKE_PASSWORD --out-dir docs\release\ui-smoke-2026-05-15
 ```
 
@@ -1574,7 +1574,7 @@ git commit -m "docs: record ui brand refactor smoke"
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] docs: record ui brand refactor smoke
+[codex/agentdock-new <hash>] docs: record ui brand refactor smoke
 ```
 
 ---
@@ -1621,14 +1621,14 @@ Expected:
 Run:
 
 ```powershell
-rg "ClawPanel|晴辰助手" src public README.md README.en.md docs -n
+rg "AgentDock|DeepAiepAi助手" src public README.md README.en.md docs -n
 ```
 
 Expected:
 
 - No visible production UI copy remains.
 - Remaining hits are one of:
-  - legacy config path references such as `clawpanel.json`.
+  - legacy config path references such as `agentdock.json`.
   - upstream/reference documentation.
   - release smoke historical excerpts.
   - compatibility notes.

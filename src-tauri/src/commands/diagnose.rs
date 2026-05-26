@@ -87,7 +87,7 @@ fn collect_env() -> DiagnoseEnv {
     };
 
     // 设备密钥
-    let device_key_path = openclaw_dir.join("clawpanel-device-key.json");
+    let device_key_path = openclaw_dir.join("agentdock-device-key.json");
     let device_key_exists = device_key_path.exists();
 
     // Gateway owner
@@ -154,7 +154,7 @@ fn check_config() -> DiagnoseStep {
 /// 检查设备密钥
 fn check_device_key() -> DiagnoseStep {
     let t = step_timer();
-    let key_path = crate::commands::openclaw_dir().join("clawpanel-device-key.json");
+    let key_path = crate::commands::openclaw_dir().join("agentdock-device-key.json");
     if key_path.exists() {
         match std::fs::read_to_string(&key_path) {
             Ok(content) => {
@@ -375,7 +375,7 @@ pub async fn diagnose_gateway_connection() -> DiagnoseResult {
 // Gateway is running. Root cause is @homebridge/ciao < 1.3.7 calling
 // `child_process.exec("arp -a ...", callback)` without `{ windowsHide: true }`.
 //
-// This is NOT a ClawPanel bug — we only expose a detection command so the
+// This is NOT a AgentDock bug — we only expose a detection command so the
 // dashboard can surface a clear, actionable hint to users rather than silently
 // inheriting third-party noise.
 // =============================================================================

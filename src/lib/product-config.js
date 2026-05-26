@@ -4,7 +4,7 @@ export const PRODUCT_CONFIG = Object.freeze({
   productId: 'agentdock',
   panelConfigFile: 'agentdock.json',
   productDataDirName: '.agentdock',
-  legacyPanelConfigFile: 'clawpanel.json',
+  legacyPanelConfigFile: 'agentdock.json',
   legacyDataDirName: '.openclaw',
   releaseChannel: 'stable',
 })

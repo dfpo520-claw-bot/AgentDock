@@ -3,13 +3,13 @@
  *
  * 用户场景：
  *   系统 PATH 中存在多份 openclaw（CherryStudio 内嵌 / 旧 npm 全局 / 手动下载等），
- *   它们与 ClawPanel 管理的 standalone 共存时会引起：
+ *   它们与 AgentDock 管理的 standalone 共存时会引起：
  *   - 终端 `openclaw` 命令拿到老版本 → schema 不兼容 → doctor --fix 卡死
  *   - 第三方工具调用 openclaw 时拿到老版本
  *
  * 本组件：
  *   1. 异步扫描 PATH，发现冲突时在容器内显示警告横幅
- *   2. 提供"一键隔离"按钮：把冲突文件重命名为 .disabled-by-clawpanel-{ts}.bak（**不真删**）
+ *   2. 提供"一键隔离"按钮：把冲突文件重命名为 .disabled-by-agentdock-{ts}.bak（**不真删**）
  *   3. 提供"详情"展开列表 / 单条隔离按钮
  *   4. 一键隔离后保留"撤销"入口，找回 .bak 文件
  *
@@ -22,10 +22,10 @@ import { api } from '../lib/tauri-api.js'
 import { t } from '../lib/i18n.js'
 import { toast } from './toast.js'
 
-const STORAGE_KEY = 'clawpanel-cli-conflict-dismissed-paths'
+const STORAGE_KEY = 'agentdock-cli-conflict-dismissed-paths'
 
-// 已知良性来源：这些 IDE/客户端会自带一份 openclaw，跟 ClawPanel 共存不会出问题——
-// Tauri 后端的 `is_rejected_cli_path` 已排除它们，不会被 ClawPanel 选用；
+// 已知良性来源：这些 IDE/客户端会自带一份 openclaw，跟 AgentDock 共存不会出问题——
+// Tauri 后端的 `is_rejected_cli_path` 已排除它们，不会被 AgentDock 选用；
 // 用户在终端调用 `openclaw` 想拿到的本来也就是这些 IDE 自己的版本。
 // 这些来源默认不再触发警告横幅，避免用户误以为需要清理一键安装包。
 const BENIGN_SOURCES = new Set(['cherrystudio', 'cursor'])

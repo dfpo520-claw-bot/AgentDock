@@ -8,11 +8,11 @@ pub const PRODUCT_ID: &str = "agentdock";
 pub const PRODUCT_NAME: &str = "AgentDock";
 pub const PRODUCT_CONFIG_FILENAME: &str = "agentdock.json";
 pub const PRODUCT_DATA_DIR_NAME: &str = ".agentdock";
-pub const LEGACY_PANEL_CONFIG_FILENAME: &str = "clawpanel.json";
+pub const LEGACY_PANEL_CONFIG_FILENAME: &str = "agentdock.json";
 pub const LEGACY_DATA_DIR_NAME: &str = ".openclaw";
-pub const LEGACY_PRODUCT_NAME: &str = "ClawPanel";
+pub const LEGACY_PRODUCT_NAME: &str = "AgentDock";
 pub const UPDATE_MANIFEST_URL: &str =
-    "https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json";
+    "https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json";
 
 const IMPORTABLE_PANEL_KEYS: &[&str] = &[
     "networkProxy",

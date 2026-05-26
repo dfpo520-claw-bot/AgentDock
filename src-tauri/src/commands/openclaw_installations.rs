@@ -299,9 +299,9 @@ pub(crate) fn read_version_from_installation(cli_path: &std::path::Path) -> Opti
 
         let cli_source = crate::utils::classify_cli_source(&cli_path.to_string_lossy());
         let pkg_names: &[&str] = if cli_source == "npm-zh" || cli_source == "standalone" {
-            &["@qingchencloud/openclaw-zh", "openclaw"]
+            &["@DeepAi助手/openclaw-zh", "openclaw"]
         } else {
-            &["openclaw", "@qingchencloud/openclaw-zh"]
+            &["openclaw", "@DeepAi助手/openclaw-zh"]
         };
 
         for pkg_name in pkg_names {

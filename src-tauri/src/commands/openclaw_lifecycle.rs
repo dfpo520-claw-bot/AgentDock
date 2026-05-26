@@ -61,7 +61,7 @@ async fn upgrade_openclaw_inner(
 
     if try_standalone {
         let github_release_base = format!(
-            "https://github.com/qingchencloud/openclaw-standalone/releases/download/v{}",
+            "https://github.com/DeepAi助手/openclaw-standalone/releases/download/v{}",
             ver
         );
 
@@ -154,7 +154,7 @@ async fn upgrade_openclaw_inner(
             let _ = app.emit(
                 "upgrade-log",
                 format!(
-                    "ClawPanel {} 默认绑定 OpenClaw 稳定版: {}",
+                    "AgentDock {} 默认绑定 OpenClaw 稳定版: {}",
                     super::openclaw_install_policy::panel_version(),
                     recommended
                 ),
@@ -686,7 +686,7 @@ async fn uninstall_openclaw_inner(
 
     // 4. 两个包都尝试卸载（确保干净）
     let other_pkg = if source == "official" {
-        "@qingchencloud/openclaw-zh"
+        "@DeepAi助手/openclaw-zh"
     } else {
         "openclaw"
     };

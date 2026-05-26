@@ -1,7 +1,9 @@
 import { navigate } from '../router.js'
 import { t } from '../lib/i18n.js'
-import { applyEngineSelection } from '../lib/engine-manager.js'
+import { applyEngineSelection, getEngine } from '../lib/engine-manager.js'
 import { toast } from '../components/toast.js'
+
+const ENGINE_STATUS_IDS = ['openclaw', 'hermes']
 
 const PRIMARY_OPTIONS = [
   {
@@ -44,6 +46,7 @@ let _busy = false
 let _revealEl = null
 let _homeEl = null
 let _animTimers = []  // 跟踪动画 setTimeout，cleanup 时清
+let _statusRunId = 0
 
 export async function render() {
   const page = document.createElement('div')
@@ -59,7 +62,7 @@ export async function render() {
       <div class="es-divider"></div>
 
       <div class="es-top-banner">${esc(t('engine.choiceTopBanner'))}</div>
-      <div class="es-corner-mark es-corner-tl">CLAWPANEL</div>
+      <div class="es-corner-mark es-corner-tl">AGENTDOCK</div>
       <div class="es-corner-mark es-corner-br" data-version-tag>v—</div>
 
       ${renderContent('openclaw')}
@@ -82,6 +85,7 @@ export async function render() {
 
   bindHover(page)
   bindClick(page)
+  refreshEngineStatuses(page)
 
   return page
 }
@@ -104,6 +108,10 @@ function renderContent(id) {
   return `
     <div class="es-content es-content-${id}" data-engine-content="${id}">
       <div class="es-product-row">${productRow}</div>
+      <div class="es-install-status is-loading" data-engine-status="${id}">
+        <span class="es-install-dot"></span>
+        <span>${esc(t('engine.detecting'))}</span>
+      </div>
       <div class="es-title">${esc(cap)}</div>
       <div class="es-tagline">${esc(tagline)}</div>
       <ul class="es-feature-list">
@@ -114,6 +122,39 @@ function renderContent(id) {
       </button>
     </div>
   `
+}
+
+function refreshEngineStatuses(page) {
+  const runId = ++_statusRunId
+  Promise.all(ENGINE_STATUS_IDS.map(async (id) => {
+    const engine = getEngine(id)
+    if (!engine?.detect) {
+      setEngineStatus(page, id, 'error', t('engine.choiceStatusError'))
+      return
+    }
+    try {
+      const status = await engine.detect()
+      if (runId !== _statusRunId) return
+      if (status?.installed) {
+        const label = status.version
+          ? t('engine.choiceStatusInstalledVersion', { version: status.version })
+          : t('engine.choiceStatusInstalled')
+        setEngineStatus(page, id, 'installed', label)
+      } else {
+        setEngineStatus(page, id, 'missing', t('engine.choiceStatusMissing'))
+      }
+    } catch (_) {
+      if (runId !== _statusRunId) return
+      setEngineStatus(page, id, 'error', t('engine.choiceStatusError'))
+    }
+  })).catch(() => {})
+}
+
+function setEngineStatus(page, id, state, label) {
+  const el = page.querySelector(`[data-engine-status="${id}"]`)
+  if (!el) return
+  el.className = `es-install-status is-${state}`
+  el.innerHTML = `<span class="es-install-dot"></span><span>${esc(label)}</span>`
 }
 
 function bindHover(page) {
@@ -243,6 +284,7 @@ function removeRevealNodes() {
 }
 
 export function cleanup() {
+  _statusRunId++
   // 路由切走时清所有 setTimeout，避免动画后期调 navigate / mutate stale element
   for (const id of _animTimers) {
     try { clearTimeout(id) } catch (_) {}

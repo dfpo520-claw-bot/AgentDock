@@ -1,7 +1,7 @@
 {
   "title": "Configuration initiale",
   "desc": "Installer et configurer OpenClaw",
-  "headerTitle": "Bienvenue sur ClawPanel",
+  "headerTitle": "Bienvenue sur AgentDock",
   "recheck": "Revérifier",
   "stepNode": "Environnement Node.js",
   "installed": "Installé",

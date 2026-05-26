@@ -24,9 +24,9 @@ fn audit_log(action: &str, detail: &str) {
         .and_then(|mut f| std::io::Write::write_all(&mut f, line.as_bytes()));
 }
 
-/// ClawPanel 数据目录（~/.openclaw/clawpanel/）
+/// AgentDock 数据目录（~/.openclaw/agentdock/）
 fn data_dir() -> PathBuf {
-    super::openclaw_dir().join("clawpanel")
+    super::openclaw_dir().join("agentdock")
 }
 
 const MAX_ASSISTANT_COMMAND_LEN: usize = 8 * 1024;

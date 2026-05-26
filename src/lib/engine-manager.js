@@ -56,28 +56,26 @@ export function onEngineChange(fn) {
 }
 
 /**
- * 初始化引擎管理器：读取 clawpanel.json 中的 engineMode，激活对应引擎
+ * 初始化引擎管理器：读取 agentdock.json 中的 engineMode，激活对应引擎
  * 在 main.js boot() 中调用
  */
 export async function initEngineManager() {
   let mode = 'openclaw'
   _engineSetupDeferred = false
-  let hasChoice = false
   try {
     const cfg = await api.readPanelConfig()
-    hasChoice = !!cfg?.engineSetupChoice
     if (cfg?.engineMode === 'deferred') {
-      _engineSetupDeferred = true
+      mode = 'openclaw'
     } else if (cfg?.engineMode === 'both') {
       mode = 'openclaw'
     } else if (cfg?.engineMode && _engines[cfg.engineMode]) {
       mode = cfg.engineMode
     }
   } catch {}
-  // “是否需要走首次选择”仅取决于用户有没有真正点过 /engine-select 或引擎切换器；
-  // 单纯有 engineMode 但没有 engineSetupChoice（旧版本/历史数据）依然视为未选择，
-  // 这样 OpenClaw 没装好的情况下能走到选择页，而不是被默认拉到 /setup。
-  _needsInitialEngineChoice = !hasChoice
+  // Startup now defaults directly to OpenClaw. The chooser remains available as
+  // an explicit page, but missing legacy engineSetupChoice no longer redirects
+  // first launch away from the OpenClaw flow.
+  _needsInitialEngineChoice = false
   await activateEngine(mode, false)
 }
 
@@ -129,7 +127,7 @@ export async function adoptActiveEngineSelection({ enabledEngineIds = [], choice
 /**
  * 激活指定引擎（注册路由 + 启动）
  * @param {string} id 引擎 ID
- * @param {boolean} persist 是否写入 clawpanel.json
+ * @param {boolean} persist 是否写入 agentdock.json
  */
 export async function activateEngine(id, persist = true) {
   const engine = _engines[id]
@@ -173,7 +171,7 @@ export async function activateEngine(id, persist = true) {
     }
   }
 
-  // 持久化到 clawpanel.json
+  // 持久化到 agentdock.json
   if (persist) {
     try {
       const cfg = await api.readPanelConfig()

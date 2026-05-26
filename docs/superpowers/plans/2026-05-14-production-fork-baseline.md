@@ -80,14 +80,14 @@ Verification:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel branch --show-current
-git -c safe.directory=D:/workSpace/ohter/clawpanel status --short
+git -c safe.directory=D:/workSpace/ohter/agentdock branch --show-current
+git -c safe.directory=D:/workSpace/ohter/agentdock status --short
 ```
 
 Expected:
 
 ```text
-codex/clawpanel-new
+codex/agentdock-new
  M docs/superpowers/specs/2026-05-14-production-fork-refactor-design.md
 ?? docs/superpowers/plans/2026-05-14-production-fork-baseline.md
 ```
@@ -156,14 +156,14 @@ Finished `dev` profile
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add docs/superpowers/plans/2026-05-14-production-fork-baseline.md
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "docs: add production fork baseline plan"
+git -c safe.directory=D:/workSpace/ohter/agentdock add docs/superpowers/plans/2026-05-14-production-fork-baseline.md
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "docs: add production fork baseline plan"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] docs: add production fork baseline plan
+[codex/agentdock-new <hash>] docs: add production fork baseline plan
 ```
 
 ## Task 2: Add Product Identity Constants
@@ -208,9 +208,9 @@ test('visible identity fields no longer use the fork app name', () => {
     PRODUCT_IDENTITY.updateManifestUrl,
   ].join('\n')
 
-  assert.doesNotMatch(visible, /ClawPanel/)
+  assert.doesNotMatch(visible, /AgentDock/)
   assert.doesNotMatch(visible, /claw\.qt\.cool/)
-  assert.doesNotMatch(visible, /qingchencloud\/clawpanel/)
+  assert.doesNotMatch(visible, /dfpo520-claw-bot/AgentDock/)
 })
 
 test('productTitle formats document and window titles', () => {
@@ -249,7 +249,7 @@ export const PRODUCT_IDENTITY = Object.freeze({
   supportUrl: 'https://agentdock.example.com/support',
   repositoryUrl: 'https://agentdock.example.com/source',
   updateManifestUrl: 'https://agentdock.example.com/update/latest.json',
-  legacyProductName: 'ClawPanel',
+  legacyProductName: 'AgentDock',
 })
 
 export function productTitle(suffix = '') {
@@ -277,14 +277,14 @@ Expected:
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src/lib/product-identity.js tests/product-identity.test.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: add product identity constants"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src/lib/product-identity.js tests/product-identity.test.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: add product identity constants"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: add product identity constants
+[codex/agentdock-new <hash>] feat: add product identity constants
 ```
 
 ## Task 3: Replace Package And Desktop Metadata
@@ -320,10 +320,10 @@ const BRAND_SURFACE_FILES = [
 ]
 
 const OLD_APP_PATTERNS = [
-  /ClawPanel/g,
+  /AgentDock/g,
   /claw\.qt\.cool/g,
-  /qingchencloud\/clawpanel/g,
-  /ai\.openclaw\.clawpanel/g,
+  /dfpo520-claw-bot/AgentDock/g,
+  /ai\.openclaw\.agentdock/g,
 ]
 
 function stripJavaScriptComments(text) {
@@ -357,7 +357,7 @@ Expected:
 
 ```text
 not ok
-package.json still matches /ClawPanel/g
+package.json still matches /AgentDock/g
 ```
 
 - [ ] **Step 3: Update `package.json` metadata**
@@ -487,7 +487,7 @@ Expected:
 
 ```text
 not ok
-index.html still matches /ClawPanel/g
+index.html still matches /AgentDock/g
 ```
 
 The test should no longer report `package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, or `src-tauri/src/main.rs`.
@@ -526,14 +526,14 @@ name = "agentdock"
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/src/main.rs tests/brand-surface.test.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "chore: rename package metadata to AgentDock"
+git -c safe.directory=D:/workSpace/ohter/agentdock add package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/src/main.rs tests/brand-surface.test.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "chore: rename package metadata to AgentDock"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] chore: rename package metadata to AgentDock
+[codex/agentdock-new <hash>] chore: rename package metadata to AgentDock
 ```
 
 ## Task 4: Replace First-Run Shell Branding
@@ -548,7 +548,7 @@ Expected:
 Run:
 
 ```powershell
-rg "ClawPanel|claw\.qt\.cool|qingchencloud/clawpanel|ai\.openclaw\.clawpanel" index.html src/components/sidebar.js src/main.js
+rg "AgentDock|claw\.qt\.cool|dfpo520-claw-bot/AgentDock|ai\.openclaw\.agentdock" index.html src/components/sidebar.js src/main.js
 ```
 
 Replace or remove every match in these shell files unless the match is inside a comment documenting historical context that is not part of runtime app identity. Do not keep old app identity in file headers, mobile topbar labels, release/download URLs, login surfaces, footer links, or boot-failure copy.
@@ -587,7 +587,7 @@ In splash action links, replace:
 + '<a class="sp-btn" href="https://agentdock.example.com" target="_blank" rel="noopener">' + t('btn.site') + '</a>'
 ```
 
-Keep `clawpanel_lang` localStorage keys unchanged in Phase 1 because changing persisted keys belongs to the configuration ownership phase.
+Keep `agentdock_lang` localStorage keys unchanged in Phase 1 because changing persisted keys belongs to the configuration ownership phase.
 
 - [ ] **Step 2: Update sidebar branding imports**
 
@@ -663,7 +663,7 @@ Expected:
 
 ```text
 not ok
-src/pages/about.js still matches /ClawPanel/g
+src/pages/about.js still matches /AgentDock/g
 ```
 
 If `src/main.js` still appears in the failure output, return to Step 0 and remove the remaining app-identity match before committing Task 4.
@@ -673,14 +673,14 @@ If `src/main.js` still appears in the failure output, return to Step 0 and remov
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add index.html src/components/sidebar.js src/main.js
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: apply AgentDock shell branding"
+git -c safe.directory=D:/workSpace/ohter/agentdock add index.html src/components/sidebar.js src/main.js
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: apply AgentDock shell branding"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: apply AgentDock shell branding
+[codex/agentdock-new <hash>] feat: apply AgentDock shell branding
 ```
 
 ## Task 5: Replace About Page And Public README Branding
@@ -695,7 +695,7 @@ Expected:
 Run:
 
 ```powershell
-rg "ClawPanel|claw\.qt\.cool|qingchencloud/clawpanel|ai\.openclaw\.clawpanel" src/pages/about.js README.md README.en.md
+rg "AgentDock|claw\.qt\.cool|dfpo520-claw-bot/AgentDock|ai\.openclaw\.agentdock" src/pages/about.js README.md README.en.md
 ```
 
 Replace or remove every match that describes this app's identity, documentation, release entry points, support URLs, repository URLs, download URLs, or user-facing product labels. Keep external integration names only when they identify external projects, engines, or dependencies rather than this app. Comments in `src/pages/about.js` may retain historical context only if they are not user-facing and not part of runtime app identity; `tests/brand-surface.test.js` strips JavaScript comments before scanning.
@@ -879,7 +879,7 @@ The first milestone is a runnable and packageable AgentDock baseline that can be
 First run the full app-identity scan across the files covered by this baseline:
 
 ```powershell
-rg "ClawPanel|claw\.qt\.cool|qingchencloud/clawpanel|ai\.openclaw\.clawpanel" index.html src/components/sidebar.js src/main.js src/pages/about.js README.md README.en.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/src/main.rs
+rg "AgentDock|claw\.qt\.cool|dfpo520-claw-bot/AgentDock|ai\.openclaw\.agentdock" index.html src/components/sidebar.js src/main.js src/pages/about.js README.md README.en.md package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/src/main.rs
 ```
 
 Remove or replace app-identity matches unless they are explicitly external integration names that identify external projects, engines, or dependencies rather than this app. For JavaScript files, non-runtime comments may retain historical context; `tests/brand-surface.test.js` strips JavaScript comments before scanning.
@@ -903,14 +903,14 @@ If the test fails for `src/pages/about.js`, run the Step 0 `rg` command again an
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add src/pages/about.js README.md README.en.md
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: update about page and readme branding"
+git -c safe.directory=D:/workSpace/ohter/agentdock add src/pages/about.js README.md README.en.md
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: update about page and readme branding"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: update about page and readme branding
+[codex/agentdock-new <hash>] feat: update about page and readme branding
 ```
 
 ## Task 6: Generate Temporary Brand Assets
@@ -1082,14 +1082,14 @@ True
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add scripts/generate-brand-assets.ps1 docs/agentdock-icon.png docs/agentdock-logo-brand.png public/favicon-source.png public/favicon.ico public/images/logo.png public/images/logo-brand.png src-tauri/icons
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "feat: generate AgentDock brand assets"
+git -c safe.directory=D:/workSpace/ohter/agentdock add scripts/generate-brand-assets.ps1 docs/agentdock-icon.png docs/agentdock-logo-brand.png public/favicon-source.png public/favicon.ico public/images/logo.png public/images/logo-brand.png src-tauri/icons
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "feat: generate AgentDock brand assets"
 ```
 
 Expected:
 
 ```text
-[codex/clawpanel-new <hash>] feat: generate AgentDock brand assets
+[codex/agentdock-new <hash>] feat: generate AgentDock brand assets
 ```
 
 ## Task 7: Verify Production Baseline
@@ -1200,14 +1200,14 @@ Expected:
 If Step 5 added execution notes, run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add docs/superpowers/plans/2026-05-14-production-fork-baseline.md
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "docs: record production baseline verification notes"
+git -c safe.directory=D:/workSpace/ohter/agentdock add docs/superpowers/plans/2026-05-14-production-fork-baseline.md
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "docs: record production baseline verification notes"
 ```
 
 Expected when notes were added:
 
 ```text
-[codex/clawpanel-new <hash>] docs: record production baseline verification notes
+[codex/agentdock-new <hash>] docs: record production baseline verification notes
 ```
 
 If no notes were added, skip this commit.
@@ -1238,8 +1238,8 @@ If no notes were added, skip this commit.
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel diff --stat HEAD~5..HEAD
-git -c safe.directory=D:/workSpace/ohter/clawpanel log --oneline -8
+git -c safe.directory=D:/workSpace/ohter/agentdock diff --stat HEAD~5..HEAD
+git -c safe.directory=D:/workSpace/ohter/agentdock log --oneline -8
 ```
 
 Expected:
@@ -1257,7 +1257,7 @@ feat: add product identity constants
 Run:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel status --short
+git -c safe.directory=D:/workSpace/ohter/agentdock status --short
 ```
 
 Expected:
@@ -1269,8 +1269,8 @@ Expected:
 The spec edit is user-owned and should not be reverted. If the user wants it committed, commit it separately with:
 
 ```powershell
-git -c safe.directory=D:/workSpace/ohter/clawpanel add docs/superpowers/specs/2026-05-14-production-fork-refactor-design.md
-git -c safe.directory=D:/workSpace/ohter/clawpanel commit -m "docs: refine production fork refactor design"
+git -c safe.directory=D:/workSpace/ohter/agentdock add docs/superpowers/specs/2026-05-14-production-fork-refactor-design.md
+git -c safe.directory=D:/workSpace/ohter/agentdock commit -m "docs: refine production fork refactor design"
 ```
 
 - [ ] **Step 3: Prepare the next plan boundary**

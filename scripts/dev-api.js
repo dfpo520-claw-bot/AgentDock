@@ -1,5 +1,5 @@
 /**
- * ClawPanel 开发模式 API 插件
+ * AgentDock 开发模式 API 插件
  * 在 Vite 开发服务器上提供真实 API 端点，替代 mock 数据
  * 使浏览器模式能真正管理 OpenClaw 实例
  */
@@ -78,11 +78,11 @@ function memoryFileName(kind) {
 function uvBinDir() {
   if (isWindows) {
     const appdata = process.env.APPDATA
-    if (appdata) return path.join(appdata, 'clawpanel', 'bin')
-    return path.join(homedir(), '.clawpanel', 'bin')
+    if (appdata) return path.join(appdata, 'agentdock', 'bin')
+    return path.join(homedir(), '.agentdock', 'bin')
   }
-  if (isMac) return path.join(homedir(), 'Library', 'Application Support', 'clawpanel', 'bin')
-  return path.join(homedir(), '.local', 'share', 'clawpanel', 'bin')
+  if (isMac) return path.join(homedir(), 'Library', 'Application Support', 'agentdock', 'bin')
+  return path.join(homedir(), '.local', 'share', 'agentdock', 'bin')
 }
 
 function hermesEnhancedPath() {
@@ -168,11 +168,11 @@ function sanitizeHermesInstallOutput(text = '') {
     .replaceAll('NousResearch/hermes-agent', 'hermes-agent')
 }
 
-// 读取 panel config (~/.openclaw/clawpanel.json) 中的 gitMirror 前缀。
+// 读取 panel config (~/.openclaw/agentdock.json) 中的 gitMirror 前缀。
 // 为空/未设置 → 返回 '' 不启用镜像。
 function gitMirrorPrefix() {
   try {
-    const cfgPath = path.join(DEFAULT_OPENCLAW_DIR, 'clawpanel.json')
+    const cfgPath = path.join(DEFAULT_OPENCLAW_DIR, 'agentdock.json')
     if (!fs.existsSync(cfgPath)) return ''
     const raw = fs.readFileSync(cfgPath, 'utf8')
     const cfg = JSON.parse(raw)
@@ -225,20 +225,20 @@ let CONFIG_PATH = path.join(OPENCLAW_DIR, 'openclaw.json')
 let MCP_CONFIG_PATH = path.join(OPENCLAW_DIR, 'mcp.json')
 let LOGS_DIR = path.join(OPENCLAW_DIR, 'logs')
 let BACKUPS_DIR = path.join(OPENCLAW_DIR, 'backups')
-let DEVICE_KEY_FILE = path.join(OPENCLAW_DIR, 'clawpanel-device-key.json')
+let DEVICE_KEY_FILE = path.join(OPENCLAW_DIR, 'agentdock-device-key.json')
 let DEVICES_DIR = path.join(OPENCLAW_DIR, 'devices')
 let PAIRED_PATH = path.join(DEVICES_DIR, 'paired.json')
 const isWindows = process.platform === 'win32'
 const isMac = process.platform === 'darwin'
 const isLinux = process.platform === 'linux'
 const SCOPES = ['operator.admin', 'operator.approvals', 'operator.pairing', 'operator.read', 'operator.write']
-const CLUSTER_TOKEN = 'clawpanel-cluster-secret-2026'
-const PANEL_CONFIG_PATH = path.join(DEFAULT_OPENCLAW_DIR, 'clawpanel.json')
+const CLUSTER_TOKEN = 'agentdock-cluster-secret-2026'
+const PANEL_CONFIG_PATH = path.join(DEFAULT_OPENCLAW_DIR, 'agentdock.json')
 const PANEL_STATE_DIR = path.dirname(PANEL_CONFIG_PATH)
 const DOCKER_NODES_PATH = path.join(PANEL_STATE_DIR, 'docker-nodes.json')
 const INSTANCES_PATH = path.join(PANEL_STATE_DIR, 'instances.json')
 const DEFAULT_DOCKER_SOCKET = process.platform === 'win32' ? '//./pipe/docker_engine' : '/var/run/docker.sock'
-const DEFAULT_OPENCLAW_IMAGE = 'ghcr.io/qingchencloud/openclaw'
+const DEFAULT_OPENCLAW_IMAGE = 'ghcr.io/DeepAi助手/openclaw'
 const PANEL_VERSION = (() => {
   try {
     return JSON.parse(fs.readFileSync(path.join(__dev_dirname, '..', 'package.json'), 'utf8')).version || '0.0.0'
@@ -262,7 +262,7 @@ function applyOpenclawPathConfig(panelConfig) {
   MCP_CONFIG_PATH = path.join(OPENCLAW_DIR, 'mcp.json')
   LOGS_DIR = path.join(OPENCLAW_DIR, 'logs')
   BACKUPS_DIR = path.join(OPENCLAW_DIR, 'backups')
-  DEVICE_KEY_FILE = path.join(OPENCLAW_DIR, 'clawpanel-device-key.json')
+  DEVICE_KEY_FILE = path.join(OPENCLAW_DIR, 'agentdock-device-key.json')
   DEVICES_DIR = path.join(OPENCLAW_DIR, 'devices')
   PAIRED_PATH = path.join(DEVICES_DIR, 'paired.json')
   process.env.OPENCLAW_HOME = OPENCLAW_DIR
@@ -406,7 +406,7 @@ function detectWindowsShimSource(cliPath) {
   if (!normalized || !fs.existsSync(normalized)) return null
   try {
     const lower = fs.readFileSync(normalized, 'utf8').toLowerCase()
-    if (lower.includes('@qingchencloud') || lower.includes('openclaw-zh')) return 'npm-zh'
+    if (lower.includes('@DeepAi助手') || lower.includes('openclaw-zh')) return 'npm-zh'
     if (lower.includes('/node_modules/openclaw/') || lower.includes('\\node_modules\\openclaw\\')) return 'npm-official'
   } catch {}
   return null
@@ -417,7 +417,7 @@ function classifyCliSource(cliPath) {
   if (!normalized) return null
   const lower = normalized.replace(/\\/g, '/').toLowerCase()
   if (lower.includes('/programs/openclaw/') || lower.includes('/openclaw-bin/') || lower.includes('/opt/openclaw/')) return 'standalone'
-  if (lower.includes('openclaw-zh') || lower.includes('@qingchencloud')) return 'npm-zh'
+  if (lower.includes('openclaw-zh') || lower.includes('@DeepAi助手')) return 'npm-zh'
   if (isWindows) {
     const shimSource = detectWindowsShimSource(normalized)
     if (shimSource) return shimSource
@@ -444,13 +444,13 @@ function detectStandaloneSourceFromDir(dir) {
       }
       const pkg = pairs.package || ''
       const edition = pairs.edition || ''
-      if (pkg.includes('openclaw-zh') || pkg.includes('@qingchencloud')) return 'chinese'
+      if (pkg.includes('openclaw-zh') || pkg.includes('@DeepAi助手')) return 'chinese'
       if (pkg === 'openclaw') return 'official'
       if (['zh', 'zh-cn', 'chinese', 'cn'].includes(edition)) return 'chinese'
       if (['en', 'official'].includes(edition)) return 'official'
     }
   } catch {}
-  if (fs.existsSync(path.join(dir, 'node_modules', '@qingchencloud', 'openclaw-zh', 'package.json'))) return 'chinese'
+  if (fs.existsSync(path.join(dir, 'node_modules', '@DeepAi助手', 'openclaw-zh', 'package.json'))) return 'chinese'
   if (fs.existsSync(path.join(dir, 'node_modules', 'openclaw', 'package.json'))) return 'official'
   return null
 }
@@ -478,8 +478,8 @@ function readVersionFromInstallation(cliPath) {
   } catch {}
   const cliSource = classifyCliSource(resolved)
   const pkgNames = (cliSource === 'standalone' || cliSource === 'npm-zh')
-    ? [path.join('@qingchencloud', 'openclaw-zh'), 'openclaw']
-    : ['openclaw', path.join('@qingchencloud', 'openclaw-zh')]
+    ? [path.join('@DeepAi助手', 'openclaw-zh'), 'openclaw']
+    : ['openclaw', path.join('@DeepAi助手', 'openclaw-zh')]
   const pkgRoots = [path.join(dir, 'node_modules')]
   const parentDir = path.dirname(dir)
   if (parentDir && parentDir !== dir) pkgRoots.push(path.join(parentDir, 'node_modules'))
@@ -1007,17 +1007,17 @@ async function _tryR2Install(version, source, logs) {
     }
     if (!fs.existsSync(modulesDir)) fs.mkdirSync(modulesDir, { recursive: true })
 
-    const qcDir = path.join(modulesDir, '@qingchencloud')
+    const qcDir = path.join(modulesDir, '@DeepAi助手')
     if (fs.existsSync(qcDir)) fs.rmSync(qcDir, { recursive: true, force: true })
 
     logs.push(`解压到 ${modulesDir}`)
     execSync(`tar -xzf "${tmpPath}" -C "${modulesDir}"`, { timeout: 60000, windowsHide: true })
 
-    // 归档内目录可能是 qingchencloud/（Windows tar 不支持 @ 前缀），需要重命名
-    const noAtDir = path.join(modulesDir, 'qingchencloud')
+    // 归档内目录可能是 DeepAi助手/（Windows tar 不支持 @ 前缀），需要重命名
+    const noAtDir = path.join(modulesDir, 'DeepAi助手')
     if (fs.existsSync(noAtDir) && !fs.existsSync(qcDir)) {
       fs.renameSync(noAtDir, qcDir)
-      logs.push('目录已修正: qingchencloud → @qingchencloud')
+      logs.push('目录已修正: DeepAi助手 → @DeepAi助手')
     }
 
     // 创建 bin 链接
@@ -1034,7 +1034,7 @@ async function _tryR2Install(version, source, logs) {
         binDir = '/usr/local/bin'
       }
     }
-    const openclawJs = path.join(modulesDir, '@qingchencloud', 'openclaw-zh', 'bin', 'openclaw.js')
+    const openclawJs = path.join(modulesDir, '@DeepAi助手', 'openclaw-zh', 'bin', 'openclaw.js')
     if (fs.existsSync(openclawJs)) {
       if (isWindows) {
         const cmdContent = `@ECHO off\r\nGOTO start\r\n:find_dp0\r\nSET dp0=%~dp0\r\nEXIT /b\r\n:start\r\nSETLOCAL\r\nCALL :find_dp0\r\n\r\nIF EXIST "%dp0%\\node.exe" (\r\n  SET "_prog=%dp0%\\node.exe"\r\n) ELSE (\r\n  SET "_prog=node"\r\n  SET PATHEXT=%PATHEXT:;.JS;=;%\r\n)\r\n\r\nendLocal & goto #_undefined_# 2>NUL || title %COMSPEC% & "%_prog%"  "${openclawJs}" %*\r\n`
@@ -1066,7 +1066,7 @@ function recommendedVersionFor(source = 'chinese') {
 }
 
 function npmPackageName(source = 'chinese') {
-  return source === 'official' ? 'openclaw' : '@qingchencloud/openclaw-zh'
+  return source === 'official' ? 'openclaw' : '@DeepAi助手/openclaw-zh'
 }
 
 function getConfiguredNpmRegistry() {
@@ -1182,7 +1182,7 @@ function collectLocalSkillRoots(agentSkillsDir) {
 
   if (isWindows) {
     const prefix = readWindowsNpmGlobalPrefix() || path.join(process.env.APPDATA || '', 'npm')
-    for (const pkg of ['openclaw', path.join('@qingchencloud', 'openclaw-zh')]) {
+    for (const pkg of ['openclaw', path.join('@DeepAi助手', 'openclaw-zh')]) {
       const bundledDir = path.join(prefix, 'node_modules', pkg, 'skills')
       if (fs.existsSync(bundledDir) && fs.statSync(bundledDir).isDirectory()) {
         pushRoot(bundledDir, 'openclaw-bundled', true)
@@ -1309,7 +1309,7 @@ function detectInstalledSource() {
     if (bin) {
       const lower = bin.replace(/\\/g, '/').toLowerCase()
       if (lower.includes('/openclaw-bin/') || lower.includes('/opt/openclaw/')) return detectStandaloneSourceFromCliPath(bin) || 'chinese'
-      if (lower.includes('openclaw-zh') || lower.includes('@qingchencloud')) return 'chinese'
+      if (lower.includes('openclaw-zh') || lower.includes('@DeepAi助手')) return 'chinese'
       return 'official'
     }
     return 'official'
@@ -1322,7 +1322,7 @@ function detectInstalledSource() {
       if (npmPrefix) {
         const shimSource = detectWindowsShimSource(path.join(npmPrefix, 'openclaw.cmd'))
         if (shimSource) return normalizeCliInstallSource(shimSource)
-        const zhDir = path.join(npmPrefix, 'node_modules', '@qingchencloud', 'openclaw-zh')
+        const zhDir = path.join(npmPrefix, 'node_modules', '@DeepAi助手', 'openclaw-zh')
         if (fs.existsSync(zhDir)) return 'chinese'
       }
     } catch {}
@@ -1330,7 +1330,7 @@ function detectInstalledSource() {
   }
   try {
     const npmBin = isWindows ? 'npm.cmd' : 'npm'
-    const out = execSync(`${npmBin} list -g @qingchencloud/openclaw-zh --depth=0 2>&1`, { timeout: 10000, windowsHide: true }).toString()
+    const out = execSync(`${npmBin} list -g @DeepAi助手/openclaw-zh --depth=0 2>&1`, { timeout: 10000, windowsHide: true }).toString()
     if (out.includes('openclaw-zh@')) return 'chinese'
   } catch {}
   return 'official'
@@ -1372,7 +1372,7 @@ function getLocalOpenclawVersion() {
           for (const l of lines) { if (l.startsWith('openclaw_version=')) { current = l.split('=')[1]?.trim(); break } }
         }
         if (!current) {
-          const pkg = path.join(saDir, 'node_modules', '@qingchencloud', 'openclaw-zh', 'package.json')
+          const pkg = path.join(saDir, 'node_modules', '@DeepAi助手', 'openclaw-zh', 'package.json')
           if (fs.existsSync(pkg)) current = JSON.parse(fs.readFileSync(pkg, 'utf8')).version
         }
       } catch {}
@@ -1382,7 +1382,7 @@ function getLocalOpenclawVersion() {
     try {
       const npmPrefix = readWindowsNpmGlobalPrefix()
       if (npmPrefix) {
-        for (const pkg of [path.join('@qingchencloud', 'openclaw-zh'), 'openclaw']) {
+        for (const pkg of [path.join('@DeepAi助手', 'openclaw-zh'), 'openclaw']) {
           const pkgPath = path.join(npmPrefix, 'node_modules', pkg, 'package.json')
           if (fs.existsSync(pkgPath)) {
             current = JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version
@@ -1598,7 +1598,7 @@ function isAuthenticated(req) {
   const pw = getAccessPassword()
   if (!pw) return true // 未设密码，放行
   const cookies = parseCookies(req)
-  const token = cookies.clawpanel_session
+  const token = cookies.agentdock_session
   if (!token) return false
   const session = _sessions.get(token)
   if (!session || Date.now() > session.expires) {
@@ -1612,7 +1612,7 @@ function checkPasswordStrength(pw) {
   if (!pw || pw.length < 6) return '密码至少 6 位'
   if (pw.length > 64) return '密码不能超过 64 位'
   if (/^\d+$/.test(pw)) return '密码不能是纯数字'
-  const weak = ['123456', '654321', 'password', 'admin', 'qwerty', 'abc123', '111111', '000000', 'letmein', 'welcome', 'clawpanel', 'openclaw']
+  const weak = ['123456', '654321', 'password', 'admin', 'qwerty', 'abc123', '111111', '000000', 'letmein', 'welcome', 'agentdock', 'openclaw']
   if (weak.includes(pw.toLowerCase())) return '密码太常见，请换一个更安全的密码'
   return null // 通过
 }
@@ -1646,7 +1646,7 @@ function getUid() {
 
 function stripUiFields(config) {
   if (!config || typeof config !== 'object' || Array.isArray(config)) return config
-  // 清理根层级 ClawPanel 内部字段（version info 等），避免污染 openclaw.json
+  // 清理根层级 AgentDock 内部字段（version info 等），避免污染 openclaw.json
   // Issue #89: 这些字段被写入 openclaw.json 后导致 Gateway 无法启动（Unknown config keys）
   const uiRootKeys = [
     'current', 'latest', 'recommended', 'update_available',
@@ -2082,7 +2082,7 @@ function patchGatewayOrigins() {
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
   const origins = requiredControlUiOrigins()
   const existing = config?.gateway?.controlUi?.allowedOrigins || []
-  // 合并：保留用户已有的 origins，只追加 ClawPanel 需要的
+  // 合并：保留用户已有的 origins，只追加 AgentDock 需要的
   const merged = [...new Set([...existing, ...origins])]
   // 幂等：已包含所有需要的 origin 时跳过写入
   if (origins.every(o => existing.includes(o))) return false
@@ -2573,7 +2573,7 @@ function winStartGateway() {
 
   // 写入启动标记到日志
   const timestamp = new Date().toISOString()
-  fs.appendFileSync(logPath, `\n[${timestamp}] [ClawPanel] Starting Gateway on Windows...\n`)
+  fs.appendFileSync(logPath, `\n[${timestamp}] [AgentDock] Starting Gateway on Windows...\n`)
 
   // 用 cmd.exe /c 启动，不用 shell: true（避免额外 cmd.exe 进程链导致终端闪烁）
   const child = spawnOpenclaw(['gateway'], {
@@ -2662,7 +2662,7 @@ function currentGatewayOwnerSignature() {
 }
 
 function matchesCurrentGatewayOwnerSignature(owner) {
-  if (!owner || owner.startedBy !== 'clawpanel') return false
+  if (!owner || owner.startedBy !== 'agentdock') return false
   const current = currentGatewayOwnerSignature()
   if (Number(owner.port || 0) !== current.port) return false
   if (!owner.openclawDir || path.resolve(owner.openclawDir) !== current.openclawDir) return false
@@ -2691,7 +2691,7 @@ function writeGatewayOwner(pid = null) {
     ...current,
     pid: Number.isInteger(pid) && pid > 0 ? pid : null,
     startedAt: new Date().toISOString(),
-    startedBy: 'clawpanel',
+    startedBy: 'agentdock',
   }, null, 2))
 }
 
@@ -2873,7 +2873,7 @@ function linuxStartGateway() {
   const err = fs.openSync(errPath, 'a')
 
   const timestamp = new Date().toISOString()
-  fs.appendFileSync(logPath, `\n[${timestamp}] [ClawPanel] Starting Gateway on Linux...\n`)
+  fs.appendFileSync(logPath, `\n[${timestamp}] [AgentDock] Starting Gateway on Linux...\n`)
 
   const child = spawnOpenclaw(['gateway'], {
     detached: true,
@@ -2982,17 +2982,17 @@ function dockerExecRun(containerId, cmd, endpoint = null, timeout = DOCKER_TASK_
   })
 }
 
-// 查找 clawpanel-agent.cjs 脚本并注入到容器（.cjs 避免容器内 ESM 冲突）
+// 查找 agentdock-agent.cjs 脚本并注入到容器（.cjs 避免容器内 ESM 冲突）
 function findAgentScript() {
   const candidates = [
-    path.resolve(__dev_dirname, '../openclaw-docker/full/clawpanel-agent.cjs'),
-    path.resolve(__dev_dirname, '../openclaw-docker/full/clawpanel-agent.js'),
-    path.resolve(__dev_dirname, '../../openclaw-docker/full/clawpanel-agent.cjs'),
-    path.resolve(__dev_dirname, '../../openclaw-docker/full/clawpanel-agent.js'),
-    path.resolve(__dev_dirname, '../clawpanel-agent.cjs'),
-    path.resolve(__dev_dirname, '../clawpanel-agent.js'),
-    path.resolve(__dev_dirname, 'clawpanel-agent.cjs'),
-    path.resolve(__dev_dirname, 'clawpanel-agent.js'),
+    path.resolve(__dev_dirname, '../openclaw-docker/full/agentdock-agent.cjs'),
+    path.resolve(__dev_dirname, '../openclaw-docker/full/agentdock-agent.js'),
+    path.resolve(__dev_dirname, '../../openclaw-docker/full/agentdock-agent.cjs'),
+    path.resolve(__dev_dirname, '../../openclaw-docker/full/agentdock-agent.js'),
+    path.resolve(__dev_dirname, '../agentdock-agent.cjs'),
+    path.resolve(__dev_dirname, '../agentdock-agent.js'),
+    path.resolve(__dev_dirname, 'agentdock-agent.cjs'),
+    path.resolve(__dev_dirname, 'agentdock-agent.js'),
   ]
   for (const p of candidates) {
     if (!fs.existsSync(p)) continue
@@ -3026,11 +3026,11 @@ function createContainerShellExec(containerId, endpoint) {
 async function injectAgentToContainer(containerId, endpoint, cExecFn, agentScript = null) {
   const source = agentScript || findAgentScript()
   if (!source) {
-    console.warn('[agent] clawpanel-agent.cjs 未找到，跳过注入')
+    console.warn('[agent] agentdock-agent.cjs 未找到，跳过注入')
     return false
   }
   const b64 = Buffer.from(source.content, 'utf8').toString('base64')
-  await cExecFn(`echo '${b64}' | base64 -d > /app/clawpanel-agent.cjs`)
+  await cExecFn(`echo '${b64}' | base64 -d > /app/agentdock-agent.cjs`)
   console.log(`[agent] agent 已同步 → ${containerId.slice(0, 12)} (${source.hash.slice(0, 8)})`)
   _agentScriptSyncCache.set(getAgentSyncCacheKey(containerId, endpoint), source.hash)
   return true
@@ -4394,7 +4394,7 @@ const handlers = {
     const runAgent = async () => {
       const execResult = await dockerExecRun(
         containerId,
-        ['node', '/app/clawpanel-agent.cjs', cmdJson],
+        ['node', '/app/agentdock-agent.cjs', cmdJson],
         node.endpoint,
         timeout,
       )
@@ -4668,7 +4668,7 @@ const handlers = {
 
       // 每个兵种独立的 AGENTS.md（操作指令）
       const ROLE_AGENTS = {
-        general: '# 操作指令\n\n你是龙虾军团的步兵，接受统帅通过 ClawPanel 下达的任务指令。\n\n## 规则\n- 收到任务后立即执行，完成后简要汇报结果\n- 如果任务不清楚，先确认再行动\n- 保持回复简洁，重点突出\n- 你有独立的记忆空间，会自动记录重要信息',
+        general: '# 操作指令\n\n你是龙虾军团的步兵，接受统帅通过 AgentDock 下达的任务指令。\n\n## 规则\n- 收到任务后立即执行，完成后简要汇报结果\n- 如果任务不清楚，先确认再行动\n- 保持回复简洁，重点突出\n- 你有独立的记忆空间，会自动记录重要信息',
         coder: '# 操作指令\n\n你是龙虾军团的突击兵，专精编程作战。\n\n## 规则\n- 收到编程任务后，先分析需求再写代码\n- 代码必须可运行，包含必要的注释\n- 主动进行错误处理和边界检查\n- 如果涉及多个文件，说明修改顺序\n- 完成后给出测试建议\n\n## 专长\n- 全栈开发、API 设计、数据库优化\n- Bug 定位与修复、代码重构\n- 性能优化、安全审计',
         translator: '# 操作指令\n\n你是龙虾军团的翻译官，专精多语言互译。\n\n## 规则\n- 翻译要信达雅，保持原文风格\n- 专业术语保留原文标注\n- 长文分段翻译，保持上下文一致\n- 文学作品注重意境传达\n- 技术文档注重准确性\n\n## 专长\n- 中英日韩法德西等主流语言\n- 技术文档、文学作品、商务邮件',
         writer: '# 操作指令\n\n你是龙虾军团的文书官，专精写作任务。\n\n## 规则\n- 根据场景调整语气和风格\n- 注重结构清晰、逻辑连贯\n- 创意写作要有个性和亮点\n- 技术文档要准确严谨\n- 营销文案要抓住痛点\n\n## 专长\n- 博客文章、技术文档、营销文案\n- 故事创作、剧本、诗歌\n- SEO 优化、社交媒体内容',
@@ -4695,10 +4695,10 @@ const handlers = {
       console.warn(`[init-worker] 兵种配置注入失败: ${e.message}`)
     }
 
-    // 4.5 注入 ClawPanel Agent（容器内专属控制代理）
+    // 4.5 注入 AgentDock Agent（容器内专属控制代理）
     try {
       await injectAgentToContainer(containerId, node.endpoint, cExec)
-      results.files.push('clawpanel-agent.cjs')
+      results.files.push('agentdock-agent.cjs')
     } catch (e) {
       console.warn(`[init-worker] Agent 注入失败: ${e.message}`)
     }
@@ -4921,7 +4921,7 @@ const handlers = {
 
   // 部署模式检测
   get_deploy_mode() {
-    const inDocker = fs.existsSync('/.dockerenv') || (process.env.CLAWPANEL_MODE === 'docker')
+    const inDocker = fs.existsSync('/.dockerenv') || (process.env.AGENTDOCK_MODE === 'docker')
     const dockerAvailable = isDockerAvailable()
     return { inDocker, dockerAvailable, mode: inDocker ? 'docker' : 'local' }
   },
@@ -5033,7 +5033,7 @@ const handlers = {
 
     // 2. 设备密钥
     const t2 = Date.now()
-    const keyPath = path.join(ocDir, 'clawpanel-device-key.json')
+    const keyPath = path.join(ocDir, 'agentdock-device-key.json')
     const keyExists = fs.existsSync(keyPath)
     steps.push({ name: 'device_key', ok: keyExists, message: keyExists ? '设备密钥存在' : '设备密钥不存在', durationMs: Date.now() - t2 })
 
@@ -5161,7 +5161,7 @@ const handlers = {
         const version = (() => {
           // 尝试读取本地安装的 package.json 获取版本号（不 spawn CLI）
           try {
-            for (const pkgName of ['@qingchencloud/openclaw-zh', 'openclaw']) {
+            for (const pkgName of ['@DeepAi助手/openclaw-zh', 'openclaw']) {
               const winNodeModules = readWindowsNpmGlobalPrefix()
                 ? [path.join(readWindowsNpmGlobalPrefix(), 'node_modules')]
                 : [path.join(process.env.APPDATA || '', 'npm', 'node_modules')]
@@ -6034,7 +6034,7 @@ const handlers = {
     // ── standalone 安装（auto / standalone-r2 / standalone-github） ──
     const tryStandalone = source !== 'official' && ['auto', 'standalone-r2', 'standalone-github'].includes(method)
     if (tryStandalone) {
-      const githubReleaseBase = `https://github.com/qingchencloud/openclaw-standalone/releases/download/v${ver}`
+      const githubReleaseBase = `https://github.com/DeepAi助手/openclaw-standalone/releases/download/v${ver}`
       if (method === 'standalone-github') {
         // standalone-github 模式：只走 GitHub
         try {
@@ -6081,7 +6081,7 @@ const handlers = {
     // ── npm install（兜底或用户明确选择） ──
 
     if (!version && recommended) {
-      logs.push(`ClawPanel ${PANEL_VERSION} 默认绑定 OpenClaw 稳定版: ${recommended}`)
+      logs.push(`AgentDock ${PANEL_VERSION} 默认绑定 OpenClaw 稳定版: ${recommended}`)
     }
     const gitConfigured = configureGitHttpsRules()
     const gitEnv = buildGitInstallEnv()
@@ -6121,7 +6121,7 @@ const handlers = {
     }
     // 清理 npm 安装
     try { execSync(`${npmBin} uninstall -g openclaw 2>&1`, { timeout: 60000, windowsHide: true }) } catch {}
-    try { execSync(`${npmBin} uninstall -g @qingchencloud/openclaw-zh 2>&1`, { timeout: 60000, windowsHide: true }) } catch {}
+    try { execSync(`${npmBin} uninstall -g @DeepAi助手/openclaw-zh 2>&1`, { timeout: 60000, windowsHide: true }) } catch {}
     if (cleanConfig && fs.existsSync(OPENCLAW_DIR)) {
       try { fs.rmSync(OPENCLAW_DIR, { recursive: true, force: true }) } catch {}
     }
@@ -6292,13 +6292,13 @@ const handlers = {
         role: 'operator', scopes: SCOPES, caps: [],
         auth: { token: gatewayToken || '' },
         device: { id: deviceId, publicKey, signedAt, nonce: nonce || '', signature: sigB64 },
-        locale: 'zh-CN', userAgent: 'ClawPanel/1.0.0 (web)',
+        locale: 'zh-CN', userAgent: 'AgentDock/1.0.0 (web)',
       },
     }
   },
   // 数据目录 & 图片存储
   assistant_ensure_data_dir() {
-    const dataDir = path.join(OPENCLAW_DIR, 'clawpanel')
+    const dataDir = path.join(OPENCLAW_DIR, 'agentdock')
     for (const sub of ['images', 'sessions', 'cache']) {
       const dir = path.join(dataDir, sub)
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -6307,7 +6307,7 @@ const handlers = {
   },
 
   assistant_save_image({ id, data }) {
-    const dir = path.join(OPENCLAW_DIR, 'clawpanel', 'images')
+    const dir = path.join(OPENCLAW_DIR, 'agentdock', 'images')
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
     const pureB64 = data.includes(',') ? data.split(',')[1] : data
     const ext = data.startsWith('data:image/png') ? 'png'
@@ -6319,7 +6319,7 @@ const handlers = {
   },
 
   assistant_load_image({ id }) {
-    const dir = path.join(OPENCLAW_DIR, 'clawpanel', 'images')
+    const dir = path.join(OPENCLAW_DIR, 'agentdock', 'images')
     for (const ext of ['jpg', 'png', 'gif', 'webp', 'jpeg']) {
       const filepath = path.join(dir, `${id}.${ext}`)
       if (fs.existsSync(filepath)) {
@@ -6332,7 +6332,7 @@ const handlers = {
   },
 
   assistant_delete_image({ id }) {
-    const dir = path.join(OPENCLAW_DIR, 'clawpanel', 'images')
+    const dir = path.join(OPENCLAW_DIR, 'agentdock', 'images')
     for (const ext of ['jpg', 'png', 'gif', 'webp', 'jpeg']) {
       const filepath = path.join(dir, `${id}.${ext}`)
       if (fs.existsSync(filepath)) fs.unlinkSync(filepath)
@@ -6784,24 +6784,24 @@ const handlers = {
 
   async check_panel_update() {
     const sources = [
-      { api: 'https://api.github.com/repos/qingchencloud/clawpanel/releases/latest', releases: 'https://github.com/qingchencloud/clawpanel/releases', name: 'github' },
-      { api: 'https://gitee.com/api/v5/repos/QtCodeCreators/clawpanel/releases/latest', releases: 'https://gitee.com/QtCodeCreators/clawpanel/releases', name: 'gitee' },
+      { api: 'https://api.github.com/repos/dfpo520-claw-bot/AgentDock/releases/latest', releases: 'https://github.com/dfpo520-claw-bot/AgentDock/releases', name: 'github' },
+      { api: 'https://api.github.com/repos/dfpo520-claw-bot/AgentDock/releases/latest', releases: 'https://github.com/dfpo520-claw-bot/AgentDock/releases', name: 'gitee' },
     ]
     let lastErr = ''
     for (const src of sources) {
       try {
         const resp = await globalThis.fetch(src.api, {
           signal: AbortSignal.timeout(8000),
-          headers: { 'User-Agent': 'ClawPanel' },
+          headers: { 'User-Agent': 'AgentDock' },
         })
         if (!resp.ok) { lastErr = `${src.name}: HTTP ${resp.status}`; continue }
         const json = await resp.json()
         const tag = (json.tag_name || '').replace(/^v/, '').trim()
         if (!tag) { lastErr = `${src.name}: 未找到版本号`; continue }
-        return { latest: tag, url: json.html_url || src.releases, source: src.name, downloadUrl: 'https://claw.qt.cool' }
+        return { latest: tag, url: json.html_url || src.releases, source: src.name, downloadUrl: 'https://github.com/dfpo520-claw-bot/AgentDock' }
       } catch (e) { lastErr = `${src.name}: ${e.message}`; continue }
     }
-    return { latest: null, url: 'https://github.com/qingchencloud/clawpanel/releases', error: lastErr }
+    return { latest: null, url: 'https://github.com/dfpo520-claw-bot/AgentDock/releases', error: lastErr }
   },
 
   write_env_file({ path: p, config }) {
@@ -6969,13 +6969,13 @@ const handlers = {
       const existing = fs.readFileSync(configPath, 'utf8')
       configContent = _mergeHermesConfigYaml(existing, modelStr, baseUrlLine, providerLine)
     } else {
-      configContent = `# Hermes Agent configuration (managed by ClawPanel)\nmodel:\n  default: ${modelStr}\n${providerLine}${baseUrlLine}platform_toolsets:\n  api_server:\n    - hermes-api-server\nterminal:\n  backend: local\nplatforms:\n  api_server:\n    enabled: true\n`
+      configContent = `# Hermes Agent configuration (managed by AgentDock)\nmodel:\n  default: ${modelStr}\n${providerLine}${baseUrlLine}platform_toolsets:\n  api_server:\n    - hermes-api-server\nterminal:\n  backend: local\nplatforms:\n  api_server:\n    enabled: true\n`
     }
     fs.writeFileSync(configPath, configContent)
     const envKey = pcfg?.apiKeyEnvVars?.[0] || ''
     const urlEnv = pcfg?.baseUrlEnvVar || ''
     const managedKeys = handlers._hermesManagedEnvKeys()
-    const newPairs = [['GATEWAY_ALLOW_ALL_USERS', 'true'], ['API_SERVER_KEY', 'clawpanel-local']]
+    const newPairs = [['GATEWAY_ALLOW_ALL_USERS', 'true'], ['API_SERVER_KEY', 'agentdock-local']]
     if (envKey && apiKey && apiKey.trim()) newPairs.push([envKey, apiKey.trim()])
     if (urlEnv && baseUrlValue) newPairs.push([urlEnv, baseUrlValue])
     const envPath = path.join(home, '.env')
@@ -7058,21 +7058,21 @@ const handlers = {
 
   async hermes_health_check() {
     const url = `${hermesGatewayUrl()}/health`
-    const resp = await globalThis.fetch(url, { signal: AbortSignal.timeout(5000), headers: { 'User-Agent': 'ClawPanel-Web' } })
+    const resp = await globalThis.fetch(url, { signal: AbortSignal.timeout(5000), headers: { 'User-Agent': 'AgentDock-Web' } })
     if (!resp.ok) throw new Error(`Gateway 返回 HTTP ${resp.status}`)
     return await resp.json()
   },
 
   async hermes_capabilities() {
     const url = `${hermesGatewayUrl()}/v1/capabilities`
-    const resp = await globalThis.fetch(url, { signal: AbortSignal.timeout(5000), headers: { 'User-Agent': 'ClawPanel-Web' } })
+    const resp = await globalThis.fetch(url, { signal: AbortSignal.timeout(5000), headers: { 'User-Agent': 'AgentDock-Web' } })
     if (!resp.ok) throw new Error(`Gateway 返回 HTTP ${resp.status}`)
     return await resp.json()
   },
 
   async hermes_api_proxy({ method, path: reqPath, body, headers: customHeaders } = {}) {
     const url = `${hermesGatewayUrl()}${reqPath}`
-    const opts = { method: method || 'GET', headers: { 'User-Agent': 'ClawPanel-Web' } }
+    const opts = { method: method || 'GET', headers: { 'User-Agent': 'AgentDock-Web' } }
     const timeout = (reqPath.includes('/chat/completions') || reqPath.includes('/responses')) ? 120000 : 30000
     opts.signal = AbortSignal.timeout(timeout)
     // Auto-inject API_SERVER_KEY from .env if available
@@ -7110,7 +7110,7 @@ const handlers = {
     if (sessionId) payload.session_id = sessionId
     if (conversationHistory) payload.conversation_history = conversationHistory
     if (instructions) payload.instructions = instructions
-    const headers = { 'Content-Type': 'application/json', 'User-Agent': 'ClawPanel-Web' }
+    const headers = { 'Content-Type': 'application/json', 'User-Agent': 'AgentDock-Web' }
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
     const resp = await globalThis.fetch(`${gwUrl}/v1/runs`, {
       method: 'POST', headers, body: JSON.stringify(payload), signal: AbortSignal.timeout(10000),
@@ -7191,7 +7191,7 @@ const handlers = {
   },
 
   hermes_lazy_deps_ensure({ feature }) {
-    return { ok: false, error: `Web 模式下无法预装依赖。请在桌面端 ClawPanel 完成 ${feature} 安装。` }
+    return { ok: false, error: `Web 模式下无法预装依赖。请在桌面端 AgentDock 完成 ${feature} 安装。` }
   },
 
   // Batch 2 §I: 流恢复 — GET /v1/runs/{run_id}
@@ -7199,7 +7199,7 @@ const handlers = {
     if (!runId) throw new Error('run_id 不能为空')
     const url = `${hermesGatewayUrl()}/v1/runs/${encodeURIComponent(runId)}`
     const apiKey = _readHermesApiServerKey()
-    const headers = { 'User-Agent': 'ClawPanel-Web' }
+    const headers = { 'User-Agent': 'AgentDock-Web' }
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
     const resp = await globalThis.fetch(url, { headers, signal: AbortSignal.timeout(5000) })
     if (resp.status === 404) return { run_id: runId, status: 'not_found' }
@@ -7215,7 +7215,7 @@ const handlers = {
     if (!runId) throw new Error('run_id 不能为空')
     const url = `${hermesGatewayUrl()}/v1/runs/${encodeURIComponent(runId)}/stop`
     const apiKey = _readHermesApiServerKey()
-    const headers = { 'User-Agent': 'ClawPanel-Web' }
+    const headers = { 'User-Agent': 'AgentDock-Web' }
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
     const resp = await globalThis.fetch(url, { method: 'POST', headers, signal: AbortSignal.timeout(5000) })
     if (!resp.ok) {
@@ -7300,7 +7300,7 @@ const handlers = {
     const port = handlers._hermesDashboardPort()
     const url = `http://127.0.0.1:${port}${reqPath}`
     const buildOpts = (token) => {
-      const opts = { method: String(method).toUpperCase(), headers: { 'User-Agent': 'ClawPanel-Web' } }
+      const opts = { method: String(method).toUpperCase(), headers: { 'User-Agent': 'AgentDock-Web' } }
       opts.signal = AbortSignal.timeout(30000)
       if (token) opts.headers['X-Hermes-Session-Token'] = token
       if (customHeaders && typeof customHeaders === 'object') Object.assign(opts.headers, customHeaders)
@@ -7314,7 +7314,7 @@ const handlers = {
     const friendly = (err) => {
       const msg = String(err?.message || err || '')
       if (/fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|aborted/i.test(msg)) {
-        return new Error(`Hermes Dashboard 未运行（端口 ${port} 无服务）。请在桌面端 ClawPanel 启动 Hermes Agent，或在 Settings 中配置远端 Dashboard 地址`)
+        return new Error(`Hermes Dashboard 未运行（端口 ${port} 无服务）。请在桌面端 AgentDock 启动 Hermes Agent，或在 Settings 中配置远端 Dashboard 地址`)
       }
       return err instanceof Error ? err : new Error(msg)
     }
@@ -7360,7 +7360,7 @@ const handlers = {
     }
     const url = `${hermesGatewayUrl()}/v1/runs/${encodeURIComponent(runId)}/approval`
     const apiKey = _readHermesApiServerKey()
-    const headers = { 'User-Agent': 'ClawPanel-Web', 'Content-Type': 'application/json' }
+    const headers = { 'User-Agent': 'AgentDock-Web', 'Content-Type': 'application/json' }
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
     const resp = await globalThis.fetch(url, {
       method: 'POST',
@@ -7539,7 +7539,7 @@ const handlers = {
     }
     const managed = new Set(handlers._hermesManagedEnvKeys())
     if (managed.has(key)) {
-      throw new Error(`'${key}' is managed by ClawPanel; please configure it via the provider setup page`)
+      throw new Error(`'${key}' is managed by AgentDock; please configure it via the provider setup page`)
     }
     const envPath = path.join(hermesHome(), '.env')
     fs.mkdirSync(path.dirname(envPath), { recursive: true })
@@ -7570,7 +7570,7 @@ const handlers = {
     if (!key) throw new Error('Key cannot be empty')
     const managed = new Set(handlers._hermesManagedEnvKeys())
     if (managed.has(key)) {
-      throw new Error(`'${key}' is managed by ClawPanel; please configure it via the provider setup page`)
+      throw new Error(`'${key}' is managed by AgentDock; please configure it via the provider setup page`)
     }
     const envPath = path.join(hermesHome(), '.env')
     if (!fs.existsSync(envPath)) return null
@@ -7874,7 +7874,7 @@ const handlers = {
     for (const suffix of ['/chat/completions', '/completions', '/responses', '/messages', '/models']) {
       if (base.endsWith(suffix)) base = base.slice(0, -suffix.length)
     }
-    const headers = { 'User-Agent': 'ClawPanel-Web' }
+    const headers = { 'User-Agent': 'AgentDock-Web' }
     let url
     if (api.includes('anthropic')) {
       if (!base.endsWith('/v1')) base += '/v1'
@@ -8528,7 +8528,7 @@ const handlers = {
     if (!resolved.startsWith(canonDir)) throw new Error('Access denied')
     const content = fs.readFileSync(resolved, 'utf8')
     if (!saveToDisk) return content
-    const outDir = path.join(os.homedir(), 'Downloads', 'ClawPanel')
+    const outDir = path.join(os.homedir(), 'Downloads', 'AgentDock')
     fs.mkdirSync(outDir, { recursive: true })
     const safeName = name.replace(/[\\/:*?"<>|]/g, '_')
     const outPath = path.join(outDir, safeName)
@@ -8762,7 +8762,7 @@ function _startHermesNdjsonStream(res) {
 }
 
 function _hermesStreamHeaders(apiKey, json = false) {
-  const headers = { 'User-Agent': 'ClawPanel-Web' }
+  const headers = { 'User-Agent': 'AgentDock-Web' }
   if (json) headers['Content-Type'] = 'application/json'
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`
   return headers
@@ -9067,7 +9067,7 @@ async function _apiMiddleware(req, res, next) {
     clearLoginAttempts(clientIp)
     const token = crypto.randomUUID()
     _sessions.set(token, { expires: Date.now() + SESSION_TTL })
-    res.setHeader('Set-Cookie', `clawpanel_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL / 1000}`)
+    res.setHeader('Set-Cookie', `agentdock_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL / 1000}`)
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ success: true, mustChangePassword: !!cfg.mustChangePassword }))
     return
@@ -9110,7 +9110,7 @@ async function _apiMiddleware(req, res, next) {
     _sessions.clear()
     const token = crypto.randomUUID()
     _sessions.set(token, { expires: Date.now() + SESSION_TTL })
-    res.setHeader('Set-Cookie', `clawpanel_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL / 1000}`)
+    res.setHeader('Set-Cookie', `agentdock_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_TTL / 1000}`)
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ success: true }))
     return
@@ -9164,8 +9164,8 @@ async function _apiMiddleware(req, res, next) {
 
   if (cmd === 'auth_logout') {
     const cookies = parseCookies(req)
-    if (cookies.clawpanel_session) _sessions.delete(cookies.clawpanel_session)
-    res.setHeader('Set-Cookie', 'clawpanel_session=; Path=/; HttpOnly; Max-Age=0')
+    if (cookies.agentdock_session) _sessions.delete(cookies.agentdock_session)
+    res.setHeader('Set-Cookie', 'agentdock_session=; Path=/; HttpOnly; Max-Age=0')
     res.setHeader('Content-Type', 'application/json')
     res.end(JSON.stringify({ success: true }))
     return
@@ -9238,7 +9238,7 @@ export function devApiPlugin() {
     _initApi()
   }
   return {
-    name: 'clawpanel-dev-api',
+    name: 'agentdock-dev-api',
     configureServer(server) {
       ensureInit()
       server.middlewares.use(_apiMiddleware)

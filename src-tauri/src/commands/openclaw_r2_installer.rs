@@ -195,7 +195,7 @@ pub(crate) async fn try_r2_install(
         }
         let _ = app.emit("upgrade-log", format!("解压到 {}", modules_dir.display()));
 
-        let qc_dir = modules_dir.join("@qingchencloud");
+        let qc_dir = modules_dir.join("@DeepAi助手");
         if qc_dir.exists() {
             let _ = std::fs::remove_dir_all(&qc_dir);
         }
@@ -233,12 +233,12 @@ pub(crate) async fn try_r2_install(
             }
         }
 
-        // 归档内目录可能是 qingchencloud/（Windows tar 不支持 @ 前缀），需要重命名
-        let no_at_dir = modules_dir.join("qingchencloud");
+        // 归档内目录可能是 DeepAi助手/（Windows tar 不支持 @ 前缀），需要重命名
+        let no_at_dir = modules_dir.join("DeepAi助手");
         if no_at_dir.exists() && !qc_dir.exists() {
             std::fs::rename(&no_at_dir, &qc_dir)
-                .map_err(|e| format!("重命名 qingchencloud → @qingchencloud 失败: {e}"))?;
-            let _ = app.emit("upgrade-log", "目录已修正: qingchencloud → @qingchencloud");
+                .map_err(|e| format!("重命名 DeepAi助手 → @DeepAi助手 失败: {e}"))?;
+            let _ = app.emit("upgrade-log", "目录已修正: DeepAi助手 → @DeepAi助手");
         }
 
         let _ = app.emit("upgrade-log", "解压完成，创建 bin 链接...");
@@ -247,7 +247,7 @@ pub(crate) async fn try_r2_install(
         let bin_dir =
             super::openclaw_install_runtime::npm_global_bin_dir().ok_or("无法确定 npm bin 目录")?;
         let openclaw_js = modules_dir
-            .join("@qingchencloud")
+            .join("@DeepAi助手")
             .join("openclaw-zh")
             .join("bin")
             .join("openclaw.js");

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Move AgentDock from fork-owned configuration paths and scattered literals to product-owned configuration constants, migration detection, and compatibility aliases for existing ClawPanel/OpenClaw data.
+Move AgentDock from fork-owned configuration paths and scattered literals to product-owned configuration constants, migration detection, and compatibility aliases for existing AgentDock/OpenClaw data.
 
 Phase 2 must keep current behavior stable. It does not rewrite engine configuration formats, remove OpenClaw or Hermes support, or change the frontend route model. Its job is to make configuration ownership explicit so later module and backend command refactors have a stable foundation.
 
@@ -13,7 +13,7 @@ Phase 1 established the AgentDock production identity and kept the existing Taur
 The current configuration ownership is still inherited:
 
 - Rust path resolution lives mostly in `src-tauri/src/commands/mod.rs`.
-- Panel settings are read from `clawpanel.json`.
+- Panel settings are read from `agentdock.json`.
 - The default engine data directory is still `~/.openclaw`.
 - `openclawDir` in panel config can override the OpenClaw config directory.
 - Frontend config calls are exposed through `src/lib/tauri-api.js` as `readPanelConfig` and `writePanelConfig`.
@@ -31,10 +31,10 @@ The product-owned defaults are:
 - Product name: `AgentDock`
 - Panel config filename: `agentdock.json`
 - Product data directory name: `.agentdock`
-- Legacy panel config filename: `clawpanel.json`
+- Legacy panel config filename: `agentdock.json`
 - Legacy OpenClaw data directory name: `.openclaw`
 - Default release channel: `stable`
-- Update manifest URL: `https://raw.githubusercontent.com/agentdock/agentdock/main/update/latest.json`
+- Update manifest URL: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json`
 
 The OpenClaw engine config filename remains `openclaw.json` in Phase 2 because it belongs to the OpenClaw engine contract, not to the AgentDock app shell. Renaming that file belongs to a later engine boundary or backend command replacement phase.
 
@@ -93,7 +93,7 @@ The detection result returned to the frontend should include:
 - `detectedItems: string[]`
 - `recommendedAction: "import" | "ignore"`
 
-The recommended action should be `import` when a valid legacy `clawpanel.json` exists. It should be `ignore` when only weak legacy signals exist, such as an empty legacy directory.
+The recommended action should be `import` when a valid legacy `agentdock.json` exists. It should be `ignore` when only weak legacy signals exist, such as an empty legacy directory.
 
 ## First-Run User Choice
 
@@ -111,7 +111,7 @@ The first-run prompt should appear after the app shell can render but before use
 
 Import should be conservative.
 
-When importing `clawpanel.json` into `agentdock.json`:
+When importing `agentdock.json` into `agentdock.json`:
 
 - Copy recognized panel-level settings such as proxy settings, custom CLI paths, custom OpenClaw directory, search paths, download source choices, and tool path overrides.
 - Add AgentDock migration metadata under an app-owned key, for example:
@@ -121,7 +121,7 @@ When importing `clawpanel.json` into `agentdock.json`:
   "agentdock": {
     "configVersion": 1,
     "migration": {
-      "legacyProduct": "ClawPanel",
+      "legacyProduct": "AgentDock",
       "decision": "imported",
       "sourceConfigPath": "...",
       "timestamp": "2026-05-14T00:00:00.000Z"
@@ -146,7 +146,7 @@ Ignoring legacy data should create product-owned panel config with migration met
   "agentdock": {
     "configVersion": 1,
     "migration": {
-      "legacyProduct": "ClawPanel",
+      "legacyProduct": "AgentDock",
       "decision": "ignored",
       "sourceConfigPath": "...",
       "timestamp": "2026-05-14T00:00:00.000Z"
@@ -164,7 +164,7 @@ Compatibility aliases keep existing installs usable while product-owned defaults
 Resolution order for panel config:
 
 1. Product-owned panel config: `<productDataDir>/agentdock.json`
-2. Existing legacy panel config with a recorded import decision: `<legacyOpenClawDir>/clawpanel.json`
+2. Existing legacy panel config with a recorded import decision: `<legacyOpenClawDir>/agentdock.json`
 3. Other legacy panel config candidates found by the existing Windows home-directory fallback logic
 4. Product-owned default path for new file creation
 
@@ -217,7 +217,7 @@ Testing should focus on path policy and migration decisions.
 Rust tests should cover:
 
 - New install chooses product-owned `agentdock.json` path.
-- Legacy `clawpanel.json` is detected when no product config exists.
+- Legacy `agentdock.json` is detected when no product config exists.
 - Product config suppresses migration prompt.
 - Import copies compatible panel config keys and writes AgentDock migration metadata.
 - Ignore writes only AgentDock migration metadata.
@@ -227,7 +227,7 @@ Frontend tests should cover:
 
 - Product config constants expose the expected filenames and directory names.
 - Startup migration wrapper calls detection and decision APIs.
-- Brand/config surface tests prevent new `clawpanel.json` literals outside declared compatibility modules.
+- Brand/config surface tests prevent new `agentdock.json` literals outside declared compatibility modules.
 
 Existing tests must keep passing:
 
@@ -261,7 +261,7 @@ Existing tests must keep passing:
 ## Success Criteria
 
 - New installs create and read product-owned `agentdock.json`.
-- AgentDock can detect legacy ClawPanel/OpenClaw data.
+- AgentDock can detect legacy AgentDock/OpenClaw data.
 - First launch prompts the user to Import or Ignore legacy data when appropriate.
 - Import and Ignore are non-destructive.
 - Existing OpenClaw engine configuration remains reachable through explicit settings or compatibility aliases.

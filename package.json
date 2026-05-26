@@ -5,13 +5,13 @@
   "description": "AgentDock - production desktop console for multi-engine AI agent operations",
   "type": "module",
   "author": "AgentDock Team",
-  "homepage": "https://github.com/agentdock/agentdock",
+  "homepage": "https://github.com/dfpo520-claw-bot/AgentDock",
   "repository": {
     "type": "git",
-    "url": "https://github.com/agentdock/agentdock"
+    "url": "https://github.com/dfpo520-claw-bot/AgentDock"
   },
   "bugs": {
-    "url": "https://github.com/agentdock/agentdock/issues"
+    "url": "https://github.com/dfpo520-claw-bot/AgentDock/issues"
   },
   "keywords": [
     "ai-agent",

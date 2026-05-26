@@ -73,7 +73,7 @@ pub(crate) async fn get_local_version() -> Option<String> {
             }
             let sa_pkg = sa_dir
                 .join("node_modules")
-                .join("@qingchencloud")
+                .join("@DeepAi助手")
                 .join("openclaw-zh")
                 .join("package.json");
             if let Ok(content) = std::fs::read_to_string(&sa_pkg) {
@@ -93,9 +93,9 @@ pub(crate) async fn get_local_version() -> Option<String> {
                     .map(|source| source == "chinese")
                     .unwrap_or(false);
                 let pkgs: &[&str] = if is_zh {
-                    &["@qingchencloud/openclaw-zh", "openclaw"]
+                    &["@DeepAi助手/openclaw-zh", "openclaw"]
                 } else {
-                    &["openclaw", "@qingchencloud/openclaw-zh"]
+                    &["openclaw", "@DeepAi助手/openclaw-zh"]
                 };
                 for pkg in pkgs {
                     let pkg_json = npm_bin.join("node_modules").join(pkg).join("package.json");
@@ -264,7 +264,7 @@ pub async fn list_openclaw_versions(source: String) -> Result<Vec<String>, Strin
 fn detect_source_from_cmd_shim(cmd_path: &std::path::Path) -> Option<String> {
     let content = std::fs::read_to_string(cmd_path).ok()?;
     let lower = content.to_lowercase();
-    if lower.contains("openclaw-zh") || lower.contains("@qingchencloud") {
+    if lower.contains("openclaw-zh") || lower.contains("@DeepAi助手") {
         return Some("chinese".into());
     }
     if lower.contains("node_modules") {
@@ -285,7 +285,7 @@ fn detect_standalone_source_from_dir(dir: &std::path::Path) -> Option<String> {
                 package = value.trim().to_ascii_lowercase();
             }
         }
-        if package.contains("openclaw-zh") || package.contains("@qingchencloud") {
+        if package.contains("openclaw-zh") || package.contains("@DeepAi助手") {
             return Some("chinese".into());
         }
         if package == "openclaw" {
@@ -300,7 +300,7 @@ fn detect_standalone_source_from_dir(dir: &std::path::Path) -> Option<String> {
     }
     if dir
         .join("node_modules")
-        .join("@qingchencloud")
+        .join("@DeepAi助手")
         .join("openclaw-zh")
         .join("package.json")
         .exists()
@@ -428,7 +428,7 @@ pub(crate) fn detect_installed_source() -> String {
             }
         }
         if let Ok(output) = super::openclaw_install_runtime::npm_command()
-            .args(["list", "-g", "@qingchencloud/openclaw-zh", "--depth=0"])
+            .args(["list", "-g", "@DeepAi助手/openclaw-zh", "--depth=0"])
             .output()
         {
             if String::from_utf8_lossy(&output.stdout).contains("openclaw-zh@") {

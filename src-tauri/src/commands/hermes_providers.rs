@@ -1,4 +1,4 @@
-//! Hermes Provider Registry — ClawPanel's built-in provider catalog
+//! Hermes Provider Registry — AgentDock's built-in provider catalog
 //! by Hermes Agent, with their auth schemes, env vars, base URLs, and known
 //! model catalogs.
 //!
@@ -772,12 +772,12 @@ pub fn primary_base_url_env(provider_id: &str) -> Option<&'static str> {
     })
 }
 
-/// All env var keys that ClawPanel manages across every provider.
+/// All env var keys that AgentDock manages across every provider.
 /// Used by `configure_hermes::merge_env_file` to know which keys to clear
 /// when the user switches providers. This is the union of:
 ///   - all `api_key_env_vars` across providers
 ///   - all non-empty `base_url_env_var` values
-///   - the two ClawPanel-specific env vars (`GATEWAY_ALLOW_ALL_USERS`,
+///   - the two AgentDock-specific env vars (`GATEWAY_ALLOW_ALL_USERS`,
 ///     `API_SERVER_KEY`)
 pub fn all_managed_env_keys() -> Vec<&'static str> {
     let mut out: Vec<&'static str> = Vec::new();
@@ -791,7 +791,7 @@ pub fn all_managed_env_keys() -> Vec<&'static str> {
             out.push(p.base_url_env_var);
         }
     }
-    // ClawPanel-specific keys
+    // AgentDock-specific keys
     for extra in &["GATEWAY_ALLOW_ALL_USERS", "API_SERVER_KEY"] {
         if !out.contains(extra) {
             out.push(extra);

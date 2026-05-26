@@ -5,23 +5,27 @@ import { t } from '../../lib/i18n.js'
 import { api, invalidate } from '../../lib/tauri-api.js'
 
 // Hermes 状态
+let _installed = false
 let _ready = false
 let _running = false
 let _listeners = []
 let _pollTimer = null
 
 async function detectHermesStatus() {
+  let info = null
   try {
     invalidate('check_hermes')
-    const info = await api.checkHermes()
-    _ready = !!info?.installed && !!info?.configExists
+    info = await api.checkHermes()
+    _installed = !!info?.installed
+    _ready = _installed && !!info?.configExists
     _running = !!info?.gatewayRunning
   } catch (_) {
+    _installed = false
     _ready = false
     _running = false
   }
-  _listeners.forEach(fn => { try { fn({ ready: _ready, running: _running }) } catch (_) {} })
-  return _ready
+  _listeners.forEach(fn => { try { fn({ installed: _installed, ready: _ready, running: _running }) } catch (_) {} })
+  return info
 }
 
 function startPoll() {
@@ -40,8 +44,8 @@ export default {
   icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
 
   async detect() {
-    await detectHermesStatus()
-    return { installed: _ready, ready: _ready }
+    const info = await detectHermesStatus()
+    return { installed: _installed, ready: _ready, version: info?.version || null }
   },
 
   async boot() {
@@ -143,17 +147,18 @@ export default {
   getSetupRoute() { return '/h/setup' },
   getDefaultRoute() { return '/h/dashboard' },
 
+  isInstalled() { return _installed },
   isReady() { return _ready },
   isGatewayRunning() { return _running },
   isGatewayForeign() { return false },
 
   onStateChange(fn) {
-    _stateListeners.push(fn)
-    return () => { _stateListeners = _stateListeners.filter(cb => cb !== fn) }
+    _listeners.push(fn)
+    return () => { _listeners = _listeners.filter(cb => cb !== fn) }
   },
   onReadyChange(fn) {
-    _readyListeners.push(fn)
-    return () => { _readyListeners = _readyListeners.filter(cb => cb !== fn) }
+    _listeners.push(fn)
+    return () => { _listeners = _listeners.filter(cb => cb !== fn) }
   },
 
   isFeatureAvailable() { return true },

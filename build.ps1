@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# ClawPanel 本地构建脚本（Windows）
+# AgentDock 本地构建脚本（Windows）
 # 用法:
 #   .\build.ps1            — 构建 Windows 安装包（默认）
 #   .\build.ps1 -Debug     — Debug 构建（快，不打包）
@@ -23,7 +23,7 @@ function Write-Fail([string]$msg) {
 }
 
 Write-Host ""
-Write-Host "  ClawPanel 构建工具" -ForegroundColor Magenta
+Write-Host "  AgentDock 构建工具" -ForegroundColor Magenta
 Write-Host "  ─────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host "  平台: Windows x64 (本机构建)" -ForegroundColor DarkGray
 Write-Host "  跨平台构建 (macOS / Linux) 请推送 tag 触发 GitHub Actions" -ForegroundColor DarkGray
@@ -107,7 +107,7 @@ Write-Host "  ──────────────────────
 
 $bundleDir = "src-tauri\target\release\bundle"
 if ($Debug) {
-    $exePath = "src-tauri\target\debug\clawpanel.exe"
+    $exePath = "src-tauri\target\debug\agentdock.exe"
     Write-Host "  可执行文件: $exePath" -ForegroundColor White
 } else {
     Write-Host "  安装包目录: $bundleDir" -ForegroundColor White

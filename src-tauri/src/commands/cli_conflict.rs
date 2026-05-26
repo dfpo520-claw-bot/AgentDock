@@ -3,7 +3,7 @@
 //! ## 用户场景
 //!
 //! 用户系统可能装了多个 OpenClaw（CherryStudio 自带、旧 npm 全局、手动下载等），
-//! 它们与 ClawPanel 管理的 standalone 共存时会引起：
+//! 它们与 AgentDock 管理的 standalone 共存时会引起：
 //! - 用户在终端用 `openclaw` 时拿到老版本，schema 与 standalone 不兼容 → doctor --fix 卡死
 //! - 第三方工具调用 openclaw 时拿到老版本
 //! - PATH 优先级影响 Tauri 后端选择 CLI（虽然 `is_rejected_cli_path` 排除了 cherrystudio，
@@ -12,11 +12,11 @@
 //! ## 本模块功能
 //!
 //! - **扫描**：列出 PATH 中所有非 standalone 的 openclaw 可执行文件
-//! - **隔离**：把指定路径重命名为 `<原名>.disabled-by-clawpanel-<ts>.bak`，**不真删**
+//! - **隔离**：把指定路径重命名为 `<原名>.disabled-by-agentdock-<ts>.bak`，**不真删**
 //! - **列出已隔离**：扫描 PATH 中现有的 `.bak` 文件
 //! - **恢复**：把 `.bak` 改回原名
 //!
-//! 隔离而非删除，是为了让用户/被影响的第三方软件可以恢复，避免 ClawPanel 越界破坏用户系统。
+//! 隔离而非删除，是为了让用户/被影响的第三方软件可以恢复，避免 AgentDock 越界破坏用户系统。
 
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -132,7 +132,7 @@ fn try_get_version(path: &Path) -> Option<String> {
         candidates.push(
             parent
                 .join("node_modules")
-                .join("@qingchencloud")
+                .join("@DeepAi助手")
                 .join("openclaw-zh")
                 .join("package.json"),
         );
@@ -148,7 +148,7 @@ fn try_get_version(path: &Path) -> Option<String> {
         // 必须是 openclaw 相关的包
         let name = json.get("name").and_then(|v| v.as_str()).unwrap_or("");
         let is_openclaw_pkg =
-            name == "openclaw" || name == "@qingchencloud/openclaw-zh" || name.contains("openclaw");
+            name == "openclaw" || name == "@DeepAi助手/openclaw-zh" || name.contains("openclaw");
         if !is_openclaw_pkg {
             continue;
         }
@@ -218,7 +218,7 @@ pub async fn scan_openclaw_path_conflicts() -> Result<Vec<CliConflict>, String> 
     Ok(conflicts)
 }
 
-/// 把指定路径的 openclaw 可执行文件重命名为 `.disabled-by-clawpanel-<ts>.bak`
+/// 把指定路径的 openclaw 可执行文件重命名为 `.disabled-by-agentdock-<ts>.bak`
 #[tauri::command]
 pub async fn quarantine_openclaw_path(path: String) -> Result<QuarantineRecord, String> {
     let original = PathBuf::from(&path);
@@ -249,7 +249,7 @@ pub async fn quarantine_openclaw_path(path: String) -> Result<QuarantineRecord, 
     }
 
     let ts = chrono::Local::now().format("%Y%m%d-%H%M%S").to_string();
-    let new_name = format!("{}.disabled-by-clawpanel-{}.bak", file_name, ts);
+    let new_name = format!("{}.disabled-by-agentdock-{}.bak", file_name, ts);
     let parent = original
         .parent()
         .ok_or_else(|| "无法解析父目录".to_string())?;
@@ -292,12 +292,12 @@ pub async fn quarantine_openclaw_paths_bulk(
     Ok(BulkQuarantineResult { records, failed })
 }
 
-/// 解析 `<original>.disabled-by-clawpanel-<digits>.bak` 中的 `<original>`
+/// 解析 `<original>.disabled-by-agentdock-<digits>.bak` 中的 `<original>`
 fn parse_quarantined_name(name: &str) -> Option<&str> {
     if !name.ends_with(".bak") {
         return None;
     }
-    let marker = ".disabled-by-clawpanel-";
+    let marker = ".disabled-by-agentdock-";
     let pos = name.rfind(marker)?;
     // marker 之后必须是 数字-数字 / 数字 这种 timestamp，简单做法只校验 marker 之后到 .bak 之间不为空
     let between = &name[pos + marker.len()..name.len() - 4];
@@ -387,7 +387,7 @@ pub async fn restore_quarantined_openclaw(quarantined_path: String) -> Result<St
         .and_then(|n| n.to_str())
         .ok_or_else(|| "无效的文件名".to_string())?;
     let original_name = parse_quarantined_name(file_name)
-        .ok_or_else(|| format!("不是 ClawPanel 隔离文件，无法恢复: {}", file_name))?;
+        .ok_or_else(|| format!("不是 AgentDock 隔离文件，无法恢复: {}", file_name))?;
 
     let parent = qpath.parent().ok_or_else(|| "无法解析父目录".to_string())?;
     let original_path = parent.join(original_name);
@@ -412,11 +412,11 @@ mod tests {
     #[test]
     fn parse_quarantined_name_basic() {
         assert_eq!(
-            parse_quarantined_name("openclaw.exe.disabled-by-clawpanel-20260507-153012.bak"),
+            parse_quarantined_name("openclaw.exe.disabled-by-agentdock-20260507-153012.bak"),
             Some("openclaw.exe")
         );
         assert_eq!(
-            parse_quarantined_name("openclaw.cmd.disabled-by-clawpanel-12345.bak"),
+            parse_quarantined_name("openclaw.cmd.disabled-by-agentdock-12345.bak"),
             Some("openclaw.cmd")
         );
     }
@@ -426,7 +426,7 @@ mod tests {
         assert_eq!(parse_quarantined_name("openclaw.exe"), None);
         assert_eq!(parse_quarantined_name("openclaw.exe.bak"), None);
         assert_eq!(
-            parse_quarantined_name("openclaw.exe.disabled-by-clawpanel-.bak"),
+            parse_quarantined_name("openclaw.exe.disabled-by-agentdock-.bak"),
             None
         );
         assert_eq!(parse_quarantined_name("not-related.bak"), None);

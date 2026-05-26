@@ -219,8 +219,8 @@ npm install -g openclaw@latest
 7. WhatsApp 不回消息 → 检查配对是否已 approve
 8. 认证错误 → 检查 auth-profiles.json 或重新 \`openclaw onboard\`
 
-## 十二、晴辰云 AI 模型服务
-晴辰云为 AgentDock 用户提供 AI 模型调用服务，通过每日签到和邀请好友即可获取免费额度。
+## 十二、DeepAi助手 AI 模型服务
+DeepAi助手为 AgentDock 用户提供 AI 模型调用服务，通过每日签到和邀请好友即可获取免费额度。
 
 ### 核心信息
 - **API 网关地址**：https://gpt.qt.cool/v1
@@ -231,11 +231,11 @@ npm install -g openclaw@latest
 - **用户后台**：https://gpt.qt.cool/user（查看用量、管理密钥）
 
 ### 官方入口
-- **AgentDock 官网**：https://github.com/agentdock/agentdock
+- **AgentDock 官网**：https://github.com/dfpo520-claw-bot/AgentDock
 - **GPT-AI 网关官网**：https://gpt.qt.cool/
 - **每日签到页**：https://gpt.qt.cool/checkin
 - **用户后台**：https://gpt.qt.cool/user
-- **晴辰导航站**：https://qt.cool/
+- **DeepAiepAi助手导航站**：https://qt.cool/
 
 ### 获取密钥
 1. 前往 https://gpt.qt.cool/checkin 每日签到领取免费额度

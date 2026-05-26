@@ -24,7 +24,7 @@ import { onKernelChange } from './lib/kernel.js'
 import { applyLegacyConfigDecision, checkLegacyConfigMigration, describeLegacyConfigDetection } from './lib/product-config.js'
 import { PRODUCT_IDENTITY } from './lib/product-identity.js'
 import { showFloorBlocker, hideFloorBlocker } from './components/floor-blocker.js'
-import { registerEngine, initEngineManager, getActiveEngine, getActiveEngineId, needsInitialEngineChoice, isEngineSetupDeferred, adoptActiveEngineSelection, onEngineChange } from './lib/engine-manager.js'
+import { registerEngine, initEngineManager, getActiveEngine, getActiveEngineId, onEngineChange } from './lib/engine-manager.js'
 import openclawEngine from './engines/openclaw/index.js'
 import hermesEngine from './engines/hermes/index.js'
 import xintianEngine from './engines/xintian/index.js'
@@ -78,11 +78,11 @@ const isTauri = isTauriRuntime()
 
 async function checkAuth() {
   if (isTauri) {
-    // 桌面端：读 clawpanel.json，检查密码配置
+    // 桌面端：读 agentdock.json，检查密码配置
     try {
       const cfg = await api.readPanelConfig()
       if (!cfg.accessPassword) return { ok: true }
-      if (sessionStorage.getItem('clawpanel_authed') === '1') return { ok: true }
+      if (sessionStorage.getItem('agentdock_authed') === '1') return { ok: true }
       // 默认密码：直接传给登录页，避免二次读取
       const defaultPw = (cfg.mustChangePassword && cfg.accessPassword) ? cfg.accessPassword : null
       return { ok: false, defaultPw }
@@ -199,7 +199,7 @@ function showLoginOverlay(defaultPw) {
   let _captcha = _loginFailCount >= CAPTCHA_THRESHOLD ? _genCaptcha() : null
   const securityLabel = t('sidebar.security')
   const accessPasswordField = '<code style="background:rgba(99,102,241,.1);padding:1px 5px;border-radius:3px;font-size:10px">accessPassword</code>'
-  const resetPath = '<code style="background:rgba(99,102,241,.1);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">~/.openclaw/clawpanel.json</code>'
+  const resetPath = '<code style="background:rgba(99,102,241,.1);padding:2px 6px;border-radius:3px;font-size:10px;word-break:break-all">~/.openclaw/agentdock.json</code>'
   overlay.innerHTML = `
     <div class="login-card">
       ${_logoSvg}
@@ -273,7 +273,7 @@ function showLoginOverlay(defaultPw) {
             btn.textContent = t('security.loginAction')
             return
           }
-          sessionStorage.setItem('clawpanel_authed', '1')
+          sessionStorage.setItem('agentdock_authed', '1')
           // 同步建立 web session（WEB_ONLY_CMDS 需要 cookie 认证）
           try {
             await fetch('/__api/auth_login', {
@@ -285,7 +285,7 @@ function showLoginOverlay(defaultPw) {
           overlay.classList.add('hide')
           setTimeout(() => overlay.remove(), 400)
           if (cfg.accessPassword === '123456') {
-            sessionStorage.setItem('clawpanel_must_change_pw', '1')
+            sessionStorage.setItem('agentdock_must_change_pw', '1')
           }
           resolve()
         } else {
@@ -311,7 +311,7 @@ function showLoginOverlay(defaultPw) {
           overlay.classList.add('hide')
           setTimeout(() => overlay.remove(), 400)
           if (data.mustChangePassword || data.defaultPassword === '123456') {
-            sessionStorage.setItem('clawpanel_must_change_pw', '1')
+            sessionStorage.setItem('agentdock_must_change_pw', '1')
           }
           resolve()
         }
@@ -325,7 +325,7 @@ function showLoginOverlay(defaultPw) {
 }
 
 // 全局 401 拦截：API 返回 401 时弹出登录
-window.__clawpanel_show_login = async function() {
+window.__agentdock_show_login = async function() {
   if (document.getElementById('login-overlay')) return
   await showLoginOverlay()
   location.reload()
@@ -341,15 +341,8 @@ async function boot() {
   registerEngine(xintianEngine)
   registerRoute('/engine-select', () => import('./pages/engine-select.js'))
 
-  // 初始化引擎管理器：读取 clawpanel.json 的 engineMode，注册对应路由
+  // 初始化引擎管理器：读取 agentdock.json 的 engineMode，注册对应路由
   await initEngineManager()
-
-  // 用户尚未做过明确的引擎选择（无 engineSetupChoice）→ 立即把默认路由
-  // 指向 /engine-select，避免初始化期间先闪到 /dashboard 或 /setup 再被
-  // 后续逻辑弹回选择页。引擎就绪后会在下方自动 adopt 并跳到 dashboard。
-  if (needsInitialEngineChoice() || isEngineSetupDeferred()) {
-    setDefaultRoute('/engine-select')
-  }
 
   // 订阅内核版本变化：低于硬地板时弹出全屏拦截，恢复后自动隐藏；
   // 同时刷新 sidebar 以反映 "内核可升级" 提示卡片状态。
@@ -414,13 +407,13 @@ async function boot() {
   }, 3000)
 
   // 默认密码提醒横幅
-  if (sessionStorage.getItem('clawpanel_must_change_pw') === '1') {
+  if (sessionStorage.getItem('agentdock_must_change_pw') === '1') {
     const banner = document.createElement('div')
     banner.id = 'pw-change-banner'
     banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:13px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)'
     banner.innerHTML = `
       <span>${statusIcon('warn', 14)} ${t('common.defaultPasswordBanner')}</span>
-      <a href="#/security" style="color:#fff;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600" onclick="document.getElementById('pw-change-banner').remove();document.body.classList.remove('has-security-banner');document.documentElement.style.removeProperty('--security-banner-height');sessionStorage.removeItem('clawpanel_must_change_pw')">${t('common.goSecurity')}</a>
+      <a href="#/security" style="color:#fff;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600" onclick="document.getElementById('pw-change-banner').remove();document.body.classList.remove('has-security-banner');document.documentElement.style.removeProperty('--security-banner-height');sessionStorage.removeItem('agentdock_must_change_pw')">${t('common.goSecurity')}</a>
       <button onclick="this.parentElement.remove();document.body.classList.remove('has-security-banner');document.documentElement.style.removeProperty('--security-banner-height')" style="background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;font-size:16px;padding:0 4px;margin-left:4px">✕</button>
     `
     document.body.prepend(banner)
@@ -489,21 +482,7 @@ async function boot() {
     // 监听引擎状态变化（如 setup 完成后 ready 变为 true），自动刷新侧边栏
     bindEngineListeners(engine)
 
-    if (needsInitialEngineChoice() && engine.isReady()) {
-      await adoptActiveEngineSelection({ choice: 'auto-detected' })
-      renderSidebar(sidebar)
-    }
-
-    if (needsInitialEngineChoice() && !engine.isReady()) {
-      setDefaultRoute('/engine-select')
-      navigate('/engine-select')
-    } else if (isEngineSetupDeferred() && !engine.isReady()) {
-      setDefaultRoute('/engine-select')
-      const currentHash = window.location.hash.slice(1) || ''
-      if (!currentHash || currentHash === engine.getSetupRoute()) {
-        navigate('/engine-select')
-      }
-    } else if (!engine.isReady()) {
+    if (!engine.isReady()) {
       setDefaultRoute(engine.getSetupRoute())
       navigate(engine.getSetupRoute())
     } else {
@@ -686,7 +665,7 @@ async function checkGlobalUpdate() {
     if (!ver) return
 
     // 用户已忽略过该版本，不再打扰
-    const dismissed = localStorage.getItem('clawpanel_update_dismissed')
+    const dismissed = localStorage.getItem('agentdock_update_dismissed')
     if (dismissed === ver) return
 
     const changelog = info.manifest?.changelog || ''
@@ -711,7 +690,7 @@ async function checkGlobalUpdate() {
 
     // 关闭按钮：记住忽略的版本
     banner.querySelector('#btn-update-dismiss')?.addEventListener('click', () => {
-      localStorage.setItem('clawpanel_update_dismissed', ver)
+      localStorage.setItem('agentdock_update_dismissed', ver)
       banner.classList.add('update-banner-hidden')
     })
 

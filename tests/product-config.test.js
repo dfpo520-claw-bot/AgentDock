@@ -14,16 +14,16 @@ test('PRODUCT_CONFIG exposes product-owned config defaults', () => {
   assert.equal(PRODUCT_CONFIG.productId, 'agentdock')
   assert.equal(PRODUCT_CONFIG.panelConfigFile, 'agentdock.json')
   assert.equal(PRODUCT_CONFIG.productDataDirName, '.agentdock')
-  assert.equal(PRODUCT_CONFIG.legacyPanelConfigFile, 'clawpanel.json')
+  assert.equal(PRODUCT_CONFIG.legacyPanelConfigFile, 'agentdock.json')
   assert.equal(PRODUCT_CONFIG.legacyDataDirName, '.openclaw')
   assert.equal(PRODUCT_CONFIG.releaseChannel, 'stable')
 })
 
-test('config filename helpers distinguish product and legacy files', () => {
+test('config filename helpers recognize AgentDock-owned files', () => {
   assert.equal(isProductPanelConfigFile('agentdock.json'), true)
-  assert.equal(isProductPanelConfigFile('clawpanel.json'), false)
-  assert.equal(isKnownLegacyPanelConfigFile('clawpanel.json'), true)
-  assert.equal(isKnownLegacyPanelConfigFile('agentdock.json'), false)
+  assert.equal(isProductPanelConfigFile('openclaw.json'), false)
+  assert.equal(isKnownLegacyPanelConfigFile('agentdock.json'), true)
+  assert.equal(isKnownLegacyPanelConfigFile('openclaw.json'), false)
 })
 
 test('product config exposes migration API wrappers', () => {
@@ -63,13 +63,13 @@ test('legacy detection summary normalizes migration payloads', () => {
     describeLegacyConfigDetection({
       needed: true,
       detectedItems: ['legacyPanelConfig'],
-      legacyConfigPath: 'C:/Users/demo/.openclaw/clawpanel.json',
+      legacyConfigPath: 'C:/Users/demo/.openclaw/agentdock.json',
       recommendedAction: 'import',
     }),
     {
       needed: true,
       items: ['legacyPanelConfig'],
-      legacyPath: 'C:/Users/demo/.openclaw/clawpanel.json',
+      legacyPath: 'C:/Users/demo/.openclaw/agentdock.json',
       recommendedAction: 'import',
     },
   )

@@ -103,7 +103,7 @@ async fn ensure_managed_gateway_ready(app: &tauri::AppHandle, gw_url: &str) -> R
 fn hermes_gateway_http_client(timeout: std::time::Duration) -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .timeout(timeout)
-        .user_agent("ClawPanel")
+        .user_agent("AgentDock")
         .gzip(true)
         .brotli(true)
         .deflate(true)
@@ -418,17 +418,17 @@ fn hermes_home() -> PathBuf {
     dirs::home_dir().unwrap_or_default().join(".hermes")
 }
 
-/// ClawPanel 管理的 uv 二进制存放路径
+/// AgentDock 管理的 uv 二进制存放路径
 fn uv_bin_dir() -> PathBuf {
     #[cfg(target_os = "windows")]
     {
         let appdata = std::env::var("APPDATA").unwrap_or_default();
         if !appdata.is_empty() {
-            return PathBuf::from(appdata).join("clawpanel").join("bin");
+            return PathBuf::from(appdata).join("agentdock").join("bin");
         }
         dirs::home_dir()
             .unwrap_or_default()
-            .join(".clawpanel")
+            .join(".agentdock")
             .join("bin")
     }
     #[cfg(target_os = "macos")]
@@ -437,7 +437,7 @@ fn uv_bin_dir() -> PathBuf {
             .unwrap_or_default()
             .join("Library")
             .join("Application Support")
-            .join("clawpanel")
+            .join("agentdock")
             .join("bin")
     }
     #[cfg(target_os = "linux")]
@@ -446,7 +446,7 @@ fn uv_bin_dir() -> PathBuf {
             .unwrap_or_default()
             .join(".local")
             .join("share")
-            .join("clawpanel")
+            .join("agentdock")
             .join("bin")
     }
 }
@@ -485,7 +485,7 @@ fn hermes_enhanced_path() -> String {
     let home = dirs::home_dir().unwrap_or_default();
     let mut extra: Vec<String> = vec![];
 
-    // ClawPanel 管理的 uv 二进制目录
+    // AgentDock 管理的 uv 二进制目录
     extra.push(uv_bin_dir().to_string_lossy().to_string());
 
     // uv tool 安装的可执行文件目录
@@ -1264,7 +1264,7 @@ async fn ensure_uv(app: &tauri::AppHandle) -> Result<String, String> {
     let url = uv_download_url(version);
     let _ = app.emit("hermes-install-log", format!("下载: {url}"));
 
-    let client = super::build_http_client(std::time::Duration::from_secs(300), Some("ClawPanel"))
+    let client = super::build_http_client(std::time::Duration::from_secs(300), Some("AgentDock"))
         .map_err(|e| format!("HTTP 客户端创建失败: {e}"))?;
 
     let resp = client
@@ -1694,7 +1694,7 @@ pub async fn configure_hermes(
     }
 
     // ---- Provider-aware key routing ----
-    // ClawPanel 根据内置 provider registry 决定 .env key 名和
+    // AgentDock 根据内置 provider registry 决定 .env key 名和
     // config.yaml 的 model.provider 字段。
     use super::hermes_providers;
 
@@ -1733,7 +1733,7 @@ pub async fn configure_hermes(
     } else {
         // 首次创建：生成完整的基线配置
         format!(
-            r#"# Hermes Agent configuration (managed by ClawPanel)
+            r#"# Hermes Agent configuration (managed by AgentDock)
 model:
   default: {model_str}
 {provider_line}{base_url_line}platform_toolsets:
@@ -1756,14 +1756,14 @@ platforms:
     let key_env = hermes_providers::primary_api_key_env(&provider);
     let url_env = hermes_providers::primary_base_url_env(&provider);
 
-    // ClawPanel 管理的 key 列表：包含所有 provider 的 api_key_env_vars + base_url_env_vars
-    // + ClawPanel 特定的两个 key。换 provider 时这些会被重写或清除。
+    // AgentDock 管理的 key 列表：包含所有 provider 的 api_key_env_vars + base_url_env_vars
+    // + AgentDock 特定的两个 key。换 provider 时这些会被重写或清除。
     let managed_keys_owned = hermes_providers::all_managed_env_keys();
     let managed_keys: Vec<&str> = managed_keys_owned.to_vec();
 
     let mut new_pairs: Vec<(String, String)> = vec![
         ("GATEWAY_ALLOW_ALL_USERS".into(), "true".into()),
-        ("API_SERVER_KEY".into(), "clawpanel-local".into()),
+        ("API_SERVER_KEY".into(), "agentdock-local".into()),
     ];
 
     if let Some(env) = key_env {
@@ -2154,7 +2154,7 @@ pub async fn hermes_read_config_full() -> Result<Value, String> {
 // `platform.telegram` / `tts.elevenlabs`）对应一组 PyPI 包。原本只有 Gateway
 // 启动 platform 模块时才会调 ensure() 装包，导致首次启动卡住甚至超时崩。
 //
-// 这里把 lazy_deps 暴露给 ClawPanel UI：
+// 这里把 lazy_deps 暴露给 AgentDock UI：
 //   - hermes_lazy_deps_features() — 列所有可装的 feature（小白选）
 //   - hermes_lazy_deps_status(features) — 批量查每个 feature 是否已安装
 //   - hermes_lazy_deps_ensure(feature) — 主动预装
@@ -5467,7 +5467,7 @@ fn safe_download_filename(name: &str) -> String {
         .collect()
 }
 
-/// Read an entire log file and save it to the user's Downloads/ClawPanel
+/// Read an entire log file and save it to the user's Downloads/AgentDock
 /// directory. We refuse path traversal and only allow files whose canonical
 /// path lives inside `~/.hermes/logs/`.
 #[tauri::command]
@@ -5492,7 +5492,7 @@ pub async fn hermes_logs_download(name: String) -> Result<Value, String> {
     let content = super::secret_redaction::redact_secrets(
         std::fs::read_to_string(&canon_file).map_err(|e| format!("Failed to read log: {e}"))?,
     );
-    let out_dir = downloads_dir_fallback().join("ClawPanel");
+    let out_dir = downloads_dir_fallback().join("AgentDock");
     std::fs::create_dir_all(&out_dir).map_err(|e| format!("Failed to create download dir: {e}"))?;
     let out_path = out_dir.join(safe_download_filename(&name));
     std::fs::write(&out_path, content).map_err(|e| format!("Failed to save log: {e}"))?;
@@ -5504,7 +5504,7 @@ pub async fn hermes_logs_download(name: String) -> Result<Value, String> {
 // ============================================================================
 // api_server guardian
 //
-// ClawPanel's Hermes integration requires `platforms.api_server.enabled: true`
+// AgentDock's Hermes integration requires `platforms.api_server.enabled: true`
 // in ~/.hermes/config.yaml so that `hermes gateway run` exposes the
 // /v1/runs endpoint we depend on. The setting is written once by
 // `configure_hermes`, but config changes can remove it.
@@ -5682,11 +5682,11 @@ fn ensure_api_server_enabled(app: &tauri::AppHandle) -> Result<(), String> {
 //
 // Users may need to set custom environment variables for Hermes (e.g.
 // `TAVILY_API_KEY` for the tavily skill, `HTTP_PROXY`, etc.). These keys
-// live in ~/.hermes/.env alongside the ClawPanel-managed provider keys.
+// live in ~/.hermes/.env alongside the AgentDock-managed provider keys.
 //
 // The three commands below:
 //   * `hermes_env_read_unmanaged` — returns every key in .env that is NOT
-//      managed by ClawPanel (i.e. not in `hermes_providers::all_managed_env_keys`)
+//      managed by AgentDock (i.e. not in `hermes_providers::all_managed_env_keys`)
 //   * `hermes_env_set`            — writes or updates an unmanaged key
 //   * `hermes_env_delete`         — removes an unmanaged key
 //
@@ -5768,7 +5768,7 @@ pub fn hermes_env_set(key: String, value: String) -> Result<(), String> {
     let managed = hermes_providers::all_managed_env_keys();
     if managed.contains(&key.as_str()) {
         return Err(format!(
-            "'{key}' is managed by ClawPanel; please configure it via the provider setup page"
+            "'{key}' is managed by AgentDock; please configure it via the provider setup page"
         ));
     }
 
@@ -5831,7 +5831,7 @@ pub fn hermes_env_delete(key: String) -> Result<(), String> {
     let managed = hermes_providers::all_managed_env_keys();
     if managed.contains(&key.as_str()) {
         return Err(format!(
-            "'{key}' is managed by ClawPanel; please configure it via the provider setup page"
+            "'{key}' is managed by AgentDock; please configure it via the provider setup page"
         ));
     }
 
@@ -6120,7 +6120,7 @@ pub fn hermes_cron_jobs_list() -> Result<Value, String> {
 // 让用户同时运行多个 Hermes Gateway 实例（每个绑不同 profile）。
 // 用 `hermes --profile <name> gateway run` 启动，PID 跟踪在内存里。
 //
-// 持久化：~/.openclaw/clawpanel.json 的 hermes.multiGateways 数组
+// 持久化：~/.openclaw/agentdock.json 的 hermes.multiGateways 数组
 //   [{ name: "main", profile: "default" }, { name: "coder", profile: "coder" }]
 //
 // 端口：从 profile 的 config.yaml 读 model.gateway.port（每个 profile 独立配置）。
@@ -6293,7 +6293,7 @@ pub async fn hermes_multi_gateway_list() -> Result<Value, String> {
             "port": port,
             "running": pid_alive || tcp_running,
             "pid": pid_opt.unwrap_or(0),
-            "owned": pid_alive,  // 是否是 ClawPanel spawn 的
+            "owned": pid_alive,  // 是否是 AgentDock spawn 的
         }));
     }
     Ok(Value::Array(result))
@@ -6375,7 +6375,7 @@ pub async fn hermes_multi_gateway_start(
         if std::net::TcpStream::connect_timeout(&sa, std::time::Duration::from_millis(300)).is_ok()
         {
             return Err(format!(
-                "端口 {port} 已被占用（非 ClawPanel spawn 的进程，无法接管。请用 services 页停掉默认 Gateway 后重试）"
+                "端口 {port} 已被占用（非 AgentDock spawn 的进程，无法接管。请用 services 页停掉默认 Gateway 后重试）"
             ));
         }
     }

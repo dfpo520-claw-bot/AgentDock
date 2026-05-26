@@ -9,7 +9,7 @@ http://127.0.0.1:1421
 Command:
 
 ```powershell
-$env:AGENTDOCK_SMOKE_PASSWORD = (Get-Content "$HOME\.openclaw\clawpanel.json" -Raw | ConvertFrom-Json).accessPassword
+$env:AGENTDOCK_SMOKE_PASSWORD = (Get-Content "$HOME\.openclaw\agentdock.json" -Raw | ConvertFrom-Json).accessPassword
 node scripts\smoke-ui-routes.mjs --base-url http://127.0.0.1:1421 --password $env:AGENTDOCK_SMOKE_PASSWORD --out-dir docs\release\ui-smoke-2026-05-15
 ```
 
@@ -44,7 +44,7 @@ Refresh note:
 - The smoke helper fails on unexpected modal overlays, and only dismisses the known Gateway ownership guidance overlay before screenshot capture so route content is visible.
 - The default-password security banner remains visible and reserves app-shell viewport space so it does not overlap route headers or clip the bottom of the shell.
 - In this local smoke profile, `/dashboard` redirects into the first-run OpenClaw setup surface because the OpenClaw CLI is not installed; the screenshot still covers the authenticated AgentDock shell, sidebar branding, release links, and setup route layout.
-- A historical `[ClawPanel]` prefix may appear inside local runtime log content on the Logs route; this is local log data, not shipped UI copy.
+- A historical `[AgentDock]` prefix may appear inside local runtime log content on the Logs route; this is local log data, not shipped UI copy.
 
 ## Scope
 

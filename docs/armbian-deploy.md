@@ -1,6 +1,6 @@
 # Armbian / ARM 设备部署指南
 
-ClawPanel 支持在 ARM 开发板（如 Orange Pi、Raspberry Pi、RK3588 等）上运行，通过 **Web 模式** 或 **Docker 模式** 部署，无需图形界面。
+AgentDock 支持在 ARM 开发板（如 Orange Pi、Raspberry Pi、RK3588 等）上运行，通过 **Web 模式** 或 **Docker 模式** 部署，无需图形界面。
 
 ## 系统要求
 
@@ -21,13 +21,13 @@ Web 模式是纯 Node.js 服务，零 GUI 依赖，最适合 ARM 板。
 ### 一键部署
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawpanel/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
 ```
 
 国内网络推荐使用 Gitee 镜像：
 
 ```bash
-curl -fsSL https://gitee.com/QtCodeCreators/clawpanel/raw/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://github.com/dfpo520-claw-bot/AgentDock/raw/main/scripts/linux-deploy.sh | bash
 ```
 
 ### 手动部署
@@ -38,8 +38,8 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
 sudo apt-get install -y nodejs git
 
 # 2. 克隆项目
-git clone https://github.com/qingchencloud/clawpanel.git /opt/clawpanel
-cd /opt/clawpanel
+git clone https://github.com/dfpo520-claw-bot/AgentDock.git /opt/agentdock
+cd /opt/agentdock
 
 # 3. 安装依赖并构建
 npm ci --registry https://registry.npmmirror.com
@@ -52,15 +52,15 @@ npm run serve -- --port 1420
 ### 设置开机自启（systemd）
 
 ```bash
-sudo tee /etc/systemd/system/clawpanel.service << 'EOF'
+sudo tee /etc/systemd/system/agentdock.service << 'EOF'
 [Unit]
-Description=ClawPanel Web Server
+Description=AgentDock Web Server
 After=network.target
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/clawpanel
+WorkingDirectory=/opt/agentdock
 ExecStart=/usr/bin/node scripts/serve.js --port 1420
 Restart=on-failure
 RestartSec=5
@@ -71,7 +71,7 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable --now clawpanel
+sudo systemctl enable --now agentdock
 ```
 
 访问 `http://<板子IP>:1420` 即可使用。
@@ -84,14 +84,14 @@ sudo systemctl enable --now clawpanel
 # 安装 Docker（如果还没有）
 curl -fsSL https://get.docker.com | sh
 
-# 一键启动（OpenClaw + ClawPanel 一体）
+# 一键启动（OpenClaw + AgentDock 一体）
 docker run -d \
   --name openclaw \
   -p 1420:1420 \
   -p 18789:18789 \
   -v openclaw-data:/root/.openclaw \
   --restart unless-stopped \
-  ghcr.io/qingchencloud/openclaw:latest
+  ghcr.io/DeepAi助手/openclaw:latest
 ```
 
 国内拉取慢可使用腾讯云镜像：
@@ -103,7 +103,7 @@ docker run -d \
   -p 18789:18789 \
   -v openclaw-data:/root/.openclaw \
   --restart unless-stopped \
-  ccr.ccs.tencentyun.com/qingchencloud/openclaw:latest
+  ccr.ccs.tencentyun.com/DeepAi助手/openclaw:latest
 ```
 
 ## 性能优化建议
