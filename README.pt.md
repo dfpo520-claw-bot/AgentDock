@@ -99,7 +99,7 @@ Acesse [Releases](https://github.com/dfpo520-claw-bot/AgentDock/releases/latest)
 ### Servidor Linux (Versão Web)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 ### Docker

@@ -59,7 +59,7 @@
 ## 方式一：一键部署
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 脚本自动完成：

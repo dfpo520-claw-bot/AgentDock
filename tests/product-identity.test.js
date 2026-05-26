@@ -29,7 +29,7 @@ test('PRODUCT_IDENTITY exposes the production fork identity', () => {
   assert.equal(PRODUCT_IDENTITY.supportUrl, 'https://github.com/dfpo520-claw-bot/AgentDock/issues')
   assert.equal(PRODUCT_IDENTITY.repositoryUrl, 'https://github.com/dfpo520-claw-bot/AgentDock')
   assert.equal(PRODUCT_IDENTITY.releaseUrl, 'https://github.com/dfpo520-claw-bot/AgentDock/releases')
-  assert.equal(PRODUCT_IDENTITY.updateManifestUrl, 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json')
+  assert.equal(PRODUCT_IDENTITY.updateManifestUrl, 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/update/latest.json')
   assert.equal(PRODUCT_IDENTITY.legacyProductName, 'AgentDock')
 })
 

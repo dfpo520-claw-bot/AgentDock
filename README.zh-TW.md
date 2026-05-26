@@ -99,7 +99,7 @@ AgentDock 是支援多 AI Agent 框架的視覺化管理面板，目前支援 [O
 ### Linux 伺服器（Web 版）
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 ### Docker

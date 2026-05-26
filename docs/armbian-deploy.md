@@ -21,13 +21,13 @@ Web 模式是纯 Node.js 服务，零 GUI 依赖，最适合 ARM 板。
 ### 一键部署
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 国内网络推荐使用 Gitee 镜像：
 
 ```bash
-curl -fsSL https://github.com/dfpo520-claw-bot/AgentDock/raw/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://github.com/dfpo520-claw-bot/AgentDock/raw/master/scripts/linux-deploy.sh | bash
 ```
 
 ### 手动部署

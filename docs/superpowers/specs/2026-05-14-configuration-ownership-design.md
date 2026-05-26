@@ -34,7 +34,7 @@ The product-owned defaults are:
 - Legacy panel config filename: `agentdock.json`
 - Legacy OpenClaw data directory name: `.openclaw`
 - Default release channel: `stable`
-- Update manifest URL: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json`
+- Update manifest URL: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/update/latest.json`
 
 The OpenClaw engine config filename remains `openclaw.json` in Phase 2 because it belongs to the OpenClaw engine contract, not to the AgentDock app shell. Renaming that file belongs to a later engine boundary or backend command replacement phase.
 

@@ -99,7 +99,7 @@ AI Agent에 열정적인 개발자와 사용자 커뮤니티 — 함께하세요
 ### Linux 서버 (Web 버전)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 ### Docker

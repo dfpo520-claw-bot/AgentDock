@@ -287,7 +287,7 @@ export const PRODUCT_IDENTITY = Object.freeze({
   supportUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/issues',
   repositoryUrl: 'https://github.com/dfpo520-claw-bot/AgentDock',
   releaseUrl: 'https://github.com/dfpo520-claw-bot/AgentDock/releases',
-  updateManifestUrl: 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json',
+  updateManifestUrl: 'https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/update/latest.json',
   legacyProductName: 'AgentDock',
 })
 ```

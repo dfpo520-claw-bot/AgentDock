@@ -1,67 +1,178 @@
 # AgentDock
 
-![AgentDock](docs/agentdock-logo-brand.png)
+<p align="center">
+  <img src="docs/agentdock-logo-brand.png" width="420" alt="AgentDock">
+</p>
 
-AgentDock 是面向多引擎 AI Agent 运营的生产级桌面控制台，基于 Tauri v2、Vite 和 Rust 命令层构建。
+<p align="center">
+  A production desktop console for operating multi-engine AI agents.
+</p>
 
-## 当前阶段
+<p align="center">
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/releases">Releases</a>
+  ·
+  <a href="docs/release/desktop-manual-debugging-handbook.zh-CN.md">桌面端调试手册</a>
+  ·
+  <a href="docs/linux-deploy.md">Linux Web 部署</a>
+  ·
+  <a href="https://github.com/dfpo520-claw-bot/AgentDock/issues">Issues</a>
+</p>
 
-本仓库处于 production fork baseline 阶段：
+<p align="center">
+  <img alt="Tauri" src="https://img.shields.io/badge/Tauri-v2-24c8db?style=flat-square">
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-command%20layer-f74c00?style=flat-square">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-frontend-646cff?style=flat-square">
+  <img alt="Platform" src="https://img.shields.io/badge/Desktop-Windows%20%7C%20macOS%20%7C%20Linux-111827?style=flat-square">
+</p>
 
-- 保留现有 OpenClaw 与 Hermes Agent 引擎能力。
-- 优先保留 Tauri 桌面壳、Web 模式、服务管理、模型管理、Agent 管理、聊天、日志、诊断、备份与扩展模块。
-- 先替换产品身份、图标、文档、应用元数据与发布入口。
-- 后续逐步重构配置归属、模块边界与后端命令实现。
+## Overview
 
-## 技术栈
+AgentDock is a Tauri desktop application for managing AI agent runtimes from one local console. It keeps OpenClaw and Hermes Agent workflows in the same operational surface, with focused pages for engine setup, service lifecycle, model configuration, diagnostics, logs, chat, extensions, and release validation.
 
-- 前端：Vite + vanilla JavaScript
-- 桌面端：Tauri v2
-- 能力层：Rust Tauri commands
-- 构建：Node.js、Cargo、Tauri CLI
+The project is currently in a production fork hardening phase. The goal is to keep the existing runtime capabilities usable while replacing product identity, release configuration, module boundaries, and backend command ownership step by step.
 
-## 本地开发
+## Highlights
+
+- **Multi-engine workspace**: switch between OpenClaw and Hermes Agent without leaving the desktop app.
+- **First-run guidance**: detect installed runtimes, guide missing dependencies, and keep version checks non-blocking.
+- **Service operations**: start, stop, reload, diagnose, repair, and inspect gateway/runtime state.
+- **Model management**: configure provider API keys, base URLs, model presets, and DeepAi assistant settings.
+- **Built-in assistant**: run a local product assistant for setup, troubleshooting, and command-aware workflows.
+- **Release hardening**: artifact manifest generation, Windows signing checks, desktop smoke notes, and manual QA checklists.
+- **Product-owned configuration**: AgentDock-owned paths, update URLs, storage keys, and release metadata are separated from runtime configs.
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/00.png" width="49%" alt="AgentDock dashboard">
+  <img src="docs/h00.png" width="49%" alt="Hermes engine dashboard">
+</p>
+
+More UI captures and smoke records are available in `docs/release/`.
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Desktop shell | Tauri v2 |
+| Command layer | Rust |
+| Frontend | Vite + vanilla JavaScript |
+| Runtime integrations | OpenClaw, Hermes Agent |
+| Packaging | Tauri bundler, NSIS, release manifest scripts |
+
+## Quick Start
+
+Install dependencies:
 
 ```bash
 npm install
+```
+
+Start the web development server:
+
+```bash
 npm run dev
 ```
 
-桌面开发：
+Start the desktop app in development mode:
 
 ```bash
 npm run tauri dev
 ```
 
-生产构建：
+Build the frontend:
 
 ```bash
 npm run build
+```
+
+Check the Rust command layer:
+
+```bash
 cargo check --manifest-path src-tauri/Cargo.toml
+```
+
+Build desktop packages:
+
+```bash
 npm run tauri build
 ```
 
-## 项目状态
+## Useful Scripts
 
-第一个里程碑是获得一个可运行、可打包的 AgentDock 基线，为后续重构提供稳定起点。
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start Vite for frontend development. |
+| `npm run build` | Build production frontend assets. |
+| `npm run tauri dev` | Run the Tauri desktop app locally. |
+| `npm run release:manifest` | Generate release artifact manifests and checksums. |
+| `npm run release:smoke` | Verify release bundle structure. |
+| `npm run smoke:ui` | Run browser route smoke checks. |
+| `npm run version:sync` | Sync version metadata across project files. |
 
-## Release Hardening Status
+## Project Layout
 
-- Windows NSIS installer local smoke passed for install, launch, and uninstall.
-- Browser-driven UI route smoke passed for the core desktop routes recorded in `docs/release/phase-5-ui-smoke-2026-05-15.md`.
-- Windows signing is wired, but formal certificate hookup is deferred until a real code-signing certificate and thumbprint are available.
-- CI/release automation is paused until signing inputs and the publish strategy are confirmed.
-- The remaining known frontend build warning is the `i18n` chunk size warning; optimize it later with locale/module lazy loading.
+```text
+src/                         Frontend shell, routes, components, engines, and shared libraries
+src-tauri/                   Tauri app, Rust commands, tray integration, product configuration
+scripts/                     Development, deployment, release, and smoke helper scripts
+docs/                        Deployment guides, release notes, UI smoke records, and design plans
+tests/                       Node-based guardrail tests for product identity, release, UI, and runtime logic
+public/                      Static assets served by the frontend
+```
+
+## Documentation
+
+- [Desktop manual debugging handbook](docs/release/desktop-manual-debugging-handbook.md)
+- [桌面端手动调试手册](docs/release/desktop-manual-debugging-handbook.zh-CN.md)
+- [Linux deployment guide](docs/linux-deploy.md)
+- [Docker deployment guide](docs/docker-deploy.md)
+- [Release checklist](docs/release/phase-5-release-checklist.md)
+- [UI smoke summary](docs/release/phase-5-ui-smoke-2026-05-15.md)
+
+## Current Status
+
+- Windows NSIS installer smoke has passed for local install, launch, and uninstall.
+- Browser-driven route smoke has passed for the core desktop routes recorded under `docs/release/`.
+- Formal Windows signing is wired but waiting for a real certificate thumbprint.
+- CI/release automation is intentionally paused until signing and publish policy are confirmed.
+- The known frontend build warning is the large `i18n` chunk; locale lazy loading is planned as a later optimization.
+
+## Configuration And Identity
+
+AgentDock-owned product configuration lives under the `agentdock` identity:
+
+- Product id: `agentdock`
+- Product config file: `agentdock.json`
+- Product data directory: `.agentdock`
+- Update manifest: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/update/latest.json`
+
+Runtime configuration for OpenClaw and Hermes Agent remains separate so the desktop shell can evolve without silently mutating upstream runtime contracts.
+
+## Contributing
+
+This repository is still being hardened toward a production-ready application boundary. Good first contributions are usually small and verifiable:
+
+- Fix inaccurate documentation.
+- Add focused guardrail tests around product identity, release metadata, or runtime command behavior.
+- Improve diagnostics and error messages without changing runtime semantics.
+- Split large modules only when the new boundary has a clear owner and test surface.
+
+Before opening a change, run the checks that match the touched area:
+
+```bash
+node --test tests/*.test.js
+npm run build
+cargo check --manifest-path src-tauri/Cargo.toml
+```
 
 ## Upstream and Referenced Projects
 
-AgentDock is currently developed from a production fork baseline. The following
-open-source projects are referenced during development and compatibility work:
+AgentDock integrates with and learns from the surrounding AI agent ecosystem:
 
-- OpenClaw: compatible AI Agent runtime integrated by the desktop panel.
-- Hermes: compatible agent/runtime integration preserved during the production
-  hardening phase.
+- [OpenClaw](https://github.com/1186258278/OpenClawChineseTranslation) for compatible agent runtime workflows.
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) for Hermes runtime integration.
+- [Tauri](https://tauri.app/) for the cross-platform desktop shell.
+- [Vite](https://vite.dev/) for frontend development and production builds.
 
-This section is a development attribution record only. Licensing and formal
-distribution notices will be reviewed after the product architecture and module
-boundaries are finalized.
+Licensing and formal distribution notices will be reviewed after the product architecture and module boundaries are finalized.

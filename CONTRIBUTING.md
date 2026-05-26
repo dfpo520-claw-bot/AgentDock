@@ -459,7 +459,7 @@ AgentDock 支持访问密码保护，**Web 模式和 Tauri 桌面端均可启用
 一键部署脚本，适用于无桌面环境的 Linux 服务器：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/scripts/linux-deploy.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/scripts/linux-deploy.sh | bash
 ```
 
 部署后通过 `http://服务器IP:1420` 访问，自动生成默认密码。

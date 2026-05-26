@@ -220,7 +220,7 @@ All user-facing release and support links should point to AgentDock-owned destin
 - Repository: `https://github.com/dfpo520-claw-bot/AgentDock`
 - Releases: `https://github.com/dfpo520-claw-bot/AgentDock/releases`
 - Issues/support: `https://github.com/dfpo520-claw-bot/AgentDock/issues`
-- Update manifest: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/update/latest.json`
+- Update manifest: `https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/update/latest.json`
 
 The About page should show AgentDock-owned release status and still disclose referenced open-source projects in a separate attribution section.
 

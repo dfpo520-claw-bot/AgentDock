@@ -1,7 +1,7 @@
 #!/bin/bash
 # AgentDock Web 版一键部署脚本
 # 适用于 WSL / Docker / 远程服务器
-# 用法: curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/main/deploy.sh | bash
+# 用法: curl -fsSL https://raw.githubusercontent.com/dfpo520-claw-bot/AgentDock/master/deploy.sh | bash
 
 set -e
 

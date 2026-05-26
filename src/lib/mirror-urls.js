@@ -1,16 +1,16 @@
 /**
- * GitHub / Gitee 镜像 URL 管理
- * 国内用户自动使用 Gitee 镜像，解决 GitHub 访问慢/不可达的问题
+ * GitHub URL 管理
+ * 当前公开仓库暂未配置独立镜像，无法访问 GitHub 时仍返回官方仓库地址。
  */
 
-const GITHUB_ORG = 'https://github.com/DeepAi助手'
-const GITEE_ORG = 'https://gitee.com/QtCodeCreators'
-const GITHUB_RAW = 'https://raw.githubusercontent.com/DeepAi助手'
-const GITEE_RAW = 'https://gitee.com/QtCodeCreators'
+const GITHUB_ORG = 'https://github.com/dfpo520-claw-bot'
+const GITEE_ORG = GITHUB_ORG
+const GITHUB_RAW = 'https://raw.githubusercontent.com/dfpo520-claw-bot'
+const GITEE_RAW = GITHUB_RAW
 
-// 仓库名映射（GitHub → Gitee，名称不同时需映射）
+// 仓库名映射（预留给后续镜像仓库，名称不同时需映射）
 const REPO_MAP = {
-  agentdock: 'agentdock',
+  agentdock: 'AgentDock',
   clawapp: 'clawapp',
   cftunnel: 'cftunnel',
   'openclaw-zh': 'openclaw-zh',
@@ -41,54 +41,53 @@ async function isGithubReachable() {
 }
 
 /**
- * 获取仓库 URL（优先 GitHub，不可达时用 Gitee）
+ * 获取仓库 URL（优先 GitHub，暂未配置镜像时仍返回 GitHub）
  * @param {string} repo - 仓库名，如 'agentdock'
  * @param {string} [path] - 可选路径，如 '/releases'、'/issues/new'
  */
 export async function repoUrl(repo, path = '') {
-  const giteeRepo = REPO_MAP[repo] || repo
+  const mappedRepo = REPO_MAP[repo] || repo
   if (await isGithubReachable()) {
-    return `${GITHUB_ORG}/${repo}${path}`
+    return `${GITHUB_ORG}/${mappedRepo}${path}`
   }
-  return `${GITEE_ORG}/${giteeRepo}${path}`
+  return `${GITEE_ORG}/${mappedRepo}${path}`
 }
 
 /**
- * 同步版本：同时返回 GitHub 和 Gitee URL，让 UI 可以展示两个链接
+ * 同步版本：同时返回主仓库和镜像 URL，让 UI 可以展示两个链接
  * @param {string} repo
  * @param {string} [path]
  */
 export function repoBothUrls(repo, path = '') {
-  const giteeRepo = REPO_MAP[repo] || repo
+  const mappedRepo = REPO_MAP[repo] || repo
   return {
-    github: `${GITHUB_ORG}/${repo}${path}`,
-    gitee: `${GITEE_ORG}/${giteeRepo}${path}`,
+    github: `${GITHUB_ORG}/${mappedRepo}${path}`,
+    gitee: `${GITEE_ORG}/${mappedRepo}${path}`,
   }
 }
 
 /**
  * 获取 raw 文件 URL（用于 deploy.sh 等脚本下载）
  * GitHub: raw.githubusercontent.com/org/repo/branch/file
- * Gitee: gitee.com/org/repo/raw/branch/file
  * @param {string} repo
  * @param {string} branch
  * @param {string} filePath
  */
 export async function rawFileUrl(repo, branch, filePath) {
-  const giteeRepo = REPO_MAP[repo] || repo
+  const mappedRepo = REPO_MAP[repo] || repo
   if (await isGithubReachable()) {
-    return `${GITHUB_RAW}/${repo}/${branch}/${filePath}`
+    return `${GITHUB_RAW}/${mappedRepo}/${branch}/${filePath}`
   }
-  return `${GITEE_RAW}/${giteeRepo}/raw/${branch}/${filePath}`
+  return `${GITEE_RAW}/${mappedRepo}/${branch}/${filePath}`
 }
 
 /**
- * deploy.sh 下载命令（国内用户自动切换为 Gitee 源）
+ * deploy.sh 下载命令
  */
 export function deployCommand() {
   return {
-    github: `curl -fsSL ${GITHUB_RAW}/agentdock/main/deploy.sh | bash`,
-    gitee: `curl -fsSL ${GITEE_RAW}/agentdock/raw/main/deploy.sh | bash`,
+    github: `curl -fsSL ${GITHUB_RAW}/AgentDock/master/deploy.sh | bash`,
+    gitee: `curl -fsSL ${GITEE_RAW}/AgentDock/master/deploy.sh | bash`,
   }
 }
 
