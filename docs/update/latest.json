@@ -1,0 +1,13 @@
+{
+  "version": "0.15.3",
+  "minAppVersion": "0.15.3",
+  "hash": "sha256:3a2329cc46d04f478b38fbd9aca94fed9d100ab7481070e76b971d66a437b6a3",
+  "url": "https://github.com/dfpo520-claw-bot/AgentDock/releases/download/v0.15.3/web-0.15.3.zip",
+  "size": 2489161,
+  "changelog": "",
+  "releasedAt": "2026-05-13T09:06:27Z",
+  "rollback": {
+    "strategy": "removeDownloadedWebUpdate",
+    "fallbackVersion": "bundled"
+  }
+}
