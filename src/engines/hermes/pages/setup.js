@@ -1,20 +1,16 @@
-/**
- * Hermes Agent 一键安装/配置向导
+﻿/**
+ * Hermes Agent 涓€閿畨瑁?閰嶇疆鍚戝
  *
- * 状态机: detect → install → configure → gateway → complete
+ * 鐘舵€佹満: detect 鈫?install 鈫?configure 鈫?gateway 鈫?complete
  */
 import { t } from '../../../lib/i18n.js'
 import { api, invalidate, isTauriRuntime } from '../../../lib/tauri-api.js'
 import { toast } from '../../../components/toast.js'
 import { getActiveEngine } from '../../../lib/engine-manager.js'
-import {
-  loadHermesProviders,
-  groupProviders,
-  inferProviderByBaseUrl,
-  findProviderById,
-} from '../lib/providers.js'
+import { QTCOOL } from '../../../lib/model-presets.js'
+import { inferProviderByBaseUrl } from '../lib/providers.js'
 
-// SVG 图标
+// SVG 鍥炬爣
 const ICONS = {
   check: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>`,
   warn: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--warning, #f59e0b)" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
@@ -24,18 +20,26 @@ const ICONS = {
   done: `<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" width="24" height="24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
 }
 
-// 核心安装不带 extras，后续可在管理页面按需安装
+// 鏍稿績瀹夎涓嶅甫 extras锛屽悗缁彲鍦ㄧ鐞嗛〉闈㈡寜闇€瀹夎
 
-// Provider 数据 — 首次 render 前异步加载
-let hermesProviders = []
-let hermesGroups = { apiKeyIntl: [], apiKeyCn: [], aggregators: [], oauth: [], externalProc: [], custom: [] }
+// Provider 鏁版嵁 鈥?棣栨 render 鍓嶅紓姝ュ姞杞?
+const DEEPAI_HERMES_PROVIDER = Object.freeze({
+  id: 'deepai',
+  name: QTCOOL.brandName,
+  baseUrl: QTCOOL.baseUrl,
+  site: QTCOOL.site,
+})
+
+const DEFAULT_HERMES_MODEL = 'gpt-5.5'
+
+let hermesProviders = [DEEPAI_HERMES_PROVIDER]
 
 export function render() {
   const el = document.createElement('div')
   el.className = 'page page-shell hermes-setup-page'
   el.dataset.engine = 'hermes'
 
-  // 状态
+  // 鐘舵€?
   let phase = 'detect' // detect | install | configure | gateway | complete
   let pyInfo = null
   let hermesInfo = null
@@ -46,6 +50,68 @@ export function render() {
   let customGatewayUrl = 'http://127.0.0.1:8642'
   let progress = 0
   let unlisten = null
+  let savedConfig = null
+  let configDraft = createConfigDraft()
+  let configSaving = false
+  let configSavedForGateway = false
+
+  function createConfigDraft(source = {}) {
+    return {
+      baseUrl: (source.base_url || source.baseUrl || QTCOOL.baseUrl || '').trim(),
+      apiKey: (source.api_key || source.apiKey || '').trim(),
+      model: (source.model || source.model_raw || source.modelName || DEFAULT_HERMES_MODEL || '').trim() || DEFAULT_HERMES_MODEL,
+    }
+  }
+
+  function hydrateSavedConfig(source) {
+    savedConfig = source || null
+    configDraft = createConfigDraft(source || {})
+  }
+
+  function syncConfigDraftFromDom() {
+    const baseUrlInput = el.querySelector('#hm-baseurl')
+    const apiKeyInput = el.querySelector('#hm-apikey')
+    const modelInput = el.querySelector('#hm-model')
+    if (baseUrlInput) configDraft.baseUrl = baseUrlInput.value.trim()
+    if (apiKeyInput) configDraft.apiKey = apiKeyInput.value.trim()
+    if (modelInput) configDraft.model = modelInput.value.trim()
+  }
+
+  function isConfigDraftDirty() {
+    const savedDraft = createConfigDraft(savedConfig || {})
+    return configDraft.baseUrl !== savedDraft.baseUrl
+      || configDraft.apiKey !== savedDraft.apiKey
+      || configDraft.model !== savedDraft.model
+  }
+
+  function canSaveConfig() {
+    const hasRequired = Boolean(configDraft.baseUrl && configDraft.apiKey && configDraft.model)
+    if (!hasRequired || configSaving) return false
+    return !savedConfig?.config_exists || isConfigDraftDirty()
+  }
+
+  function getSavedConfigSummary() {
+    if (!savedConfig?.config_exists) return t('engine.configNotSavedYet')
+    return t('engine.configSavedState', {
+      model: savedConfig.model || DEFAULT_HERMES_MODEL,
+      baseUrl: savedConfig.base_url || QTCOOL.baseUrl,
+    })
+  }
+
+  function refreshConfigFormUi() {
+    syncConfigDraftFromDom()
+    const saveBtn = el.querySelector('.hermes-config-save')
+    if (saveBtn) {
+      saveBtn.disabled = !canSaveConfig()
+      saveBtn.textContent = configSaving ? t('engine.configSaving') : t('engine.configSaveBtn')
+    }
+    const draftStatus = el.querySelector('#hm-config-draft-status')
+    if (draftStatus) {
+      const dirty = isConfigDraftDirty()
+      draftStatus.textContent = dirty ? t('engine.configDraftPending') : t('engine.configDraftClean')
+      draftStatus.style.color = dirty ? 'var(--warning, #f59e0b)' : 'var(--text-tertiary)'
+    }
+  }
 
   function draw() {
     el.innerHTML = `
@@ -64,7 +130,7 @@ export function render() {
     bind()
   }
 
-  // --- 阶段指示器 ---
+  // --- 闃舵鎸囩ず鍣?---
   function renderPhaseIndicator() {
     const phases = [
       { id: 'detect', label: t('engine.hermesPhaseDetect') },
@@ -84,7 +150,7 @@ export function render() {
     }).join('<div class="hermes-phase-line"></div>')}</div>`
   }
 
-  // --- 检测阶段 ---
+  // --- 妫€娴嬮樁娈?---
   function renderDetect() {
     const rows = []
     if (!pyInfo && !hermesInfo) {
@@ -105,7 +171,7 @@ export function render() {
         } else {
           rows.push(`<div class="hermes-detect-row warn">${ICONS.warn} <span>${t('engine.uvNotFound')}</span></div>`)
         }
-        // git（从 GitHub 安装需要）
+        // git锛堜粠 GitHub 瀹夎闇€瑕侊級
         if (pyInfo.hasGit) {
           rows.push(`<div class="hermes-detect-row ok">${ICONS.check} <span>${t('engine.gitFound')}</span></div>`)
         } else {
@@ -132,9 +198,9 @@ export function render() {
     </div>`
   }
 
-  // --- 安装阶段 ---
+  // --- 瀹夎闃舵 ---
   function renderInstall() {
-    // 模式切换按钮
+    // 妯″紡鍒囨崲鎸夐挳
     const modeSwitch = `
       <div style="display:flex;gap:8px;margin-bottom:20px">
         <button class="btn btn-sm hermes-mode-btn ${installMode === 'local' ? 'btn-primary' : 'btn-secondary'}" data-mode="local">
@@ -148,7 +214,7 @@ export function render() {
       </div>`
 
     if (installMode === 'custom') {
-      // 自定义模式：输入已有 Gateway 地址
+      // 鑷畾涔夋ā寮忥細杈撳叆宸叉湁 Gateway 鍦板潃
       return `<div class="card" style="margin-bottom:16px">
         <div class="card-body" style="padding:24px">
           <h3 style="margin:0 0 4px;font-size:16px">${t('engine.installTitle')}</h3>
@@ -173,11 +239,11 @@ export function render() {
       </div>`
     }
 
-    // 本地模式：一键安装
+    // 鏈湴妯″紡锛氫竴閿畨瑁?
     const btnText = installing ? `${ICONS.spinner} ${t('engine.installingBtn')}` : `${ICONS.rocket} ${t('engine.installBtn')}`
     const btnDisabled = installing ? 'disabled' : ''
 
-    // 错误提示块
+    // 閿欒鎻愮ず鍧?
     const errorBlock = installError ? `
       <div style="margin-bottom:14px;padding:12px 16px;background:var(--error-bg, #fef2f2);border:1px solid var(--error, #ef4444);border-radius:var(--radius-sm,6px);font-size:13px;line-height:1.6">
         <div style="display:flex;align-items:flex-start;gap:8px">
@@ -190,7 +256,7 @@ export function render() {
       </div>
     ` : ''
 
-    // 进度 + 日志区（安装中或安装失败后都显示）
+    // 杩涘害 + 鏃ュ織鍖猴紙瀹夎涓垨瀹夎澶辫触鍚庨兘鏄剧ず锛?
     const hasLogs = installing || logs.length > 0
     const progressBlock = hasLogs ? `
       <div class="hermes-install-status">
@@ -228,10 +294,11 @@ export function render() {
     </div>`
   }
 
-  // --- 配置阶段 ---
+  // --- 閰嶇疆闃舵 ---
   function renderConfigure() {
-    const presetBtns = renderGroupedProviderButtons()
-
+    const draftDirty = isConfigDraftDirty()
+    const saveDisabled = canSaveConfig() ? '' : 'disabled'
+    const savedSummary = getSavedConfigSummary()
     return `<div class="card" style="margin-bottom:16px">
       <div class="card-body" style="padding:24px">
         <h3 style="margin:0 0 4px;font-size:16px">${t('engine.configTitle')}</h3>
@@ -240,17 +307,23 @@ export function render() {
         <div class="hermes-form">
           <div class="hermes-field">
             <span>${t('engine.configProvider')}</span>
-            ${presetBtns}
-            <div id="hm-preset-detail" style="display:none;margin-top:6px;padding:8px 12px;background:var(--bg-tertiary);border-radius:var(--radius-md,8px);font-size:12px"></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+              <button class="btn btn-sm btn-secondary hermes-preset-btn" data-key="${DEEPAI_HERMES_PROVIDER.id}" data-url="${DEEPAI_HERMES_PROVIDER.baseUrl}" data-api="${QTCOOL.api}" style="font-size:12px;padding:3px 10px;opacity:1">
+                ${DEEPAI_HERMES_PROVIDER.name}
+              </button>
+            </div>
           </div>
           <label class="hermes-field">
-            <span>API Base URL</span>
-            <input type="text" id="hm-baseurl" class="input" placeholder="https://openrouter.ai/api/v1">
+            <span>${t('engine.configBaseUrl')}</span>
+            <input type="text" id="hm-baseurl" class="input" value="${esc(configDraft.baseUrl)}" placeholder="${QTCOOL.baseUrl}">
           </label>
           <div class="hermes-field">
-            <span>${t('engine.configApiKey')}</span>
+            <span style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <span>${t('engine.configApiKey')}</span>
+              <a href="${QTCOOL.site}" target="_blank" rel="noreferrer">${t('engine.configGetApiKey')}</a>
+            </span>
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="password" id="hm-apikey" class="input" placeholder="sk-..." autocomplete="off" style="flex:1">
+              <input type="password" id="hm-apikey" class="input" value="${esc(configDraft.apiKey)}" placeholder="sk-..." autocomplete="off" style="flex:1">
               <button class="btn btn-sm btn-secondary hermes-fetch-models" style="white-space:nowrap;flex-shrink:0">${t('engine.configFetchModels')}</button>
             </div>
           </div>
@@ -258,27 +331,41 @@ export function render() {
           <div class="hermes-field">
             <span>${t('engine.configModel')}</span>
             <div style="position:relative">
-              <input type="text" id="hm-model" class="input" placeholder="anthropic/claude-sonnet-4-20250514" autocomplete="off">
+              <input type="text" id="hm-model" class="input" value="${esc(configDraft.model)}" placeholder="${DEFAULT_HERMES_MODEL}" autocomplete="off">
               <div id="hm-model-dropdown" class="hermes-model-dropdown" style="display:none"></div>
             </div>
+          </div>
+          <div style="margin-top:14px;padding:12px 14px;background:var(--bg-tertiary);border:1px solid var(--border-primary);border-radius:var(--radius-sm,6px);font-size:12px;line-height:1.6;color:var(--text-secondary)">
+            <div>${t('engine.configFetchDraftOnly')}</div>
+            <div style="margin-top:6px">${t('engine.configSaveWritesFiles')}</div>
+          </div>
+          <div style="margin-top:12px;padding:12px 14px;background:var(--bg-secondary);border:1px solid var(--border-primary);border-radius:var(--radius-sm,6px);font-size:12px;line-height:1.7">
+            <div style="color:var(--text-secondary)">${savedSummary}</div>
+            <div id="hm-config-draft-status" style="margin-top:6px;color:${draftDirty ? 'var(--warning, #f59e0b)' : 'var(--text-tertiary)'}">${draftDirty ? t('engine.configDraftPending') : t('engine.configDraftClean')}</div>
           </div>
         </div>
 
         <div style="display:flex;gap:10px;margin-top:20px">
-          <button class="btn btn-primary hermes-config-save">${t('engine.configSaveBtn')}</button>
+          <button class="btn btn-primary hermes-config-save" ${saveDisabled}>${configSaving ? t('engine.configSaving') : t('engine.configSaveBtn')}</button>
           <button class="btn-text hermes-config-skip">${t('engine.configSkipBtn')}</button>
         </div>
       </div>
     </div>`
   }
 
-  // --- Gateway 阶段 ---
+  // --- Gateway 闃舵 ---
   function renderGateway() {
     const running = hermesInfo?.gatewayRunning
     return `<div class="card" style="margin-bottom:16px">
       <div class="card-body" style="padding:24px">
         <h3 style="margin:0 0 4px;font-size:16px">${t('engine.gatewayTitle')}</h3>
         <p style="color:var(--text-secondary);margin:0 0 20px;font-size:13px">${t('engine.gatewayDesc')}</p>
+        ${configSavedForGateway ? `
+          <div class="hermes-detect-row ok" style="margin-bottom:12px">
+            ${ICONS.check}
+            <span>${t('engine.configSavedNextStep')}</span>
+          </div>
+        ` : ''}
         <div class="hermes-detect-row ${running ? 'ok' : ''}">
           ${running ? ICONS.check : ICONS.warn}
           <span>${running ? t('engine.gatewayRunning', { port: hermesInfo?.gatewayPort || 8642 }) : t('engine.gatewayStopped')}</span>
@@ -292,7 +379,7 @@ export function render() {
     </div>`
   }
 
-  // --- 完成 ---
+  // --- 瀹屾垚 ---
   function renderComplete() {
     return `<div class="card" style="margin-bottom:16px">
       <div class="card-body" style="padding:32px;text-align:center">
@@ -305,19 +392,19 @@ export function render() {
   }
 
   function esc(s) {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   }
 
-  // --- 事件绑定 ---
+  // --- 浜嬩欢缁戝畾 ---
   function bind() {
-    // 点击已完成的阶段指示器，跳回该步骤
+    // 鐐瑰嚮宸插畬鎴愮殑闃舵鎸囩ず鍣紝璺冲洖璇ยูն楠?
     el.querySelectorAll('[data-goto-phase]').forEach(dot => {
       dot.addEventListener('click', () => {
         phase = dot.dataset.gotoPhase
         draw()
       })
     })
-    // 安装模式切换
+    // 瀹夎妯″紡鍒囨崲
     el.querySelectorAll('.hermes-mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.dataset.mode
@@ -328,54 +415,46 @@ export function render() {
         }
       })
     })
-    // 安装按钮（本地模式）
+    // 瀹夎鎸夐挳锛堟湰鍦版ā寮忥級
     el.querySelector('.hermes-install-btn')?.addEventListener('click', doInstall)
-    // 自定义连接按钮
+    // 鑷畾涔夎繛鎺ユ寜閽?
     el.querySelector('.hermes-custom-connect')?.addEventListener('click', doCustomConnect)
-    // 服务商预设按钮
+    // 鏈嶅姟鍟嗛璁炬寜閽?
     el.querySelectorAll('.hermes-preset-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const baseUrlInput = el.querySelector('#hm-baseurl')
         if (baseUrlInput) baseUrlInput.value = btn.dataset.url
-        // 高亮选中
-        el.querySelectorAll('.hermes-preset-btn').forEach(b => b.style.opacity = '0.5')
-        btn.style.opacity = '1'
-        // 显示服务商详情（展示 authType + models 预览）
-        const preset = findProviderById(hermesProviders, btn.dataset.key)
-        const detailEl = el.querySelector('#hm-preset-detail')
-        if (detailEl && preset) {
-          const envLine = preset.apiKeyEnvVars && preset.apiKeyEnvVars.length
-            ? `<div style="color:var(--text-tertiary);font-size:11px;margin-top:2px">写入 <code>${preset.apiKeyEnvVars[0]}</code></div>`
-            : ''
-          const modelsPreview = preset.models && preset.models.length
-            ? `<div style="color:var(--text-tertiary);font-size:11px;margin-top:2px">${preset.models.length} 个已知模型</div>`
-            : '<div style="color:var(--text-tertiary);font-size:11px;margin-top:2px">聚合路由：请自行指定模型</div>'
-          detailEl.innerHTML = `<div style="color:var(--text-secondary);line-height:1.5">${preset.name}</div>${envLine}${modelsPreview}`
-          detailEl.style.display = 'block'
-        }
+        refreshConfigFormUi()
       })
     })
-    // 获取模型列表
+    for (const selector of ['#hm-baseurl', '#hm-apikey', '#hm-model']) {
+      el.querySelector(selector)?.addEventListener('input', () => {
+        configSavedForGateway = false
+        refreshConfigFormUi()
+      })
+    }
+    // 鑾峰彇妯″瀷鍒楄〃
     el.querySelector('.hermes-fetch-models')?.addEventListener('click', doFetchModels)
-    // 模型下拉选择：点击选项填入 input
+    // 妯″瀷涓嬫媺閫夋嫨锛氱偣鍑婚€夐」濉叆 input
     el.querySelector('#hm-model-dropdown')?.addEventListener('click', (e) => {
       const opt = e.target.closest('.hermes-model-option')
       if (!opt) return
       const modelInput = el.querySelector('#hm-model')
       if (modelInput) modelInput.value = opt.dataset.model
       el.querySelector('#hm-model-dropdown').style.display = 'none'
+      refreshConfigFormUi()
     })
-    // 点击 input 时如果有下拉就展开
+    // 鐐瑰嚮 input 鏃跺鏋滄湁涓嬫媺灏卞睍寮€
     el.querySelector('#hm-model')?.addEventListener('focus', () => {
       const dd = el.querySelector('#hm-model-dropdown')
       if (dd && dd.children.length > 0) dd.style.display = 'block'
     })
-    // 点击其他地方关闭下拉
+    // 鐐瑰嚮鍏朵粬鍦版柟鍏抽棴涓嬫媺
     document.addEventListener('click', (e) => {
       const dd = el.querySelector('#hm-model-dropdown')
       if (dd && !e.target.closest('.hermes-field')) dd.style.display = 'none'
     })
-    // 配置保存
+    // 閰嶇疆淇濆瓨
     el.querySelector('.hermes-config-save')?.addEventListener('click', doSaveConfig)
     el.querySelector('.hermes-config-skip')?.addEventListener('click', () => { phase = 'gateway'; refreshHermes() })
     // Gateway
@@ -384,30 +463,36 @@ export function render() {
       if (hermesInfo?.gatewayRunning) { phase = 'complete'; draw() }
       else { phase = 'complete'; draw() }
     })
-    // 仪表盘
+    // 浠〃鐩?
     el.querySelector('.hermes-go-dashboard')?.addEventListener('click', async () => {
       const engine = getActiveEngine()
       if (engine?.detect) await engine.detect()
       window.location.hash = '#/h/dashboard'
     })
-    // 自动滚日志到底
+    // 鑷姩婊氭棩蹇楀埌搴?
     const logEl = el.querySelector('.hermes-log-content')
     if (logEl) logEl.scrollTop = logEl.scrollHeight
+    refreshConfigFormUi()
   }
 
-  // --- 检测流程 ---
+  // --- 妫€娴嬫祦绋?---
   async function detect() {
     phase = 'detect'
     draw()
     try {
       invalidate('check_hermes', 'check_python')
-      const [py, hm] = await Promise.all([api.checkPython(), api.checkHermes()])
+      const [py, hm, cfg] = await Promise.all([
+        api.checkPython(),
+        api.checkHermes(),
+        api.hermesReadConfig().catch(() => null),
+      ])
       pyInfo = py
       hermesInfo = hm
+      hydrateSavedConfig(cfg)
 
       draw()
 
-      // 自动跳转到最合适的阶段（不自动离开向导，让用户可以查看和回退每一步）
+      // 鑷姩璺宠浆鍒版渶鍚堥€傜殑闃舵锛堜笉鑷姩绂诲紑鍚戝锛岃鐢ㄦ埛鍙互鏌ョ湅鍜屽洖閫€姣忎竴姝ワ級
       await new Promise(r => setTimeout(r, 800))
       if (hm.installed && hm.gatewayRunning) {
         phase = 'complete'
@@ -420,19 +505,21 @@ export function render() {
       }
       draw()
     } catch (e) {
+      configSaving = false
+      draw()
       logs.push(`[detect error] ${e?.message || e}`)
       phase = 'install'
       draw()
     }
   }
 
-  // --- 自定义连接流程 ---
+  // --- 鑷畾涔夎繛鎺ユ祦绋?---
   async function doCustomConnect() {
     const urlInput = el.querySelector('#hm-custom-url')
     const url = urlInput?.value?.trim()
     if (!url) { installError = t('engine.installCustomEmpty'); draw(); return }
 
-    // 基础 URL 格式检查
+    // 鍩虹 URL 鏍煎紡妫€鏌?
     try { new URL(url) } catch { installError = t('engine.installCustomInvalidUrl'); draw(); return }
 
     installing = true
@@ -440,16 +527,16 @@ export function render() {
     draw()
 
     try {
-      // 保存 Gateway URL
+      // 淇濆瓨 Gateway URL
       await api.hermesSetGatewayUrl(url)
 
-      // 测试连接
+      // 娴嬭瘯杩炴帴
       const health = await api.hermesHealthCheck()
       if (!health) throw new Error(t('engine.installCustomNoResponse'))
 
       installing = false
       customGatewayUrl = url
-      // 连接成功，跳到配置步骤
+      // 杩炴帴鎴愬姛锛岃烦鍒伴厤缃楠?
       phase = 'configure'
       draw()
     } catch (e) {
@@ -459,7 +546,7 @@ export function render() {
     }
   }
 
-  // --- 安装流程 ---
+  // --- 瀹夎娴佺▼ ---
   async function doInstall() {
     installing = true
     installError = null
@@ -467,7 +554,7 @@ export function render() {
     logs = []
     draw()
 
-    // 监听安装事件；Web 模式跳过桌面事件监听。
+    // 鐩戝惉瀹夎浜嬩欢锛沇eb 妯″紡璺宠繃妗岄潰浜嬩欢鐩戝惉銆?
     try {
       if (!isTauriRuntime()) throw new Error('skip-listen-in-web-mode')
       const { listen } = await import('@tauri-apps/api/event')
@@ -488,7 +575,7 @@ export function render() {
         if (bar) bar.style.width = progress + '%'
         const pctEl = el.querySelector('.hermes-progress-text')
         if (pctEl) pctEl.textContent = progress >= 100 ? t('engine.installSuccess') : t('engine.installingBtn')
-        // 更新百分比数字
+        // 鏇存柊鐧惧垎姣旀暟瀛?
         const pctNum = bar?.parentElement?.nextElementSibling?.querySelector('span:last-child')
         if (pctNum) pctNum.textContent = Math.min(progress, 100) + '%'
       })
@@ -496,27 +583,28 @@ export function render() {
     } catch (_) {}
 
     try {
-      await api.installHermes('uv-tool', [])
+      await api.installHermes('uv-tool', ['web'])
       installing = false
       progress = 100
-      logs.push('✅ ' + t('engine.installSuccess'))
+      logs.push('鉁?' + t('engine.installSuccess'))
       phase = 'configure'
       draw()
     } catch (e) {
       installing = false
       installError = String(e.message || e)
-      logs.push(`❌ ${t('engine.installFailed')}: ${e}`)
+      logs.push(`鉂?${t('engine.installFailed')}: ${e}`)
       draw()
     } finally {
       if (unlisten) { unlisten(); unlisten = null }
     }
   }
 
-  // --- 获取模型列表 ---
+  // --- 鑾峰彇妯″瀷鍒楄〃 ---
   async function doFetchModels() {
     const btn = el.querySelector('.hermes-fetch-models')
     const resultEl = el.querySelector('#hm-fetch-result')
     const dropdown = el.querySelector('#hm-model-dropdown')
+    syncConfigDraftFromDom()
     const baseUrl = el.querySelector('#hm-baseurl')?.value?.trim()
     const apiKey = el.querySelector('#hm-apikey')?.value?.trim()
 
@@ -533,54 +621,14 @@ export function render() {
     if (resultEl) resultEl.innerHTML = `<span style="color:var(--text-tertiary)">${t('engine.configFetching')}</span>`
 
     try {
-      // 清理 URL：去掉尾部多余路径，确保 /models 能正确拼接
-      let base = baseUrl.replace(/\/+$/, '')
-      // 移除常见尾部路径
-      base = base.replace(/\/(chat\/completions|completions|responses|messages|models)\/?$/, '')
-
-      // 判断 API 类型：按 provider transport 推断，fallback 到 openai 兼容
-      const matched = inferProviderByBaseUrl(hermesProviders, baseUrl)
-      let apiType = 'openai-completions'
-      if (matched) {
-        if (matched.transport === 'anthropic_messages') apiType = 'anthropic-messages'
-        else if (matched.transport === 'google_gemini') apiType = 'google-generative-ai'
-      }
-
-      let models = []
-
-      if (apiType === 'anthropic-messages') {
-        // Anthropic 格式
-        if (!base.endsWith('/v1')) base += '/v1'
-        const resp = await fetch(base + '/models', {
-          headers: { 'Content-Type': 'application/json', 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
-          signal: AbortSignal.timeout(15000),
-        })
-        if (!resp.ok) throw new Error('HTTP ' + resp.status)
-        const data = await resp.json()
-        models = (data.data || []).map(m => m.id).filter(Boolean).sort()
-      } else if (apiType === 'google-generative-ai') {
-        // Google Gemini
-        const resp = await fetch(base + '/models?key=' + apiKey, { signal: AbortSignal.timeout(15000) })
-        if (!resp.ok) throw new Error('HTTP ' + resp.status)
-        const data = await resp.json()
-        models = (data.models || []).map(m => (m.name || '').replace('models/', '')).filter(Boolean).sort()
-      } else {
-        // OpenAI 兼容（大多数服务商）
-        const resp = await fetch(base + '/models', {
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-          signal: AbortSignal.timeout(15000),
-        })
-        if (!resp.ok) throw new Error('HTTP ' + resp.status)
-        const data = await resp.json()
-        models = (data.data || []).map(m => m.id).filter(Boolean).sort()
-      }
+      const models = await api.hermesFetchModels(baseUrl, apiKey, QTCOOL.api, 'custom')
 
       if (models.length === 0) {
         if (resultEl) resultEl.innerHTML = `<span style="color:var(--warning)">${t('engine.configFetchNotSupported')}</span>`
         return
       }
 
-      if (resultEl) resultEl.innerHTML = `<span style="color:var(--success)">✓ ${t('engine.configFetchSuccess', { count: models.length })}</span>`
+      if (resultEl) resultEl.innerHTML = `<span style="color:var(--success)">鉁?${t('engine.configFetchSuccess', { count: models.length })}</span>`
       if (dropdown) {
         dropdown.innerHTML = models.map(m =>
           `<div class="hermes-model-option" data-model="${m}" style="padding:6px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border-primary)">${m}</div>`
@@ -588,13 +636,13 @@ export function render() {
         dropdown.style.display = 'block'
       }
     } catch (err) {
-      // 网络错误或不支持
+      // 缃戠粶閿欒鎴栦笉鏀寔
       const msg = err.message || String(err)
       if (resultEl) {
         if (msg.includes('403') || msg.includes('404') || msg.includes('405') || msg.includes('timeout') || msg.includes('Failed to fetch')) {
           resultEl.innerHTML = `<span style="color:var(--warning)">${t('engine.configFetchNotSupported')}</span>`
         } else {
-          resultEl.innerHTML = `<span style="color:var(--error)">✗ ${t('engine.configFetchFailed', { error: msg })}</span>`
+          resultEl.innerHTML = `<span style="color:var(--error)">鉁?${t('engine.configFetchFailed', { error: msg })}</span>`
         }
       }
     } finally {
@@ -602,30 +650,47 @@ export function render() {
     }
   }
 
-  // --- 配置保存 ---
+  // --- 閰嶇疆淇濆瓨 ---
   async function doSaveConfig() {
-    const baseUrl = el.querySelector('#hm-baseurl')?.value?.trim()
-    const apiKey = el.querySelector('#hm-apikey')?.value?.trim()
-    const model = el.querySelector('#hm-model')?.value?.trim()
-    // 从 baseUrl 推断 provider id；推不出来时用 'custom'，让后端按通用 OpenAI 兼容处理
+    syncConfigDraftFromDom()
+    const baseUrl = configDraft.baseUrl
+    const apiKey = configDraft.apiKey
+    const model = configDraft.model
+    // Persist the DeepAi-only preset through Hermes' native openai-api path so
+    // runtime auth resolves against OPENAI_API_KEY instead of the custom key.
+    // 浠?baseUrl 鎺ㄦ柇 provider id锛涙帹涓嶅嚭鏉ユ椂鐢?'custom'锛岃鍚庣鎸夐€氱敤 OpenAI 鍏煎澶勭悊
     const matched = inferProviderByBaseUrl(hermesProviders, baseUrl)
-    const provider = matched?.id || 'custom'
+    const provider = matched?.id === 'deepai' ? 'openai-api' : (matched?.id || 'custom')
 
     if (!apiKey) {
-      toast(t('engine.installCustomEmpty') || '请输入 API Key', 'warning')
+      toast(t('engine.installCustomEmpty') || '璇疯緭鍏?API Key', 'warning')
       return
     }
     try {
+      configSaving = true
+      draw()
       await api.configureHermes(provider, apiKey, model, baseUrl)
+      const latestConfig = await api.hermesReadConfig().catch(() => null)
+      hydrateSavedConfig(latestConfig || {
+        base_url: baseUrl,
+        api_key: apiKey,
+        model,
+        config_exists: true,
+      })
+      configSaving = false
+      configSavedForGateway = true
+      toast(t('engine.configSaved'), 'success')
       phase = 'gateway'
       await refreshHermes()
     } catch (e) {
+      configSaving = false
+      draw()
       const msg = String(e?.message || e).replace(/^Error:\s*/, '')
-      toast(`${t('engine.configSaveFailed') || '配置保存失败'}: ${msg}`, 'error')
+      toast(`${t('engine.configSaveFailed') || '閰嶇疆淇濆瓨澶辫触'}: ${msg}`, 'error')
     }
   }
 
-  // --- Gateway 启动 ---
+  // --- Gateway 鍚姩 ---
   let gwStarting = false
   async function doStartGateway() {
     const btn = el.querySelector('.hermes-gw-start')
@@ -636,7 +701,7 @@ export function render() {
       await refreshHermes()
     } catch (e) {
       const msg = String(e).replace(/^Error:\s*/, '')
-      // 在 Gateway 阶段显示错误信息
+      // 鍦?Gateway 闃舵鏄剧ず閿欒淇℃伅
       const errEl = el.querySelector('#hm-gw-error')
       if (errEl) {
         errEl.textContent = msg || t('engine.gatewayStartFailed')
@@ -650,11 +715,11 @@ export function render() {
     }
   }
 
-  // --- 刷新 hermes 状态 ---
+  // --- 鍒锋柊 hermes 鐘舵€?---
   async function refreshHermes() {
     invalidate('check_hermes')
     try { hermesInfo = await api.checkHermes() } catch (_) {}
-    // 已安装且 Gateway 在运行 → 更新引擎状态并跳转仪表盘
+    // 宸插畨瑁呬笖 Gateway 鍦ㄨ繍琛?鈫?鏇存柊寮曟搸鐘舵€佸苟璺宠浆浠〃鐩?
     if (hermesInfo?.installed && hermesInfo?.gatewayRunning) {
       phase = 'complete'
       const engine = getActiveEngine()
@@ -665,14 +730,8 @@ export function render() {
     draw()
   }
 
-  // 启动检测前先加载 provider registry，然后启动检测
+  // 鍚姩妫€娴嬪墠鍏堝姞杞?provider registry锛岀劧鍚庡惎鍔ㄦ娴?
   ;(async () => {
-    try {
-      hermesProviders = await loadHermesProviders()
-      hermesGroups = groupProviders(hermesProviders)
-    } catch (err) {
-      console.warn('[hermes/setup] failed to load providers:', err)
-    }
     detect()
   })()
 
@@ -684,44 +743,15 @@ export function render() {
 // ============================================================================
 
 function renderGroupedProviderButtons() {
-  if (!hermesProviders.length) {
-    return `<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm,6px);color:var(--text-secondary);font-size:12px;line-height:1.6">
-      ${t('engine.hermesProvidersLoadFallback')}
-    </div>`
-  }
+  return ''
 
-  const sectionStyle = 'margin-top:6px'
-  const titleStyle = 'font-size:11px;color:var(--text-tertiary);margin:4px 0 4px;font-weight:500;letter-spacing:0.3px'
-  const rowStyle = 'display:flex;flex-wrap:wrap'
-
-  const btn = (p) => {
-    const envHint = p.apiKeyEnvVars && p.apiKeyEnvVars.length
-      ? ` title="${p.apiKeyEnvVars[0]}"`
-      : ''
-    return `<button class="btn btn-sm btn-secondary hermes-preset-btn"
-      data-key="${p.id}"
-      data-url="${p.baseUrl}"
-      data-api="${p.transport === 'anthropic_messages' ? 'anthropic-messages' : p.transport === 'google_gemini' ? 'google-generative-ai' : 'openai-completions'}"${envHint}
-      style="font-size:12px;padding:3px 10px;margin:0 6px 6px 0">${p.name}</button>`
-  }
-
-  const parts = []
-
-  if (hermesGroups.apiKeyIntl.length) {
-    parts.push(`<div style="${sectionStyle}"><div style="${titleStyle}">${t('engine.hermesProviderGroupIntl')}</div><div style="${rowStyle}">${hermesGroups.apiKeyIntl.map(btn).join('')}</div></div>`)
-  }
-  if (hermesGroups.apiKeyCn.length) {
-    parts.push(`<div style="${sectionStyle}"><div style="${titleStyle}">${t('engine.hermesProviderGroupCn')}</div><div style="${rowStyle}">${hermesGroups.apiKeyCn.map(btn).join('')}</div></div>`)
-  }
-  if (hermesGroups.aggregators.length) {
-    parts.push(`<div style="${sectionStyle}"><div style="${titleStyle}">${t('engine.hermesProviderGroupAggregator')}</div><div style="${rowStyle}">${hermesGroups.aggregators.map(btn).join('')}</div></div>`)
-  }
   if (hermesGroups.oauth.length) {
     const oauthItems = hermesGroups.oauth.map(p =>
-      `<div style="font-size:11px;color:var(--text-tertiary);margin-right:10px"><code>${p.name}</code>：${t('engine.hermesProviderOAuthRunHint') || '需运行'} <code>${p.cliAuthHint}</code></div>`
+      `<div style="font-size:11px;color:var(--text-tertiary);margin-right:10px"><code>${p.name}</code>锛?{t('engine.hermesProviderOAuthRunHint') || '闇€杩愯'} <code>${p.cliAuthHint}</code></div>`
     ).join('')
-    parts.push(`<div style="${sectionStyle}"><div style="${titleStyle}">${t('engine.hermesProviderGroupOAuth')}</div><div style="display:flex;flex-wrap:wrap;gap:4px 0">${oauthItems}</div></div>`)
+    parts.push(`<div style="${sectionStyle}"><div style="${titleStyle}">OAuth</div><div style="display:flex;flex-wrap:wrap;gap:4px 0">${oauthItems}</div></div>`)
   }
 
   return parts.join('')
 }
+

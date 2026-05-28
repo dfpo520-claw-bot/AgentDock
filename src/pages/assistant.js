@@ -10,7 +10,7 @@ import { showConfirm } from '../components/modal.js'
 import { api } from '../lib/tauri-api.js'
 import { OPENCLAW_KB } from '../lib/openclaw-kb.js'
 import { icon, statusIcon } from '../lib/icons.js'
-import { PROVIDER_PRESETS, API_TYPES as SHARED_API_TYPES } from '../lib/model-presets.js'
+import { PROVIDER_PRESETS, API_TYPES as SHARED_API_TYPES, QTCOOL, fetchQtcoolModels } from '../lib/model-presets.js'
 import { t } from '../lib/i18n.js'
 import { getActiveEngineId } from '../lib/engine-manager.js'
 import { enhanceModelCallError } from '../lib/model-error-diagnosis.js'
@@ -65,6 +65,53 @@ function normalizeApiType(raw) {
   if (type === 'ollama') return 'ollama'
   if (type === 'openai' || type === 'openai-completions' || type === 'openai-responses') return 'openai-completions'
   return 'openai-completions'
+}
+
+function getDeepAiOpenClawProvider(providers) {
+  if (!providers) return null
+  if (providers[QTCOOL.providerKey]) return providers[QTCOOL.providerKey]
+  for (const legacyKey of (QTCOOL.legacyProviderKeys || [])) {
+    if (providers[legacyKey]) return providers[legacyKey]
+  }
+  return null
+}
+
+function getModelObjectId(model) {
+  return typeof model === 'string' ? model : (model?.id || model?.name || '')
+}
+
+function mergeOpenClawModelList(existingModels = [], nextModels = []) {
+  const seen = new Set()
+  const merged = []
+  for (const model of [...existingModels, ...nextModels]) {
+    const id = getModelObjectId(model)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    merged.push(model)
+  }
+  return merged
+}
+
+function upsertDeepAiOpenClawProvider(providers, nextProvider) {
+  const existingProvider = getDeepAiOpenClawProvider(providers) || {}
+  providers[QTCOOL.providerKey] = {
+    ...existingProvider,
+    ...nextProvider,
+    models: mergeOpenClawModelList(existingProvider.models || [], nextProvider.models || []),
+  }
+  for (const legacyKey of (QTCOOL.legacyProviderKeys || [])) {
+    delete providers[legacyKey]
+  }
+  return providers[QTCOOL.providerKey]
+}
+
+function getDeepAiPrimaryModelId(primary) {
+  if (typeof primary !== 'string') return ''
+  for (const providerKey of [QTCOOL.providerKey, ...(QTCOOL.legacyProviderKeys || [])]) {
+    const prefix = providerKey + '/'
+    if (primary.startsWith(prefix)) return primary.slice(prefix.length)
+  }
+  return ''
 }
 
 function requiresApiKey(apiType) {
@@ -3815,23 +3862,18 @@ function showSettings() {
         if (!config.models) config.models = {}
         if (!config.models.providers) config.models.providers = {}
 
-        // 添加/更新 qtcool provider
-        if (!config.models.providers.qtcool) {
-          config.models.providers.qtcool = {
-            baseUrl: QTCOOL.baseUrl,
-            apiKey: key,
-            api: 'openai-completions',
-            models: [{ id: selectedModel, name: selectedModel, contextWindow: 128000, reasoning: selectedModel.includes('codex') }]
-          }
-        } else {
-          config.models.providers.qtcool.apiKey = key
-        }
+        upsertDeepAiOpenClawProvider(config.models.providers, {
+          baseUrl: QTCOOL.baseUrl,
+          apiKey: key,
+          api: 'openai-completions',
+          models: [{ id: selectedModel, name: selectedModel, contextWindow: 128000, reasoning: selectedModel.includes('codex') }]
+        })
 
         // 设为主模型
         if (!config.agents) config.agents = {}
         if (!config.agents.defaults) config.agents.defaults = {}
         if (!config.agents.defaults.model) config.agents.defaults.model = {}
-        config.agents.defaults.model.primary = 'qtcool/' + selectedModel
+        config.agents.defaults.model.primary = QTCOOL.providerKey + '/' + selectedModel
 
         await api.writeOpenclawConfig(config)
         qtcoolStatus.innerHTML = `<span style="color:#34d399">${statusIcon('ok', 14)} ${t('assistant.qtcoolSetMainDone', { model: selectedModel })}</span>`
@@ -3868,16 +3910,16 @@ function showSettings() {
       try { config = await api.readOpenclawConfig() } catch {}
       if (!config.models) config.models = {}
       if (!config.models.providers) config.models.providers = {}
-      config.models.providers.qtcool = {
+      upsertDeepAiOpenClawProvider(config.models.providers, {
         baseUrl,
         apiKey,
         api: 'openai-completions',
         models: [{ id: model, name: model, contextWindow: 128000, reasoning: model.includes('codex') }]
-      }
+      })
       if (!config.agents) config.agents = {}
       if (!config.agents.defaults) config.agents.defaults = {}
       if (!config.agents.defaults.model) config.agents.defaults.model = {}
-      config.agents.defaults.model.primary = 'qtcool/' + model
+      config.agents.defaults.model.primary = QTCOOL.providerKey + '/' + model
       await api.writeOpenclawConfig(config)
       toast(t('assistant.qtcoolSyncToDone', { model }), 'success')
       try { await api.restartGateway() } catch {}
@@ -3890,13 +3932,13 @@ function showSettings() {
   overlay.querySelector('#ast-qtcool-sync-from')?.addEventListener('click', async () => {
     try {
       const config = await api.readOpenclawConfig()
-      const qtProvider = config?.models?.providers?.qtcool
+      const qtProvider = getDeepAiOpenClawProvider(config?.models?.providers)
       if (!qtProvider?.baseUrl) {
         toast(t('assistant.qtcoolNoProvider'), 'info')
         return
       }
       const primary = config?.agents?.defaults?.model?.primary || ''
-      const primaryModel = primary.startsWith('qtcool/') ? primary.slice(7) : ''
+      const primaryModel = getDeepAiPrimaryModelId(primary)
       const firstModel = (qtProvider.models || [])[0]
       const modelId = primaryModel || (typeof firstModel === 'string' ? firstModel : firstModel?.id) || ''
       const yes = await showConfirm(

@@ -161,9 +161,16 @@ export async function modelStatusProbe(opts = {}) {
  *
  * 注意：底层调用的是 Tauri 命令 `list_agents`（封装了 Gateway RPC），不直接走 WS。
  */
+export function normalizeAgentListPayload(raw) {
+  if (Array.isArray(raw)) return raw
+  if (Array.isArray(raw?.items)) return raw.items
+  if (Array.isArray(raw?.agents)) return raw.agents
+  if (Array.isArray(raw?.list)) return raw.list
+  return []
+}
+
 export async function listAgentsCompat() {
-  const list = await api.listAgents()
-  if (!Array.isArray(list)) return []
+  const list = normalizeAgentListPayload(await api.listAgents())
 
   return list.map(ag => {
     const out = { ...ag }

@@ -7,7 +7,7 @@ import { toast } from '../components/toast.js'
 import { humanizeError } from '../lib/humanize-error.js'
 import { showModal, showConfirm } from '../components/modal.js'
 import { icon, statusIcon } from '../lib/icons.js'
-import { API_TYPES, PROVIDER_PRESETS, QTCOOL, MODEL_PRESETS, fetchQtcoolModels } from '../lib/model-presets.js'
+import { API_TYPES, QTCOOL, MODEL_PRESETS, fetchQtcoolModels } from '../lib/model-presets.js'
 import { t } from '../lib/i18n.js'
 import { scheduleGatewayRestart, fireRestartNow, cancelPendingRestart, onRestartState } from '../lib/gateway-restart-queue.js'
 
@@ -15,6 +15,10 @@ import { scheduleGatewayRestart, fireRestartNow, cancelPendingRestart, onRestart
 function escapeHtml(str) {
   if (str == null) return ''
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function isRouteDisposed(page) {
+  return page?.__agentdockRouteDisposed === true
 }
 
 export async function render() {
@@ -27,7 +31,6 @@ export async function render() {
       <p class="page-desc">${t('models.desc')}</p>
     </div>
     <div class="config-actions">
-      <button class="btn btn-primary btn-sm" id="btn-add-provider">${t('models.addProvider')}</button>
       <button class="btn btn-secondary btn-sm" id="btn-undo" disabled>${t('models.undo')}</button>
     </div>
     <div class="form-hint" style="margin-bottom:var(--space-md)">
@@ -41,18 +44,16 @@ export async function render() {
             <span style="font-size:10px;background:var(--primary);color:#fff;padding:1px 7px;border-radius:8px">${t('models.qtcoolRecommend')}</span>
           </div>
           <div style="font-size:var(--font-size-xs);color:var(--text-secondary);line-height:1.5">
-            ${t('models.qtcoolDesc')}
             <a href="${QTCOOL.site}" target="_blank" style="color:var(--primary);text-decoration:none">${t('models.qtcoolMore')}</a>
           </div>
         </div>
-        <a href="${QTCOOL.checkinUrl}" target="_blank" class="btn btn-primary btn-sm">${icon('gift', 12)} ${t('models.qtcoolCheckin')}</a>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input class="form-input" id="qtcool-apikey" placeholder="${t('models.qtcoolKeyPlaceholder')}" style="font-size:12px;padding:6px 10px;flex:1;min-width:180px">
         <button class="btn btn-primary btn-sm" id="btn-qtcool-oneclick">${icon('plus', 14)} ${t('models.qtcoolFetchModels')}</button>
       </div>
       <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">
-        ${t('models.qtcoolNoKey')} <a href="${QTCOOL.checkinUrl}" target="_blank" style="color:var(--primary)">${t('models.qtcoolCheckinPage')}</a> ${t('models.qtcoolCheckinHint')} <a href="${QTCOOL.usageUrl}" target="_blank" style="color:var(--primary)">${t('models.qtcoolDashboard')}</a> ${t('models.qtcoolCopyKey')}
+        ${t('models.qtcoolDashboardHint')} <a href="${QTCOOL.usageUrl}" target="_blank" style="color:var(--primary)">${t('models.qtcoolDashboard')}</a> ${t('models.qtcoolCopyKey')}
       </div>
     </div>
     <div id="default-model-bar"></div>
@@ -83,18 +84,30 @@ async function loadConfig(page, state) {
   const listEl = page.querySelector('#providers-list')
   try {
     state.config = await api.readOpenclawConfig()
+    if (isRouteDisposed(page)) return
     // 自动修复现有配置中的 baseUrl(如 Ollama 缺少 /v1),一次性迁移
-    const before = JSON.stringify(state.config?.models?.providers || {})
+    const before = JSON.stringify({
+      providers: state.config?.models?.providers || {},
+      defaultsModel: state.config?.agents?.defaults?.model || {},
+      defaultsModels: state.config?.agents?.defaults?.models || {},
+    })
     normalizeProviderUrls(state.config)
-    const after = JSON.stringify(state.config?.models?.providers || {})
+    const after = JSON.stringify({
+      providers: state.config?.models?.providers || {},
+      defaultsModel: state.config?.agents?.defaults?.model || {},
+      defaultsModels: state.config?.agents?.defaults?.models || {},
+    })
     if (before !== after) {
       console.log('[models] 自动修复了服务商 baseUrl,正在保存...')
       await api.writeOpenclawConfig(state.config)
+      if (isRouteDisposed(page)) return
       toast(t('models.autoFixUrl'), 'info')
     }
+    if (isRouteDisposed(page)) return
     renderDefaultBar(page, state)
     renderProviders(page, state)
   } catch (e) {
+    if (isRouteDisposed(page)) return
     console.error('[models] loadConfig failed:', e)
     const detail = escapeHtml(e?.stack || e?.message || String(e))
     const shortMsg = escapeHtml(e?.message || String(e))
@@ -123,6 +136,82 @@ async function loadConfig(page, state) {
 
 function getCurrentPrimary(config) {
   return config?.agents?.defaults?.model?.primary || ''
+}
+
+const DEEPAI_PROVIDER_KEY = QTCOOL.providerKey
+const LEGACY_DEEPAI_PROVIDER_KEYS = QTCOOL.legacyProviderKeys || []
+
+function replaceLegacyDeepAiModelId(modelId) {
+  if (typeof modelId !== 'string') return modelId
+  for (const legacyKey of LEGACY_DEEPAI_PROVIDER_KEYS) {
+    const prefix = legacyKey + '/'
+    if (modelId.startsWith(prefix)) {
+      return DEEPAI_PROVIDER_KEY + '/' + modelId.slice(prefix.length)
+    }
+  }
+  return modelId
+}
+
+function migrateLegacyDeepAiModelMap(modelMap) {
+  if (!modelMap || typeof modelMap !== 'object' || Array.isArray(modelMap)) return modelMap
+  const migrated = {}
+  for (const [modelId, value] of Object.entries(modelMap)) {
+    const nextModelId = replaceLegacyDeepAiModelId(modelId)
+    migrated[nextModelId] = value
+  }
+  return migrated
+}
+
+function getProviderModelId(model) {
+  return typeof model === 'string' ? model : (model?.id || model?.name || '')
+}
+
+function mergeDeepAiProviderModels(currentModels = [], legacyModels = []) {
+  const seen = new Set()
+  const result = []
+  for (const model of [...currentModels, ...legacyModels]) {
+    const id = getProviderModelId(model)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    result.push(model)
+  }
+  return result
+}
+
+function migrateDeepAiProviderConfig(config) {
+  const providers = config?.models?.providers
+  if (providers) {
+    for (const legacyKey of LEGACY_DEEPAI_PROVIDER_KEYS) {
+      const legacyProvider = providers[legacyKey]
+      if (!legacyProvider) continue
+
+      const currentProvider = providers[DEEPAI_PROVIDER_KEY]
+      if (!currentProvider) {
+        providers[DEEPAI_PROVIDER_KEY] = legacyProvider
+      } else {
+        currentProvider.baseUrl = currentProvider.baseUrl || legacyProvider.baseUrl
+        currentProvider.apiKey = currentProvider.apiKey || legacyProvider.apiKey
+        currentProvider.api = currentProvider.api || legacyProvider.api
+        currentProvider.models = mergeDeepAiProviderModels(currentProvider.models || [], legacyProvider.models || [])
+      }
+      delete providers[legacyKey]
+    }
+  }
+
+  const modelConfig = config?.agents?.defaults?.model
+  if (modelConfig) {
+    let primary = modelConfig.primary
+    primary = replaceLegacyDeepAiModelId(primary)
+    modelConfig.primary = primary
+    if (Array.isArray(modelConfig.fallbacks)) {
+      modelConfig.fallbacks = modelConfig.fallbacks.map(replaceLegacyDeepAiModelId)
+    }
+  }
+
+  const defaults = config?.agents?.defaults
+  if (defaults?.models) {
+    defaults.models = migrateLegacyDeepAiModelMap(defaults.models)
+  }
 }
 
 function ensureDefaultModelConfig(state) {
@@ -664,9 +753,10 @@ const VALID_API_TYPES = new Set(API_TYPES.map(t => t.value))
 
 /** 保存前规范化所有服务商的 baseUrl 和 API 类型,确保 Gateway 能正确调用 */
 function normalizeProviderUrls(config) {
+  migrateDeepAiProviderConfig(config)
   const providers = config?.models?.providers
   if (!providers) return
-  for (const [, p] of Object.entries(providers)) {
+  for (const [providerKey, p] of Object.entries(providers)) {
     // 修复 API 类型
     if (p.api) {
       const lower = p.api.toLowerCase().trim()
@@ -676,6 +766,11 @@ function normalizeProviderUrls(config) {
         console.warn(`[models] 未知 API 类型「${p.api}」,自动修正为 openai-completions`)
         p.api = 'openai-completions'
       }
+    }
+
+    if (providerKey === QTCOOL.providerKey) {
+      p.baseUrl = QTCOOL.baseUrl
+      if (!p.api) p.api = QTCOOL.api
     }
 
     if (!p.baseUrl) continue
@@ -1092,7 +1187,6 @@ function applyDefaultModel(state) {
 
 // 顶部按钮事件
 function bindTopActions(page, state) {
-  page.querySelector('#btn-add-provider').onclick = () => addProvider(page, state)
   page.querySelector('#btn-undo').onclick = () => undo(page, state)
 
   // DeepAi助手:获取模型列表 → 弹窗让用户选择要添加的模型
@@ -1128,7 +1222,7 @@ function bindTopActions(page, state) {
         <div class="modal-title">${t('models.qtcoolSelectTitle')}</div>
         <div class="form-hint" style="margin-bottom:12px">${t('models.qtcoolSelectHint', { count: models.length })}</div>
         ${!existingProvider ? `<div style="margin-bottom:12px">
-          <label class="form-label" style="font-size:var(--font-size-xs)">${t('models.qtcoolKeyLabel')} <a href="${QTCOOL.checkinUrl}" target="_blank" style="color:var(--primary);font-weight:400">${t('models.qtcoolKeyCheckinLink')}</a></label>
+          <label class="form-label" style="font-size:var(--font-size-xs)">${t('models.qtcoolKeyLabel')} <a href="${QTCOOL.usageUrl}" target="_blank" style="color:var(--primary);font-weight:400">${t('models.qtcoolKeyCheckinLink')}</a></label>
           <input class="form-input" id="qtsel-apikey" placeholder="${t('models.qtcoolKeyPlaceholder2')}" style="font-size:12px">
         </div>` : ''}
         <div style="margin-bottom:12px;display:flex;gap:8px">
@@ -1208,110 +1302,6 @@ function bindTopActions(page, state) {
       autoSave(state)
     }
   }
-}
-
-// 添加服务商(带预设快捷选择)
-function addProvider(page, state) {
-  // 构建预设按钮 HTML
-  const presetsHtml = PROVIDER_PRESETS.filter(p => !p.hidden).map(p =>
-    `<button class="btn btn-sm btn-secondary preset-btn" data-preset="${p.key}" style="margin:0 6px 6px 0">${p.label}${p.badge ? ' <span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px">' + p.badge + '</span>' : ''}</button>`
-  ).join('')
-
-  const overlay = document.createElement('div')
-  overlay.className = 'modal-overlay'
-  overlay.innerHTML = `
-    <div class="modal" style="max-height:85vh;overflow-y:auto">
-      <div class="modal-title">${t('models.addProviderTitle')}</div>
-      <div class="form-group">
-        <label class="form-label">${t('models.quickSelect')}</label>
-        <div style="display:flex;flex-wrap:wrap">${presetsHtml}</div>
-        <div class="form-hint">${t('models.quickSelectHint')}</div>
-        <div id="preset-detail" style="display:none;margin-top:8px;padding:10px 14px;background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--font-size-sm)"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('models.providerName')}</label>
-        <input class="form-input" data-name="key" placeholder="${t('models.providerNamePlaceholder')}">
-        <div class="form-hint">${t('models.providerNameHint')}</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('models.baseUrl')}</label>
-        <input class="form-input" data-name="baseUrl" placeholder="${t('models.baseUrlPlaceholder')}">
-        <div class="form-hint">${t('models.baseUrlHint')}</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('models.apiKey')}</label>
-        <input class="form-input" data-name="apiKey" placeholder="${t('models.apiKeyPlaceholder')}">
-        <div class="form-hint">${t('models.apiKeyHint')}</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">${t('models.apiType')}</label>
-        <select class="form-input" data-name="api">
-          ${API_TYPES.map(at => `<option value="${at.value}">${at.label}</option>`).join('')}
-        </select>
-        <div class="form-hint">${t('models.apiTypeHint')}</div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary btn-sm" data-action="cancel">${t('common.cancel')}</button>
-        <button class="btn btn-primary btn-sm" data-action="confirm">${t('common.confirm')}</button>
-      </div>
-    </div>
-  `
-
-  document.body.appendChild(overlay)
-  attachTermTooltips(overlay)
-
-  // 预设按钮点击自动填充
-  overlay.querySelectorAll('.preset-btn').forEach(btn => {
-    btn.onclick = () => {
-      const preset = PROVIDER_PRESETS.find(p => p.key === btn.dataset.preset)
-      if (!preset) return
-      overlay.querySelector('[data-name="key"]').value = preset.key
-      overlay.querySelector('[data-name="baseUrl"]').value = preset.baseUrl
-      overlay.querySelector('[data-name="api"]').value = preset.api
-      // 高亮选中的预设
-      overlay.querySelectorAll('.preset-btn').forEach(b => b.style.opacity = '0.5')
-      btn.style.opacity = '1'
-      // 显示服务商详情(官网、描述)
-      const detailEl = overlay.querySelector('#preset-detail')
-      if (detailEl) {
-        if (preset.desc || preset.site) {
-          let html = preset.desc ? `<div style="color:var(--text-secondary);line-height:1.6">${preset.desc}</div>` : ''
-          if (preset.site) html += `<a href="${preset.site}" target="_blank" style="color:var(--accent);text-decoration:none;font-size:12px;margin-top:4px;display:inline-block">→ ${t('models.visitSite', { name: preset.label })}</a>`
-          detailEl.innerHTML = html
-          detailEl.style.display = 'block'
-        } else {
-          detailEl.style.display = 'none'
-        }
-      }
-    }
-  })
-
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove() })
-  overlay.querySelector('[data-action="cancel"]').onclick = () => overlay.remove()
-
-  overlay.querySelector('[data-action="confirm"]').onclick = () => {
-    const key = overlay.querySelector('[data-name="key"]').value.trim()
-    const baseUrl = overlay.querySelector('[data-name="baseUrl"]').value.trim()
-    const apiKey = overlay.querySelector('[data-name="apiKey"]').value.trim()
-    const apiType = overlay.querySelector('[data-name="api"]').value
-    if (!key) { toast(t('models.providerNameRequired'), 'warning'); return }
-    pushUndo(state)
-    if (!state.config.models) state.config.models = { mode: 'replace', providers: {} }
-    if (!state.config.models.providers) state.config.models.providers = {}
-    state.config.models.providers[key] = {
-      baseUrl: baseUrl || '',
-      apiKey: apiKey || '',
-      api: apiType,
-      models: [],
-    }
-    overlay.remove()
-    renderProviders(page, state)
-    updateUndoBtn(page, state)
-    autoSave(state)
-    toast(t('models.providerAdded', { name: key }), 'success')
-  }
-
-  overlay.querySelector('[data-name="key"]')?.focus()
 }
 
 // 编辑服务商

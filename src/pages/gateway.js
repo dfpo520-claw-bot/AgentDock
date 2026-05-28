@@ -6,6 +6,8 @@ import { toast } from '../components/toast.js'
 import { humanizeError } from '../lib/humanize-error.js'
 import { tryShowEngagement } from '../components/engagement.js'
 import { t } from '../lib/i18n.js'
+import { termHelpHtml, attachTermTooltips } from '../lib/term-tooltip.js'
+import { validateField } from '../lib/config-schema.js'
 
 // 兼容新版 SecretRef：token 可能是 string 或 { $env: "VAR" } / { $ref: "x/y" }
 function _tokenDisplayStr(token) {
@@ -20,6 +22,10 @@ function _tokenDisplayStr(token) {
 }
 function _isSecretRef(token) {
   return token && typeof token === 'object' && ('$env' in token || '$ref' in token)
+}
+
+function isRouteDisposed(page) {
+  return page?.__agentdockRouteDisposed === true
 }
 
 export async function render() {
@@ -68,9 +74,11 @@ async function loadConfig(page, state) {
   const el = page.querySelector('#gateway-config')
   try {
     state.config = await api.readOpenclawConfig()
+    if (isRouteDisposed(page)) return
     state._origToken = state.config?.gateway?.auth?.token ?? null
     renderConfig(page, state)
   } catch (e) {
+    if (isRouteDisposed(page)) return
     el.innerHTML = '<div style="color:var(--error);padding:20px">' + t('gateway.loadFailed') + ': ' + e + '</div>'
     toast(humanizeError(e, t('gateway.loadFailed')), 'error')
   }

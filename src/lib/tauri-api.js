@@ -55,6 +55,7 @@ async function getTauriInvoke() {
 // 简单缓存：避免页面切换时重复请求后端
 const _cache = new Map()
 const _inflight = new Map() // in-flight 请求去重，防止缓存过期后同一命令并发 spawn 多个进程
+let _cacheGeneration = 0
 const CACHE_TTL = 15000 // 15秒
 
 // 网络请求日志（用于调试）
@@ -87,6 +88,7 @@ export function clearRequestLogs() {
 
 function cachedInvoke(cmd, args = {}, ttl = CACHE_TTL) {
   const key = cmd + JSON.stringify(args)
+  const generation = _cacheGeneration
   const cached = _cache.get(key)
   if (cached && Date.now() - cached.ts < ttl) {
     logRequest(cmd, args, 0, true)
@@ -98,11 +100,13 @@ function cachedInvoke(cmd, args = {}, ttl = CACHE_TTL) {
     return _inflight.get(key)
   }
   const p = invoke(cmd, args).then(val => {
-    _cache.set(key, { val, ts: Date.now() })
-    _inflight.delete(key)
+    if (_cacheGeneration === generation && _inflight.get(key) === p) {
+      _cache.set(key, { val, ts: Date.now() })
+    }
+    if (_inflight.get(key) === p) _inflight.delete(key)
     return val
   }).catch(err => {
-    _inflight.delete(key)
+    if (_inflight.get(key) === p) _inflight.delete(key)
     throw err
   })
   _inflight.set(key, p)
@@ -111,6 +115,7 @@ function cachedInvoke(cmd, args = {}, ttl = CACHE_TTL) {
 
 // 清除指定命令的缓存（写操作后调用）
 function invalidate(...cmds) {
+  _cacheGeneration++
   if (!cmds.length) {
     _cache.clear()
     _inflight.clear()

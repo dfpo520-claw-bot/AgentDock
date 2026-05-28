@@ -638,16 +638,18 @@ pub async fn add_agent(
             .join("workspace"),
     };
 
-    // 验证 workspace 路径有效性
+    // 新建 Agent 时 workspace 不存在是正常情况；这里只提前拦住损坏软链接。
     let ws_check = check_workspace_status(&ws);
-    if let Some(ref warning) = ws_check.warning {
-        eprintln!("[agent] Workspace 警告: {}", warning);
-    }
     if ws_check.status.is_symlink && !ws_check.status.symlink_valid {
         return Err(format!(
             "指定的 workspace 是软链接，但目标不存在: {}",
             ws_check.status.symlink_target.as_deref().unwrap_or("未知")
         ));
+    }
+    if let Some(ref warning) = ws_check.warning {
+        if ws_check.status.exists || ws_check.status.is_symlink {
+            eprintln!("[agent] Workspace 警告: {}", warning);
+        }
     }
 
     let mut args = vec![
@@ -664,6 +666,9 @@ pub async fn add_agent(
         args.push(model.clone());
     }
 
+    crate::commands::refresh_enhanced_path();
+    let resolved_cli_path = crate::utils::resolve_openclaw_cli_path();
+
     // 尝试 CLI（15s 超时），失败则直接写配置兜底
     let cli_ok = match tokio::time::timeout(
         std::time::Duration::from_secs(15),
@@ -674,14 +679,22 @@ pub async fn add_agent(
         Ok(Ok(o)) if o.status.success() => true,
         Ok(Ok(o)) => {
             let stderr = String::from_utf8_lossy(&o.stderr);
-            eprintln!(
-                "[agent] CLI 创建失败: {}",
-                stderr.chars().take(200).collect::<String>()
-            );
+            if resolved_cli_path.is_none() {
+                eprintln!("[agent] 未检测到 openclaw CLI，改用配置写入方式创建 Agent");
+            } else {
+                eprintln!(
+                    "[agent] CLI 创建失败: {}",
+                    stderr.chars().take(200).collect::<String>()
+                );
+            }
             false
         }
         Ok(Err(e)) => {
-            eprintln!("[agent] CLI 执行错误: {e}");
+            if resolved_cli_path.is_none() {
+                eprintln!("[agent] 未检测到 openclaw CLI，改用配置写入方式创建 Agent");
+            } else {
+                eprintln!("[agent] CLI 执行错误: {e}");
+            }
             false
         }
         Err(_) => {
@@ -704,9 +717,7 @@ pub async fn add_agent(
 
     // 确保 workspace 目录存在
     if !ws.exists() {
-        if let Err(e) = fs::create_dir_all(&ws) {
-            eprintln!("[agent] 创建 workspace 目录失败: {e}");
-        }
+        fs::create_dir_all(&ws).map_err(|e| format!("创建 workspace 目录失败: {e}"))?;
     }
 
     // 验证步骤
@@ -720,14 +731,10 @@ pub async fn add_agent(
         eprintln!("[agent] 警告: Agent 创建后未在列表中出现");
     }
 
-    if !ws.exists() {
-        eprintln!("[agent] 警告: Agent workspace 目录未创建");
-    }
-
     // 触发 Gateway 重载使新 agent 生效
     let _ = super::gateway_runtime::do_reload_gateway(&app).await;
 
-    list_agents().await
+    Ok(agents)
 }
 
 /// 直接写 openclaw.json 创建 agent（CLI 不可用时的兜底方案）

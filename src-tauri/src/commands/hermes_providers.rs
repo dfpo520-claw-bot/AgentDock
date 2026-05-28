@@ -578,6 +578,20 @@ const P_COPILOT: HermesProvider = HermesProvider {
     cli_auth_hint: "",
 };
 
+const P_OPENAI_API: HermesProvider = HermesProvider {
+    id: "openai-api",
+    name: "OpenAI API",
+    auth_type: AUTH_API_KEY,
+    base_url: "https://api.openai.com/v1",
+    base_url_env_var: "OPENAI_BASE_URL",
+    api_key_env_vars: &["OPENAI_API_KEY"],
+    transport: TRANSPORT_OPENAI_CHAT,
+    models_probe: PROBE_OPENAI,
+    models: &["gpt-5.5", "gpt-5.4", "gpt-5.4-mini", "gpt-4.1", "gpt-4o"],
+    is_aggregator: false,
+    cli_auth_hint: "",
+};
+
 const P_OPENROUTER: HermesProvider = HermesProvider {
     id: "openrouter",
     name: "OpenRouter",
@@ -719,6 +733,7 @@ pub const ALL_PROVIDERS: &[HermesProvider] = &[
     P_NVIDIA,
     P_OLLAMA_CLOUD,
     P_COPILOT,
+    P_OPENAI_API,
     // API-key providers — China
     P_ZAI,
     P_KIMI_CODING,
@@ -854,13 +869,14 @@ mod tests {
 
     #[test]
     fn registry_has_expected_providers() {
-        assert_eq!(ALL_PROVIDERS.len(), 33);
+        assert_eq!(ALL_PROVIDERS.len(), 34);
         assert!(get_provider("anthropic").is_some());
         assert!(get_provider("gemini").is_some());
         assert!(get_provider("alibaba-coding-plan").is_some());
         assert!(get_provider("bedrock").is_some());
         assert!(get_provider("lmstudio").is_some());
         assert!(get_provider("nous").is_some());
+        assert!(get_provider("openai-api").is_some());
         assert!(get_provider("custom").is_some());
         assert!(get_provider("nonexistent").is_none());
     }
@@ -870,6 +886,7 @@ mod tests {
         assert_eq!(primary_api_key_env("anthropic"), Some("ANTHROPIC_API_KEY"));
         assert_eq!(primary_api_key_env("gemini"), Some("GOOGLE_API_KEY"));
         assert_eq!(primary_api_key_env("zai"), Some("GLM_API_KEY"));
+        assert_eq!(primary_api_key_env("openai-api"), Some("OPENAI_API_KEY"));
         assert_eq!(primary_api_key_env("bedrock"), None);
         assert_eq!(primary_api_key_env("nous"), None);
     }
@@ -910,6 +927,9 @@ mod tests {
         assert_eq!(infer_provider_from_env_keys(&keys), Some("anthropic"));
 
         // Unknown key → no match.
+        let keys = vec!["OPENAI_API_KEY"];
+        assert_eq!(infer_provider_from_env_keys(&keys), Some("openai-api"));
+
         let keys = vec!["UNRELATED_KEY"];
         assert_eq!(infer_provider_from_env_keys(&keys), None);
     }

@@ -5,6 +5,7 @@ import {
   API_TYPES,
   PROVIDER_PRESETS,
   MODEL_PRESETS,
+  QTCOOL,
 } from '../src/lib/model-presets.js'
 
 // ===== Provider Presets =====
@@ -42,6 +43,13 @@ test('no duplicate provider preset keys', () => {
   const keys = PROVIDER_PRESETS.map(p => p.key)
   const unique = new Set(keys)
   assert.equal(keys.length, unique.size, 'provider preset keys must be unique')
+})
+
+test('DeepAi provider preset owns the deepai provider key', () => {
+  assert.equal(QTCOOL.providerKey, 'deepai')
+  assert.deepEqual(QTCOOL.legacyProviderKeys, ['qtcool'])
+  assert.ok(PROVIDER_PRESETS.find(p => p.key === 'deepai'), 'DeepAi provider preset should use the deepai key')
+  assert.ok(!PROVIDER_PRESETS.find(p => p.key === 'qtcool'), 'legacy qtcool provider preset should not be shown as a new preset')
 })
 
 // ===== Model Presets =====

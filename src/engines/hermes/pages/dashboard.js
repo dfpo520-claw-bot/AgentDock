@@ -3,10 +3,8 @@
  */
 import { t } from '../../../lib/i18n.js'
 import { api, safeTauriListen } from '../../../lib/tauri-api.js'
-import {
-  loadHermesProviders,
-  inferProviderByBaseUrl,
-} from '../lib/providers.js'
+import { QTCOOL } from '../../../lib/model-presets.js'
+import { inferProviderByBaseUrl } from '../lib/providers.js'
 import { toast } from '../../../components/toast.js'
 
 const ICONS = {
@@ -18,8 +16,18 @@ const ICONS = {
   refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>`,
 }
 
-// Provider registry—异步加载，第一次 render 前填充
-let hermesProviders = []
+const DEEPAI_HERMES_PROVIDER = Object.freeze({
+  id: 'deepai',
+  name: QTCOOL.brandName,
+  baseUrl: QTCOOL.baseUrl,
+  site: QTCOOL.site,
+})
+
+const DEFAULT_HERMES_MODEL = 'gpt-5.5'
+
+// The UI intentionally exposes a single DeepAi preset while persisting it
+// through Hermes' native openai-api provider with a custom base URL.
+let hermesProviders = [DEEPAI_HERMES_PROVIDER]
 
 const HERMES_DASHBOARD_URL = 'http://127.0.0.1:9119/'
 
@@ -67,9 +75,9 @@ export function render() {
   let modelConfigCollapsed = true // 模型配置默认折叠
 
   // 表单状态（跨 draw 保持，不被覆盖）
-  let formBaseUrl = ''
+  let formBaseUrl = QTCOOL.baseUrl
   let formApiKey = ''
-  let formModel = ''
+  let formModel = DEFAULT_HERMES_MODEL
   let formInited = false    // 首次加载后用 hermesConfig 初始化
 
   function syncFormFromDom() {
@@ -159,6 +167,7 @@ export function render() {
 
     // 服务商高亮匹配
     const activePreset = inferProviderByBaseUrl(hermesProviders, formBaseUrl)
+    const displayProvider = activePreset?.name || hermesConfig?.provider || '—'
 
     // 模型下拉 HTML（data-dense）
     const dropdownHtml = showDropdown && models.length
@@ -199,7 +208,7 @@ export function render() {
         <div class="hm-kpi" data-tone="accent">
           <div class="hm-kpi-label">${t('engine.dashModel')}</div>
           <div class="hm-kpi-value" style="font-size:13px;word-break:break-all">${esc(displayModel)}</div>
-          <div class="hm-kpi-foot">${t('engine.dashProvider')} <code class="hm-code" style="padding:0 5px;font-size:10px">${esc(hermesConfig?.provider || activePreset?.id || '—')}</code></div>
+          <div class="hm-kpi-foot">${t('engine.dashProvider')} <code class="hm-code" style="padding:0 5px;font-size:10px">${esc(displayProvider)}</code></div>
         </div>
         <div class="hm-kpi">
           <div class="hm-kpi-label">${t('engine.dashVersion')}</div>
@@ -233,7 +242,7 @@ export function render() {
           <div class="hm-panel-title">
             <svg class="hm-panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"/></svg>
             ${t('engine.dashModelConfig')}
-            <span class="hm-panel-title-count">${hermesProviders.filter(p => p.id !== 'custom').length}</span>
+            <span class="hm-panel-title-count">${hermesProviders.length}</span>
           </div>
           <div class="hm-panel-actions">
             <svg class="hm-panel-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
@@ -243,29 +252,29 @@ export function render() {
         <div class="hm-panel-body">
           <div class="hm-field-label" style="margin-bottom:10px">${t('engine.dashProviderPresets')}</div>
           <div class="hm-pills" style="margin-bottom:18px">
-            ${hermesProviders.filter(p => p.id !== 'custom').map(p => {
-              const api = p.transport === 'anthropic_messages' ? 'anthropic-messages'
-                : p.transport === 'google_gemini' ? 'google-generative-ai'
-                : 'openai-completions'
+            ${hermesProviders.map(p => {
               const active = activePreset?.id === p.id
-              return `<button class="hm-pill hm-preset-btn ${active ? 'is-active' : ''}" data-key="${p.id}" data-url="${esc(p.baseUrl)}" data-api="${api}">${esc(p.name)}</button>`
+              return `<button class="hm-pill hm-preset-btn ${active ? 'is-active' : ''}" data-key="${p.id}" data-url="${esc(p.baseUrl)}" data-api="${QTCOOL.api}">${esc(p.name)}</button>`
             }).join('')}
           </div>
           <div class="hm-field-row">
             <label class="hm-field">
               <span class="hm-field-label">${t('engine.dashApiBaseUrl')}</span>
-              <input type="text" id="hm-cfg-baseurl" class="hm-input" value="${esc(formBaseUrl)}" placeholder="https://api.deepseek.com/v1">
+              <input type="text" id="hm-cfg-baseurl" class="hm-input" value="${esc(formBaseUrl || QTCOOL.baseUrl)}" placeholder="${QTCOOL.baseUrl}">
             </label>
             <label class="hm-field">
-              <span class="hm-field-label">${t('engine.dashApiKey')}</span>
-              <input type="password" id="hm-cfg-apikey" class="hm-input" value="${esc(formApiKey)}" placeholder="sk-…">
+              <span class="hm-field-label" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span>${t('engine.dashApiKey')}</span>
+                <a href="${QTCOOL.site}" target="_blank" rel="noreferrer">${t('engine.configGetApiKey')}</a>
+              </span>
+              <input type="password" id="hm-cfg-apikey" class="hm-input" value="${esc(formApiKey)}" placeholder="sk-...">
             </label>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-end;margin-top:12px">
             <label class="hm-field" style="flex:1">
               <span class="hm-field-label">${t('engine.configModel')}</span>
               <div style="position:relative">
-                <input type="text" id="hm-cfg-model" class="hm-input" value="${esc(formModel)}" placeholder="deepseek-chat">
+                <input type="text" id="hm-cfg-model" class="hm-input" value="${esc(formModel || DEFAULT_HERMES_MODEL)}" placeholder="${DEFAULT_HERMES_MODEL}">
                 ${dropdownHtml}
               </div>
             </label>
@@ -708,12 +717,7 @@ export function render() {
     if (!formBaseUrl) { cfgMsg = `<span style="color:var(--warning)">${t('engine.configFetchNeedUrl')}</span>`; draw(); return }
     if (!formApiKey) { cfgMsg = `<span style="color:var(--warning)">${t('engine.configFetchNeedKey')}</span>`; draw(); return }
 
-    const matched = inferProviderByBaseUrl(hermesProviders, formBaseUrl)
-    const apiType = matched
-      ? (matched.transport === 'anthropic_messages' ? 'anthropic-messages'
-        : matched.transport === 'google_gemini' ? 'google-generative-ai'
-        : 'openai-completions')
-      : 'openai-completions'
+    const apiType = QTCOOL.api
 
     fetchBusy = true; cfgMsg = ''; draw()
     try {
@@ -735,7 +739,7 @@ export function render() {
     if (!formModel) { cfgMsg = `<span style="color:var(--warning)">${t('engine.configModelRequired')}</span>`; draw(); return }
 
     const matched = inferProviderByBaseUrl(hermesProviders, formBaseUrl)
-    const provider = matched?.id || 'custom'
+    const provider = matched?.id === 'deepai' ? 'openai-api' : (matched?.id || 'custom')
 
     modelBusy = true; cfgMsg = ''; draw()
     try {
@@ -819,9 +823,9 @@ export function render() {
     loading = false
     // 首次加载时用 hermesConfig 初始化表单
     if (!formInited && hermesConfig) {
-      formBaseUrl = hermesConfig.base_url || ''
+      formBaseUrl = hermesConfig.base_url || QTCOOL.baseUrl
       formApiKey = hermesConfig.api_key || ''
-      formModel = hermesConfig.model || ''
+      formModel = hermesConfig.model || DEFAULT_HERMES_MODEL
       formInited = true
     }
     draw()
@@ -830,11 +834,11 @@ export function render() {
   // 初始加载：先拉取 provider registry（和 refresh 并行），再渲染
   ;(async () => {
     try {
-      hermesProviders = await loadHermesProviders()
+      refresh()
     } catch (err) {
-      console.warn('[hermes/dashboard] failed to load providers:', err)
+      console.warn('[hermes/dashboard] failed to initialize:', err)
+      refresh()
     }
-    refresh()
   })()
 
   // --- Guardian 事件监听：实时响应 Gateway 状态变化 ---

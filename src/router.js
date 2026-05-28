@@ -12,6 +12,13 @@ let _initialized = false
 
 let _defaultRoute = '/dashboard'
 
+function markRouteDisposed(root = _contentEl) {
+  if (!root) return
+  root.querySelectorAll?.('.page').forEach(page => {
+    page.__agentdockRouteDisposed = true
+  })
+}
+
 export function registerRoute(path, loader) {
   routes[path] = loader
 }
@@ -48,6 +55,7 @@ async function loadRoute() {
   const thisLoad = ++_loadId
 
   // 清理上一个页面
+  markRouteDisposed()
   if (_currentCleanup) {
     try { _currentCleanup() } catch (_) {}
     _currentCleanup = null
@@ -95,13 +103,18 @@ async function loadRoute() {
     if (thisLoad === _loadId) showLoadError(_contentEl, routePath, e)
     return
   }
-  if (thisLoad !== _loadId) return
+  if (thisLoad !== _loadId) {
+    if (page instanceof HTMLElement) page.__agentdockRouteDisposed = true
+    return
+  }
 
   // 插入页面内容
+  markRouteDisposed()
   _contentEl.innerHTML = ''
   if (typeof page === 'string') {
     _contentEl.innerHTML = page
   } else if (page instanceof HTMLElement) {
+    page.__agentdockRouteDisposed = false
     _contentEl.appendChild(page)
   }
 

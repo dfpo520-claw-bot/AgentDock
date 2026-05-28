@@ -8,7 +8,7 @@ import { humanizeError } from '../lib/humanize-error.js'
 import { showModal, showConfirm } from '../components/modal.js'
 import { CHANNEL_LABELS } from '../lib/channel-labels.js'
 import { t } from '../lib/i18n.js'
-import { listAgentsCompat } from '../lib/api-compat.js'
+import { listAgentsCompat, normalizeAgentListPayload } from '../lib/api-compat.js'
 import { hasFeature } from '../lib/kernel.js'
 import { termHelpHtml, attachTermTooltips } from '../lib/term-tooltip.js'
 
@@ -55,14 +55,31 @@ function renderSkeleton(container) {
   container.innerHTML = [item(), item(), item()].join('')
 }
 
+function isRouteDisposed(page) {
+  return page?.__agentdockRouteDisposed === true
+}
+
+function normalizeAgentList(list) {
+  return normalizeAgentListPayload(list).map(ag => {
+    const out = { ...ag }
+    if (!out.agentRuntime) out.agentRuntime = { id: 'pi' }
+    else if (typeof out.agentRuntime === 'string') out.agentRuntime = { id: out.agentRuntime }
+    return out
+  })
+}
+
 async function loadAgents(page, state) {
   const container = page.querySelector('#agents-list')
+  if (!container || isRouteDisposed(page)) return
+  state._loadAgentsRequestId = (state._loadAgentsRequestId || 0) + 1
+  const requestId = state._loadAgentsRequestId
   renderSkeleton(container)
   try {
     const [agents, config] = await Promise.all([
       listAgentsCompat(),
       api.readOpenclawConfig().catch(() => null),
     ])
+    if (requestId !== state._loadAgentsRequestId || isRouteDisposed(page)) return
     state.agents = agents
     state.bindings = Array.isArray(config?.bindings) ? config.bindings : []
     renderAgents(page, state)
@@ -73,6 +90,7 @@ async function loadAgents(page, state) {
       state.eventsAttached = true
     }
   } catch (e) {
+    if (requestId !== state._loadAgentsRequestId || isRouteDisposed(page)) return
     container.innerHTML = '<div style="color:var(--error);padding:20px">' + t('agents.loadFailed') + ': ' + String(e).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</div>'
     toast(humanizeError(e, t('agents.loadListFailed')), 'error')
   }
@@ -116,6 +134,7 @@ function _renderRuntimeBadge(runtime) {
 
 function renderAgents(page, state) {
   const container = page.querySelector('#agents-list')
+  if (!container || isRouteDisposed(page)) return
   if (!state.agents.length) {
     container.innerHTML = `
       <div class="empty-state">
@@ -238,19 +257,32 @@ async function showAddAgentDialog(page, state) {
       const workspace = (result.workspace || '').trim()
 
       try {
-        await api.addAgent(id, model, workspace || null)
+        const createdAgentsRaw = await api.addAgent(id, model, workspace || null)
+        const createdAgents = normalizeAgentListPayload(createdAgentsRaw)
+        if (createdAgents.length) {
+          state.agents = normalizeAgentList(createdAgents)
+        }
         // 身份信息更新（非关键，失败不阻塞）
         if (name || emoji) {
           try {
             await api.updateAgentIdentity(id, name || null, emoji || null)
+            if (isRouteDisposed(page)) return
+            const createdAgent = state.agents.find(agent => agent.id === id)
+            if (createdAgent) {
+              if (name) createdAgent.identityName = name
+              if (emoji) createdAgent.identityEmoji = emoji
+            }
           } catch (identityErr) {
             console.warn('[Agent] 身份信息更新失败（Agent 已创建）:', identityErr)
             toast(t('agents.createdNameFailed'), 'warning')
           }
         }
+        if (isRouteDisposed(page)) return
         toast(t('agents.created'), 'success')
 
-        // 强制清除缓存并重新加载
+        if (state.agents.length) {
+          renderAgents(page, state)
+        }
         invalidate('list_agents')
         await loadAgents(page, state)
       } catch (e) {

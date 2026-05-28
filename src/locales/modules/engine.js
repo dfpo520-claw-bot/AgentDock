@@ -1,4 +1,4 @@
-import { _ } from '../helper.js'
+﻿import { _ } from '../helper.js'
 
 export default {
   switchedTo: _('已切换到 {name} 模式', 'Switched to {name} mode', '已切換到 {name} 模式', '{name} モードに切り替えました', '{name} 모드로 전환됨'),
@@ -143,9 +143,17 @@ export default {
   configFetchNotSupported: _('此渠道不支持获取模型列表，请前往平台查看可用模型后手动输入', 'This provider does not support model listing. Please check available models on their platform and enter manually.', '此渠道不支持取得模型列表，請前往平台查看可用模型後手動輸入'),
   configFetchNeedKey: _('请先填写 API Key', 'Please enter API Key first', '請先填寫 API Key'),
   configFetchNeedUrl: _('请先选择服务商或填写 Base URL', 'Please select a provider or enter Base URL first', '請先選擇服務商或填寫 Base URL'),
+  configFetchDraftOnly: _('获取模型列表只会更新当前表单，不会修改已安装的 Hermes 配置。', 'Fetching models only updates this form and does not change the installed Hermes config.', '取得模型列表只會更新目前表單，不會修改已安裝的 Hermes 設定。'),
   configSaveBtn: _('保存配置', 'Save Config', '儲存配置'),
+  configSaveWritesFiles: _('只有点击保存配置时，才会写入 Hermes 的 config.yaml 与 .env。', 'Only saving the config writes to Hermes config.yaml and .env.', '只有點擊儲存設定時，才會寫入 Hermes 的 config.yaml 與 .env。'),
+  configSaving: _('正在保存...', 'Saving...', '儲存中...'),
   configSkipBtn: _('跳过，稍后配置', 'Skip, configure later', '跳過，稍後配置'),
   configSaved: _('配置已保存', 'Configuration saved', '配置已儲存'),
+  configSavedState: _('已保存到 Hermes（{provider} / {model}）', 'Saved to Hermes ({provider} / {model})', '已儲存到 Hermes（{provider} / {model}）'),
+  configNotSavedYet: _('尚未写入 Hermes 配置文件', 'Not yet written to Hermes config files', '尚未寫入 Hermes 設定檔'),
+  configDraftPending: _('当前表单有未保存修改', 'This form has unsaved changes', '目前表單有未儲存修改'),
+  configDraftClean: _('当前表单与已保存配置一致', 'This form matches the saved config', '目前表單與已儲存設定一致'),
+  configSavedNextStep: _('配置已写入 Hermes，下一步可直接启动 Gateway。', 'Config has been written to Hermes. Next, start the Gateway.', '設定已寫入 Hermes，下一步可直接啟動 Gateway。'),
   // Gateway 阶段
   gatewayTitle: _('启动 Gateway', 'Start Gateway', '啟動 Gateway'),
   gatewayDesc: _('启动 HTTP API 服务以连接 AgentDock', 'Start HTTP API server to connect with AgentDock', '啟動 HTTP API 服務以連接 AgentDock'),

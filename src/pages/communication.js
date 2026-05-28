@@ -11,6 +11,10 @@ import { wsClient } from '../lib/ws-client.js'
 
 let _page = null, _config = null, _dirty = false
 
+function isRouteDisposed(page) {
+  return page?.__agentdockRouteDisposed === true
+}
+
 export async function render() {
   const page = document.createElement('div')
   page.className = 'page page-shell communication-page'
@@ -56,9 +60,11 @@ export function cleanup() { _page = null; _config = null; _dirty = false }
 async function loadConfig(page) {
   try {
     _config = await api.readOpenclawConfig()
+    if (isRouteDisposed(page)) return
     if (!_config) _config = {}
     renderTab(page, 'messages')
   } catch (e) {
+    if (isRouteDisposed(page)) return
     page.querySelector('#comm-content').innerHTML = `<div style="color:var(--error)">${t('communication.loadFailed')}: ${esc(e?.message || e)}</div>`
   }
 }

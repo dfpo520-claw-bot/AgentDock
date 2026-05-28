@@ -1377,6 +1377,7 @@ fn extract_uv_tar_gz(data: &[u8], dest: &std::path::Path) -> Result<(), String> 
 }
 
 const HERMES_GIT_URL: &str = "git+https://github.com/NousResearch/hermes-agent.git";
+const HERMES_API_SERVER_RUNTIME_DEP: &str = "aiohttp==3.13.3";
 
 fn sanitize_hermes_install_output(text: &str) -> String {
     let mut out = text.replace(HERMES_GIT_URL, "hermes-agent");
@@ -1462,14 +1463,23 @@ async fn install_via_uv_tool(
 
     // 构造安装规格
     let pkg = if extras.is_empty() {
-        format!("hermes-agent @ {}", HERMES_GIT_URL)
+        format!("hermes-agent[web] @ {}", HERMES_GIT_URL)
     } else {
         format!("hermes-agent[{}] @ {}", extras.join(","), HERMES_GIT_URL)
     };
 
     let mut cmd = tokio::process::Command::new(uv_path);
     cmd.args([
-        "tool", "install", "--force", &pkg, "--python", "3.11", "--with", "croniter",
+        "tool",
+        "install",
+        "--force",
+        &pkg,
+        "--python",
+        "3.11",
+        "--with",
+        "croniter",
+        "--with",
+        HERMES_API_SERVER_RUNTIME_DEP,
     ]);
 
     // 配置 PyPI 镜像（extras 的依赖仍从 PyPI 下载）
@@ -1494,7 +1504,7 @@ async fn install_via_uv_tool(
 
     let _ = app.emit(
         "hermes-install-log",
-        "uv tool install hermes-agent --python 3.11",
+        "uv tool install hermes-agent --python 3.11 --with croniter --with aiohttp==3.13.3",
     );
 
     let child = cmd.spawn().map_err(|e| format!("启动安装进程失败: {e}"))?;
@@ -1584,14 +1594,14 @@ async fn install_via_uv_pip(
 
     // pip install
     let pkg = if extras.is_empty() {
-        format!("hermes-agent @ {}", HERMES_GIT_URL)
+        format!("hermes-agent[web] @ {}", HERMES_GIT_URL)
     } else {
         format!("hermes-agent[{}] @ {}", extras.join(","), HERMES_GIT_URL)
     };
     let _ = app.emit("hermes-install-log", "> uv pip install hermes-agent");
 
     let mut pip_cmd = tokio::process::Command::new(uv_path);
-    pip_cmd.args(["pip", "install", &pkg]);
+    pip_cmd.args(["pip", "install", &pkg, HERMES_API_SERVER_RUNTIME_DEP]);
     pip_cmd.env("GIT_TERMINAL_PROMPT", "0");
     pip_cmd.env("VIRTUAL_ENV", &venv_str);
     if let Some(mirror) = pypi_mirror_url() {
@@ -3123,11 +3133,13 @@ pub async fn update_hermes(app: tauri::AppHandle) -> Result<String, String> {
         "3.11",
         "--with",
         "croniter",
+        "--with",
+        HERMES_API_SERVER_RUNTIME_DEP,
     ]);
     let _ = app.emit("hermes-install-progress", 20u32);
     let _ = app.emit(
         "hermes-install-log",
-        "uv tool install --reinstall hermes-agent --python 3.11 --with croniter",
+        "uv tool install --reinstall hermes-agent --python 3.11 --with croniter --with aiohttp==3.13.3",
     );
     cmd.env("GIT_TERMINAL_PROMPT", "0");
     if let Some(mirror) = pypi_mirror_url() {
